@@ -1,0 +1,4045 @@
+%% RasMol V2.6 Manual
+%% Roger Sayle, December 1998
+%%
+
+%%
+%% ASCII Text Headers
+%%
+
+TR
+TR
+TR
+TR
+TR                             R a s M o l   v 2 . 6 
+TR                             =====================
+TR
+TR
+TR                       A Molecular Visualisation Program
+TR
+TR                                  Roger Sayle
+TR
+TR
+TR
+TR
+TR
+TR
+%%
+%% UNIX man(1) Headers
+%%
+MR.PU
+MR.TH RASMOL 1 "December 1998"
+MR.SH NAME
+MRrasmol \- Molecular Graphics Visualisation Tool v2.6
+
+%%
+%% VMS Help Headers
+%%
+XR1 RasMol
+
+%%
+%% RTF Headers
+%%
+RR{\rtf1\ansi
+RR{\fonttbl
+RR\f0\fswiss Arial;
+RR\f1\fdecor Symbol;
+RR\f2\fmodern Courier New;
+RR}\deff0\fs20
+
+RR#{\footnote rasmol}
+RR${\footnote RasMol V2.6}
+RR+{\footnote doc}
+
+RR\par{\fs28\b RasMol V2.6}\par\par
+RR{\fs24\b Molecular Visualisation Program}\par\par
+RR{\b Roger Sayle}\par\par
+
+%%
+%% HTML Headers
+%%
+HR<title>RasMol V2.6 Molecular Visualisation Program</title>
+HR<h1>RasMol V2.6</h1><p>
+HR<h2>Molecular Visualisation Program</h2><p>
+HR<h3>Roger Sayle</h3><p><p>
+
+%%
+%% HTML Table of Contents
+%%
+HR<h2>Table of Contents</h2>
+HR<ol>
+HR<li><a href="#chintro">Introduction</a>
+HR<li><a href="#chcomref">Command Reference</a>
+HR<li><a href="#chsetopt">Internal Parameters</a>
+HR<li><a href="#chexprs">Atom Expressions</a>
+HR<li><a href="#predefinedsets">Predefined Sets</a>
+HR<li><a href="#chcolours">Colour Schemes</a>
+HR</ol>
+
+%%
+%% RTF Table of Contents
+%%
+RR\par{\fs24\b Table of Contents}\par\par
+RR\tx250\li250\fi-250
+RR{\f1\'b7}\tab
+RR{\uldb Introduction}{\v chintro}\par
+RR{\f1\'b7}\tab
+RR{\uldb Command Reference}{\v chcomref}\par
+RR{\f1\'b7}\tab
+RR{\uldb Internal Parameters}{\v chsetopt}\par
+RR{\f1\'b7}\tab
+RR{\uldb Atom Expressions}{\v chexprs}\par
+RR{\f1\'b7}\tab
+RR{\uldb Predefined Sets}{\v predefinedsets}\par
+RR{\f1\'b7}\tab
+RR{\uldb Colour Schemes}{\v chcolours}\par
+RR\pard
+AB
+
+%% 
+%% Copyright Notices
+%%
+TT1992-1998 by Roger Sayle (rasmol@ggr.co.uk)
+RT1992-1998 by Roger Sayle (rasmol@ggr.co.uk)
+HR<p><p>1992-1998 by Roger Sayle 
+HR<address>rasmol@ggr.co.uk</address>
+AP
+
+RR{\fs16
+VTThe information supplied in this document is believed to be true but
+VTno liability is assumed for its use or for the infringements of the
+VTrights of the others resulting from its use.
+VTInformation in this document is subject to change without notice and does
+VTnot represent a commitment on the part of the supplier.
+RR}
+AB
+
+%%
+%% Man Page Synopsis
+%%
+MR.SH SYNOPSIS
+MR.B rasmol
+MR.RB "[\|" \-nodiplay "\|]"
+MR.RB "[\|\&[\|" "\-"\c
+MR.I "format"\c
+MR.RB "\|]"
+MR.I filename\c
+MR\&\|]
+MR.RB "[\|" "\-script "\c
+MR.I scriptfile\c
+MR\&\|]
+MR
+MR.SH FORMATS
+MR.PD 0
+MR.TP 12
+MR.B \-pdb
+MRBrookhaven Protein Databank
+MR.TP
+MR.B \-mdl
+MRMDL's MOL File Format
+MR.TP
+MR.B \-mol2
+MRTripos' Sybyl MOL2 Format
+MR.TP
+MR.B \-xyz
+MRMSC's XYZ (XMol) Format
+MR.TP
+MR.B \-mopac
+MRMOPAC Input or Output File Format
+MR.TP
+MR.B \-alchemy
+MRAlchemy File Format
+MR.TP
+MR.B \-charmm
+MRCHARMm File Format
+MR.PD
+
+%%
+%% Simple Description
+%%
+TR    INTRODUCTION
+TR    ============
+TR
+RR#{\footnote chintro}
+RR${\footnote Introduction}
+RR{\fs24\b Introduction}\par\par
+MR.SH DESCRIPTION
+HR<a name="chintro"><h2>Introduction</h2></a>
+XR2 Introduction
+ATRasMol2 is a molecular graphics program intended for the visualisation of
+ATproteins, nucleic acids and small molecules. The program is aimed at
+ATdisplay, teaching and generation of publication quality images. RasMol
+ATruns on Microsoft Windows, Apple Macintosh, UNIX and VMS systems. The
+ATUNIX and VMS systems require an 8, 24 or 32 bit colour X Windows display 
+AT(X11R4 or later). The program reads in a molecule co-ordinate file and 
+ATinteractively displays the molecule on the screen in a variety of colour
+ATschemes and molecule representations. Currently available representations 
+ATinclude depth-cued wireframes, 'Dreiding' sticks, spacefilling (CPK) spheres,
+ATball and stick, solid and strand biomolecular ribbons, atom labels and dot
+ATsurfaces.
+PP
+
+PRThe RasMol help facility can be accessed by typing "help <topic>" or
+PR"help <topic> <subtopic>" from the command line. A complete list of RasMol
+PRcommands may be displayed by typing "help commands". A single question
+PRmark may also be used to abbreviate the keyword "help".
+PR
+PR1992-1998 by Roger Sayle
+AB
+
+%% 
+%% Commands Introduction
+%%
+RR#{\footnote chcomref}
+RR${\footnote Command Reference}
+RR{\fs24\b Command Reference}\par\par
+MR.SH COMMANDS
+XR2 Commands
+PR?commands
+PR?keywords
+HR<a name="chcomref"><h2>Command Reference</h2></a>
+TR    COMMANDS
+TR    ========
+TR
+
+ATRasMol allows the execution of interactive commands typed at the
+AC"RasMol>
+ATprompt in the terminal window. Each command must be given on
+ATa separate line. Keywords are case insensitive and may be entered in
+ATeither upper or lower case letters. All whitespace characters are
+ATignored except to separate keywords and their arguments.
+AP
+
+ATThe commands/keywords currently recognised by RasMol are given below.
+PRType "help <command>" for more information on each RasMol function.
+AP
+
+NR    backbone        background      centre          clipboard
+NR    colour          connect         cpk             dots
+NR    define          echo            exit            hbonds
+NR    help            label           load            print
+NR    quit            renumber        reset           restrict
+NR    ribbons         rotate          save            script
+NR    select          set             show            slab
+NR    source          spacefill       ssbonds         strands
+NR    structure       trace           translate       wireframe
+NR    write           zap             zoom
+NP
+
+HR<pre>
+HR    <a href="#backbone">Backbone</a>        <a href="#background">Background</a>      <a href="#centre">Centre</a>
+HR    <a href="#clipboard">Clipboard</a>       <a href="#colour">Colour</a>          <a href="#connect">Connect</a>
+HR    <a href="#spacefill">CPK</a>             <a href="#dots">Dots</a>            <a href="#define">Define</a>
+HR    <a href="#echo">Echo</a>            <a href="#quit">Exit</a>            <a href="#hbonds">HBonds</a>
+HR    <a href="#help">Help</a>            <a href="#label">Label</a>           <a href="#load">Load</a>
+HR    <a href="#print">Print</a>           <a href="#quit">Quit</a>            <a href="#renumber">Renumber</a>
+HR    <a href="#reset">Reset</a>           <a href="#restrict">Restrict</a>        <a href="#ribbons">Ribbons</a>
+HR    <a href="#rotate">Rotate</a>          <a href="#save">Save</a>            <a href="#script">Script</a>
+HR    <a href="#select">Select</a>          <a href="#set">Set</a>             <a href="#show">Show</a>
+HR    <a href="#slab">Slab</a>            <a href="#script">Source</a>          <a href="#spacefill">Spacefill</a>
+HR    <a href="#ssbonds">SSBonds</a>         <a href="#strands">Strands</a>         <a href="#structure">Structure</a>
+HR    <a href="#backbone">Trace</a>           <a href="#translate">Translate</a>       <a href="#wireframe">Wireframe</a>     
+HR    <a href="#write">Write</a>           <a href="#zap">Zap</a>             <a href="#zoom">Zoom</a>
+HR</pre><hr>
+
+RR\cellx1200\cellx2400\cellx3600\cellx4800
+RR\intbl
+RR{\uldb backbone}{\v backbone}\cell
+RR{\uldb background}{\v background}\cell
+RR{\uldb centre}{\v centre}\cell
+RR{\uldb clipboard}{\v clipboard}\cell
+RR\row\intbl
+RR{\uldb colour}{\v colour}\cell
+RR{\uldb connect}{\v connect}\cell
+RR{\uldb cpk}{\v cpk}\cell
+RR{\uldb dots}{\v dots}\cell
+RR\row\intbl
+RR{\uldb define}{\v define}\cell
+RR{\uldb echo}{\v echo}\cell
+RR{\uldb exit}{\v exit}\cell
+RR{\uldb hbonds}{\v hbonds}\cell
+RR\row\intbl
+RR{\uldb help}{\v help}\cell
+RR{\uldb label}{\v label}\cell
+RR{\uldb load}{\v load}\cell
+RR{\uldb print}{\v print}\cell
+RR\row\intbl
+RR{\uldb quit}{\v quit}\cell
+RR{\uldb renumber}{\v renumber}\cell
+RR{\uldb reset}{\v reset}\cell
+RR{\uldb restrict}{\v restrict}\cell
+RR\row\intbl
+RR{\uldb ribbon}{\v ribbon}\cell
+RR{\uldb rotate}{\v rotate}\cell
+RR{\uldb save}{\v save}\cell
+RR{\uldb script}{\v script}\cell
+RR\row\intbl
+RR{\uldb select}{\v select}\cell
+RR{\uldb set}{\v set}\cell
+RR{\uldb show}{\v show}\cell
+RR{\uldb slab}{\v slab}\cell
+RR\row\intbl
+RR{\uldb source}{\v source}\cell
+RR{\uldb spacefill}{\v spacefill}\cell
+RR{\uldb ssbonds}{\v ssbonds}\cell
+RR{\uldb strands}{\v strands}\cell
+RR\row\intbl
+RR{\uldb structure}{\v structure}\cell
+RR{\uldb trace}{\v trace}\cell
+RR{\uldb translate}{\v translate}\cell
+RR{\uldb wireframe}{\v wireframe}\cell
+RR\row\intbl
+RR{\uldb write}{\v write}\cell
+RR{\uldb zap}{\v zap}\cell
+RR{\uldb zoom}{\v zoom}\cell
+RR\row\pard\par\trowd
+RB
+
+%%
+%% Commands Reference
+%%
+PR?trace
+RR#{\footnote trace}
+ASBackbone
+NRSyntax:  backbone {<boolean>}
+NR         backbone <value>
+NR
+HR<pre>
+HRSyntax:  backbone {&lt;boolean&gt;}
+HR         backbone &lt;value&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRbackbone \{<boolean>\}\line\tab
+RRbackbone <value>\par
+RR}\pard\par
+
+ATThe RasMol
+ACbackbone
+ATcommand permits the representation of a polypeptide
+ATbackbone as a series of bonds connecting the adjacent alpha carbons of 
+ATeach amino acid in a chain. The display of these backbone `bonds' is
+ATturned on and off by the command paramater the same as the
+AXwireframe wireframe
+ATcommand. The command
+ACbackbone off
+ATturns off the selected `bonds', and
+ACbackbone on
+ATor with a number turns them on. The number can be used
+ATto specify the cylinder radius of the representation in either Angstrom
+ATor rasmol units. A parameter value of 500 (2.0 Angstroms) or above 
+ATresults in a "Parameter value too large" error. Backbone objects may be
+ATcoloured using the RasMol 
+AXcolour colour backbone
+ATcommand. 
+PP
+PTThe reserved work backbone is also used as a predefined set ("help sets")
+PTand as a parameter to the `set hbond' and `set ssbond' commands. The
+PTRasMol command
+PCtrace
+PTis synonymous with the command
+PCbackbone.
+VP
+VTThe reserved work 
+VCbackbone
+VTis also used as a predefined set and as a parameter to the 
+VCset hbond
+VTand 
+VCset ssbond
+VTcommands. The RasMol command
+VCtrace
+VTis synonymous with the command 
+VCbackbone.
+AB
+
+
+ASBackground
+NRSyntax:  background <colour>
+NR
+HR<pre>
+HRSyntax:  background &lt;colour&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRbackground <colour>\par
+RR}\pard\par
+
+ATThe RasMol
+ACbackground
+ATcommand is used to set the colour of the "canvas" background. The
+ATcolour may be given as either a colour name or a comma separated
+ATtriple of Red, Green and Blue (RGB) components enclosed in square
+ATbrackets. Typing the command 
+AXhelp help colours
+ATwill give a list of the predefined colour names recognised by RasMol. 
+ATWhen running under X Windows, RasMol also recognises colours in the 
+ATX server's colour name database.
+AP
+ATThe
+ACbackground
+ATcommand is synonymous with the RasMol
+AXsetbackground set background
+ATcommand.
+AB
+
+
+PR?center
+RR#{\footnote center}
+ASCentre
+NRSyntax:  center {<expression>}
+NR         centre {<expression>}
+NR
+HR<pre>
+HRSyntax:  center {&lt;expression&gt;}
+HR         centre {&lt;expression&gt;}
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRcenter \{<expression>\}\line\tab
+RRcentre \{<expression>\}\par
+RR}\pard\par
+
+ATThe RasMol 
+ACcentre
+ATcommand defines the point about which the 
+AXrotate rotate
+ATcommand and the scroll bars rotate the current molecule. Without a 
+ATparameter the centre command resets the centre of rotation to be the
+ATcentre of gravity of the molecule. If an atom expression is specified,
+ATRasMol rotates the molecule about the centre of gravity of the set of
+ATatoms specified by the expression. Hence, if a single atom is specified
+ATby the expression, that atom will remain `stationary' during rotations.
+AP
+ATType 
+AXhelp help expression
+ATfor more information on RasMol atom expressions.
+AB
+
+
+ASClipboard
+NRSyntax:  clipboard
+NR
+HR<pre>
+HRSyntax:  clipboard
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRclipboard\par
+RR}\pard\par
+
+ATThe RasMol 
+ACclipboard
+ATcommand places a copy of the currently displayed image on the local 
+ATgraphics `clipboard'. Note: this command is not yet supported on 
+ATUNIX or VMS machines. It is intended to make transfering images 
+ATbetween applications easier under Microsoft Windows or on an Apple 
+ATMacintosh.
+AP
+ATWhen using RasMol on a UNIX or VMS system this functionality may be
+ATachieved by generating a raster image in a format that can be read
+ATby the receiving program using the RasMol
+AXwrite write
+ATcommand.
+AB
+
+
+PR?color
+RR#{\footnote color}
+ASColour
+NRSyntax:  colour {<object>} <colour>
+NR         color {<object>} <colour>
+NR
+HR<pre>
+HRSyntax:  colour {&lt;object&gt;} &lt;colour&gt;
+HR         color {&lt;object&gt;} &lt;colour&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRcolour \{<object>\} <colour>\line\tab
+RRcolor \{<object>\} <colour>\par
+RR}\pard\par
+
+ATColour the atoms (or other objects) of the selected region. The colour may 
+ATbe given as either a colour name or a comma separated triple of Red, Green
+ATand Blue (RGB) components enclosed in square brackets. Typing the command
+AXhelp help colours
+ATwill give a list of all the predefined colour names recognised
+ATby RasMol.
+AP
+
+ATAllowed objects are 
+ACatoms,
+ACbonds,
+AXbackbone backbone,
+AXribbons ribbons
+AXlabel labels
+AXdots dots,
+AXhbonds hbonds,
+ATand
+AXssbonds ssbonds.
+ATIf no object is specified, the default keyword 
+ACatom
+ATis assumed.
+ATSome colour schemes are defined for certain object types. The colour scheme
+ACnone
+ATcan be applied all objects accept atoms and dots, stating that the selected
+ATobjects have no colour of their own, but use the colour of their associated
+ATatoms (i.e. the atoms they connect).
+ACAtom 
+ATobjects can also be coloured by
+AXcpkcolours cpk,
+AXaminocolours amino,
+AXchaincolours chain,
+AXgroupcolours group,
+AXshapelycolours shapely,
+AXstructurecolours structure,
+AXtemperaturecolours temperature
+AXchargecolours charge
+ATand
+AXusercolours user. Hydrogen bonds can also be coloured by 
+AXhbondtypecolours type
+ATand dot surfaces can also be coloured by
+AXpotentialcolours electrostatic potential.
+ATFor more information type
+AXchcolours help colour <colour>.
+AB
+
+
+ASConnect
+NRSyntax:  connect {<boolean>}
+NR
+HR<pre>
+HRSyntax:  connect {&lt;boolean&gt;}
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRconnect \{<boolean>\}\par
+RR}\pard\par
+
+ATThe RasMol
+ACconnect
+ATcommand is used to force RasMol to (re)calculate the connectivity
+ATof the current molecule. If the original input file contained
+ATconnectivity information, this is discarded. The command
+ACconnect false
+ATuses an extremely fast heuristic algorithmm that is suitable for
+ATdeterming bonding in large bio-molecules such as proteins and
+ATnucleic acids.  The command
+ACconnect true
+ATuses a slower more accurate algorithm based upon covalent radii
+ATthat is more suitable for small molecules containing inorganic 
+ATelements or strained rings. If no parameters are given, RasMol 
+ATdetermines which algorithm to use based on the number of atoms 
+ATin the file. Greater than 255 atoms causes RasMol to use the
+ATfaster implementation. This is the method used to determine 
+ATbonding, if necessary, when a molecule is first read in using 
+ATthe
+AXload load
+ATcommand.
+AB
+
+
+ASDefine
+NRSyntax:  define <identifier> <expression>
+NR
+HR<pre>
+HRSyntax:  define &lt;identifier&gt; &lt;expression&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRdefine <identifier> <expression>\par
+RR}\pard\par
+
+ATThe RasMol
+ACdefine
+ATcommand allows the user to associate an arbitrary set of atoms with a 
+ATunique identifier. This allows the definition of user-defined sets. These
+ATsets are declared statically, i.e. once defined the contents of the set
+ATdo not change, even if the expression defining them depends on the
+ATcurrent transformation and representation of the molecule.
+AB
+
+PR?dot surface
+PR?surface
+ASDots
+NRSyntax:  dots {<boolean>}
+NR         dots <value>
+NR
+HR<pre>
+HRSyntax:  dots {&lt;boolean&gt;}
+HR         dots &lt;value&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRdots \{<boolean>\}\line\tab
+RRdots \{<value>\}\par
+RR}\pard\par
+
+ATThe RasMol
+ACdots
+ATcommand is used to generate a van der Waal's dot surface around the 
+ATcurrently selected atoms. Dot surfaces display regularly spaced points
+ATon a sphere of van der Waals' radius about each selected atom. Dots that
+ATwould are `buried' within the van der Waal's radius of any other atom
+AT(selected or not) are not displayed.
+ATThe command
+ACdots on
+ATdeletes any existing dot surface and generates a dots surface around
+ATthe currently selected atom set with a default dot density of 100. The
+ATcommand
+ACdots off
+ATdeletes any existing dot surface. The dot density may be 
+ATspecified by providing a numeric parameter between 1 and 1000. This 
+ATvalue approximately corresponds to the number of dots on the surface
+ATof a medium sized atom.
+AP
+
+ATBy default, the colour of each point on a dot surface is the colour
+ATof it's closest atom at the time the surface is generated. The colour 
+ATof the whole dot surface may be changed using the
+AXcolour colour dots
+ATcommand.
+AB
+
+
+ASEcho
+NRSyntax:  echo {<string>}
+NR
+HR<pre>
+HRSyntax:  echo {&lt;string&gt;}
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRecho \{<string>\}\par
+RR}\pard\par
+
+ATThe RasMol
+ACecho
+ATcommand is used to display a message in the RasMol command/terminal 
+ATwindow. The string parameter may optionally be delimited in double
+ATquote characters. If no parameter is specified, the
+ACecho
+ATcommand displays a blank line. This command is particularly useful
+ATfor displaying text from within a RasMol
+AXscript script
+ATfile.
+AB
+
+PR?hbond
+RR#{\footnote hbond}
+ASHBonds
+NRSyntax:  hbonds {<boolean>}
+NR         hbonds <value>
+NR
+HR<pre>
+HRSyntax:  hbonds {&lt;boolean&gt;}
+HR         hbonds &lt;value&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRhbonds \{<boolean>\}\line\tab
+RRhbonds <value>\par
+RR}\pard\par
+
+ATThe RasMol 
+AChbond
+ATcommand is used to represent the hydrogen bonding of the protein 
+ATmolecule's backbone. This information is useful in assessing the
+ATprotein's secondary structure. Hydrogen bonds are represented as
+ATeither dotted lines or cylinders between the donor and acceptor
+ATresidues. The first time the
+AChbond
+ATcommand is used, the program searches the structure of the 
+ATmolecule to find hydrogen bonded residues and reports the number of bonds 
+ATto the user. The command
+AChbonds on
+ATdisplays the selected `bonds' as dotted lines, and the
+AChbonds off
+ATturns off their display. The colour of hbond objects may be changed 
+ATby the
+AXcolour colour hbond
+ATcommand. Initially, each hydrogen bond has the colours of its connected
+ATatoms.
+AP
+
+ATBy default the dotted lines are drawn between the accepting oxygen and 
+ATthe donating nitrogen. By using the
+AXsethbonds set hbonds
+ATcommand the alpha carbon positions of the appropriate residues may be
+ATused instead. This is especially useful when examining proteins in
+ATbackbone representation.
+AB
+
+ASHelp
+NRSyntax:  help {<topic> {<subtopic>}}
+NR         ? {<topic> {<subtopic>}
+NR
+HR<pre>
+HRSyntax:  help {&lt;topic&gt; {&lt;subtopic&gt;}}
+HR         ? {&lt;topic&gt; {&lt;subtopic&gt;}}
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRhelp \{<topic> \{<subtopic>\}\}\line\tab
+RR? \{<topic> \{<subtopic>\}\}\par
+RR}\pard\par
+
+ATThe RasMol
+AChelp
+ATcommand provides on-line help on the given topic.
+AB
+
+
+PR?labels
+RR#{\footnote labels}
+ASLabel
+NRSyntax:  label {<string>}
+NR         label <boolean>
+NR
+HR<pre>
+HRSyntax:  label {&lt;string&gt;}
+HR         label &lt;boolean&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRlabel \{<string>\}\line\tab
+RRlabel <boolean>\par
+RR}\pard\par
+
+ATThe RasMol
+AClabel
+ATcommand allows an arbitrary formatted text string to be
+ATassociated with each currently selected atom.  This string may contain
+ATembedded `expansion specifiers' which display properties of the atom
+ATbeing labelled. An expansion specifier consists of a `%' character
+ATfollowed by a single alphabetic character specifying the property to be
+VTdisplayed (similar to C's printf syntax). 
+STdisplayed.
+ATAn actual '%' character may be displayed by using the expansion 
+ATspecifier `%%'.
+AP
+ATAtom labelling for the currently selected atoms may be turned off with
+ATthe command 
+AClabel off. 
+ATBy default, if no string is given as a parameter RasMol uses labels
+ATappropriate for the current molecule.
+VTRasMol uses the label "%n%r:%c.%a" if the molecule contains more than 
+VTone chain, "%e%i" if the molecule has only a single residue (a small 
+VTmolecule) and "%n%r.%a" otherwise.
+AP
+ATThe colour of each label may be changed using the 
+AXcolour colour label
+ATcommand. By default, each label is drawn in the same colour as the atom 
+ATto which it is attached. The size of the displayed text may be changed 
+ATusing the 
+AXsetfontsize set fontsize
+ATcommand.
+
+AP
+PTFor a list of expansion specifiers, type "help specifiers".
+PB
+
+PR?expansion
+PR?specifiers
+PR?expansion specifiers
+PSLabel Specifiers
+VTThe following table lists the current expansion specifiers:
+VP
+PTLabel specifiers are characters sequences that are embedded
+PTin the string parameter passed to the RasMol `label' command.
+PTThese specifiers are then expanded as the labels are drawn 
+PTto display properties associated with the atom being labelled.
+PTThe following table lists the current expansion specifiers.
+PTThe specifier '%%' is treated as an exception and is displayed
+PTas a single `%' character.
+PP
+
+NR    %a      Atom Name
+NR    %b %t   B-factor/Temperature
+NR    %c %s   Chain Identifier
+NR    %e      Element Atomic Symbol
+NR    %i      Atom Serial Number
+NR    %n      Residue Name
+NR    %r      Residue Number
+
+HR<pre>
+HR    %a      Atom Name
+HR    %b %t   B-factor/Temperature
+HR    %c %s   Chain Identifier
+HR    %e      Element Atomic Symbol
+HR    %i      Atom Serial Number
+HR    %n      Residue Name
+HR    %r      Residue Number
+HR</pre>
+
+RR\cellx500\cellx1000\cellx3500
+RR\intbl
+RR%a\cell   \cell Atom Name\cell\row\intbl
+RR%b\cell %t\cell B-factor/Temperature\cell\row\intbl
+RR%c\cell %s\cell Chain Identifier\cell\row\intbl
+RR%e\cell   \cell Element Atomic Symbol\cell\row\intbl
+RR%i\cell   \cell Atom Serial Number\cell\row\intbl
+RR%n\cell   \cell Residue Name\cell\row\intbl
+RR%r\cell   \cell Residue Number\cell\row
+RR\pard\par\trowd
+AB
+
+ASLoad
+NRSyntax:  load {<format>} <filename>
+NR
+HR<pre>
+HRSyntax:  load {&lt;format&gt;} &lt;filename&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRload \{<format>\} <filename>\line\tab
+RR}\pard\par
+
+ATLoad a molecule co-ordinate file into RasMol2. Valid molecule file
+ATformats are
+ACpdb
+AT(Brookhaven Protein Databank),
+ACmdl
+AT(Molecular Design Limited's MOL file format),
+ACalchemy
+AT(Tripos' Alchemy file format),
+ACmol2
+AT(Tripos' Sybyl Mol2 file format),
+ACcharmm
+AT(CHARMm file format) or
+ACxyz
+AT(MSC's XMol XYZ file format). If no file format is specified,
+ACpdb
+ATis assumed by default. Only a single molecule may be loaded at a time.
+ATTo delete a molecule prior to loading another use the RasMol
+AXzap zap
+ATcommand.
+AP 
+
+ATThe
+ACload 
+ATcommand selects all the atoms in the molecule, centres it on the
+ATscreen and renders it as a CPK coloured wireframe model. If the molecule
+ATcontains no bonds (i.e. contains only alpha carbons), it is drawn as
+ATan alpha carbon backbone. If the file specifies less bonds than atoms,
+ATRasMol determines connectivity using the
+AXconnect connect
+ATcommand.
+AB
+
+
+ASPrint
+NRSyntax:  print
+NR
+HR<pre>
+HRSyntax:  print
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRprint\par
+RR}\pard\par
+
+ATThe RasMol
+ACprint
+ATcommand sends the currently displayed image to the local default printer
+ATusing the operating system's native printer driver. Note: this command 
+ATis not yet supported under UNIX or VMS. It is intended to take advantage
+ATof Microsoft Windows and Apple Macintosh printer drivers. For example,
+ATallowing images to be printed directly on a dot matrix printer.
+AP
+ATWhen using RasMol on a UNIX or VMS system this functionality may be
+ATachieved by either generating a PostScript file using the RasMol
+AXwrite write ps
+ATor
+AXwrite write vectps
+ATcommands and printing that or generating a raster image file and using a
+ATutility to dump that to the local printer.
+AB
+
+
+PR?exit
+RR#{\footnote exit}
+ASQuit
+NRSyntax:  quit
+NR         exit
+NR
+HR<pre>
+HRSyntax:  quit
+HR         exit
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRquit\line\tab
+RRexit\par
+RR}\pard\par
+
+ATExit from the RasMol program. The RasMol commands
+ACexit
+ATand
+ACquit
+ATare synonymous.
+AB
+
+
+PR?renum
+RR#{\footnote renum}
+ASRenumber
+NRSyntax:  renumber {{-} <value>}
+NR
+HR<pre>
+HRSyntax:  renumber {{-} &lt;value&gt;}
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRrenumber \{\{-\} <value>\}\par
+RR}\pard\par
+
+ATThe RasMol
+ACrenumber
+ATcommand sequentially numbers the residues in a macromolecular chain.
+ATThe optional parameter specifies the value of the first residue in the
+ATsequence. By default, this value is one. For proteins,
+ATeach amino acid is numbered consecutively from the N terminus to the C 
+ATterminus. For nucleic acids, each base is numbered from the 5' terminus 
+ATto 3' terminus. All chains in the current database are renumbered and gaps
+ATin the original sequence are ignored. The starting value for numbering may
+ATbe negative.
+AB
+
+
+ASReset
+NRSyntax:  reset
+NR
+HR<pre>
+HRSyntax:  reset
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRreset\par
+RR}\pard\par
+
+ATThe RasMol 
+ACreset
+ATcommand restores the original viewing transformation
+ATand centre of rotation. The scale is set to it default value,
+AXzoom zoom 100,
+ATthe centre of rotation is set to the geometric centre of the currently 
+ATloaded molecule, 
+AXcentre centre all,
+ATthis centre is translated to the middle of the screen and 
+ATthe viewpoint set to the default orientation.
+AP
+
+ATThis command should not be mistaken for the RasMol
+AXzap zap
+ATcommand which deletes the currently stored molecule, returning the
+ATprogram to its initial state.
+AB
+
+ASRestrict
+NRSyntax:  restrict {<expression>}
+NR
+HR<pre>
+HRSyntax:  restrict {&lt;expression&gt;}
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRrestrict \{<expression>\}\par
+RR}\pard\par
+
+ATThe RasMol
+ACrestrict
+ATcommand both defines the currently selected region of the
+ATmolecule and disables the representation of (most of) those parts of the
+ATmolecule no longer selected.  All subsequent RasMol commands that modify
+ATa molecule's colour or representation effect only the currently selected
+ATregion. The parameter of a 
+ACrestrict
+ATcommand is a RasMol atom expression that is evaluated for every atom
+ATof the current molecule. This command is very similar to the RasMol
+AXselect select
+ATcommand, except restrict disables the
+AXwireframe wireframe,
+AXspacefill spacefill
+ATand
+AXbackbone backbone
+ATrepresentations in the non-selected region.
+AP
+
+ATType "help expression" for more information on RasMol atom expressions.
+AB
+
+
+PR?ribbon
+RR#{\footnote ribbon}
+ASRibbons
+NRSyntax:  ribbons {<boolean>}
+NR         ribbons <value>
+NR
+HR<pre>
+HRSyntax:  ribbons {&lt;boolean&gt;}
+HR         ribbons &lt;value&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRribbons \{<boolean>\}\line\tab
+RRribbons <value>\par
+RR}\pard\par
+
+ATThe RasMol 
+ACribbons
+ATcommand displays the currently loaded protein or nucleic acid as a 
+ATsmooth solid "ribbon" surface passing along the backbone of the protein.
+ATThe ribbon is drawn between each amino acid whose alpha carbon is 
+ATcurrently selected. The colour of the ribbon is changed by the RasMol 
+AXcolour colour ribbon
+ATcommand. If the current ribbon colour is
+ACnone
+AT(the default), the colour is taken from the alpha carbon at each
+ATposition along its length.
+AP
+
+ATThe width of the ribbon at each position is determined by the optional
+ATparameter in the usual RasMol units. By default the width of the ribbon
+ATis taken from the secondary structure of the protein or a constant value
+ATof 720 (2.88 Angstroms) for nucleic acids.
+ATThe default width of protein alpha helices and beta sheets is 380 (1.52
+ATAngstroms) and 100 (0.4 Angstroms) for turns and random coil. The 
+ATsecondary structure assignment is either from the PDB file or calculated
+ATusing the DSSP algorithm as used by the
+AXstructure structure
+ATcommand. This command is similar to the RasMol command
+AXstrands strands
+ATwhich renders the biomolecular ribbon as parallel depth-cued curves.
+AB
+
+
+ASRotate
+NRSyntax:  rotate <axis> {-} <value>
+NR
+HR<pre>
+HRSyntax:  rotate &lt;axis&gt; {-} &lt;value&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRrotate <axis> \{-\} <value>\par
+RR}\pard\par
+
+ATRotate the molecule about the specified axis. 
+ATPermited values for the axis parameter are
+HT"<tt><b>x</b></tt>", "<tt><b>y</b></tt>" and "<tt><b>z</b></tt>".
+RT"{\f2\b x}", "{\f2\b y}" and "{\f2\b z}".
+MT"x", "y" and "z".
+NT"x", "y" and "z".
+ATThe integer parameter states the angle in degrees for the structure to 
+ATbe rotated. For the X and Y axes, positive values move the closest point 
+ATup and right, and negative values move it down and left respectively. For 
+ATthe Z axis, a positive rotation acts clockwise and a negative angle 
+ATanti-clockwise.
+AB
+
+ASSave
+NRSyntax:  save {pdb} <filename>
+NR         save alchemy <filename>
+NR
+HR<pre>
+HRSyntax:  save {pdb} &lt;filename&gt;
+HR         save alchemy &lt;filename&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRsave \{pdb\} <filename>\line\tab
+RRsave alchemy <filename>\par
+RR}\pard\par
+
+ATSave the currently selected set of atoms in either a Brookhaven Protein 
+ATDatabase (PDB) or Alchemy(tm) format file.
+ATThe distinction between this command and the RasMol
+AXwrite write
+ATcommand has been dropped. The only difference is that without a format
+ATspecifier the
+ACsave
+ATcommand generates a 
+ACPDB
+ATfile and the
+AXwrite write
+ATcommand generates a 
+ACGIF
+ATimage.
+AB
+
+PR?source
+PR?scripts
+ASScript
+RR#{\footnote source}
+NRSyntax:  script <filename>
+NR
+HR<pre>
+HRSyntax:  script &lt;filename&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRscript <filename>\par
+RR}\pard\par
+
+ATThe RasMol
+ACscript
+ATcommand reads a set of RasMol commands sequentially from a 
+ATtext file and executes them. This allows sequences of commonly used 
+ATcommands to be stored and performed by single command. A RasMol script
+ATfile may contain a further script command up to a maximum "depth" of 10, 
+ATallowing compilicated sequences of actions to be executed. RasMol 
+ATignores all characters after the first '#' character on each line
+ATallowing the scripts to be annotated. Script files are often also
+ATannotated using the RasMol
+AXecho echo
+ATcommand.
+AP
+ATThe most common way to generate a RasMol script file is to use the
+AXwrite write script
+ATor
+AXwrite write rasmol
+ATcommands to output the sequence of commands that are needed to 
+ATregenerate the current view, representation and colouring of the
+ATcurrently displayed molecule.
+AP
+ATThe RasMol command
+ACsource
+ATis synonymous with the 
+ACscript
+ATcommand.
+AB
+
+ASSelect
+NRSyntax:  select {<expression>}
+NR
+HR<pre>
+HRSyntax:  select {&lt;expression&gt;}
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRselect \{<expression>\}\par
+RR}\pard\par
+
+ATDefine the currently selected region of the molecule. All subsequent RasMol
+ATcommands that manipulate a molecule or modify its colour or representation,
+ATonly effects the currently selected region. The parameter of a
+ACselect
+ATcommand is a RasMol expression that is evaluated for every atom of the
+ATcurrent molecule. The currently selected (active) region of the molecule
+ATare those atoms that cause the expression to evaluate true. To select
+ATthe whole molecule use the RasMol command
+ACselect all.
+ATThe behaviour of the
+ACselect
+ATcommand without any parameters is determined by the RasMol
+AXsethetero hetero
+ATand
+AXset hydrogen
+ATparameters.
+AP
+
+ATType "help expression" for more information on RasMol atom expressions.
+AB
+
+ASSet
+NRSyntax:  set <parameter> {<option>}
+NR
+HR<pre>
+HRSyntax:  set &lt;parameter&gt; {&lt;option&gt;}
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRset <parameter> \{<option>\}\par
+RR}\pard\par
+
+ATThe RasMol
+ACset
+ATcommand allows the user to alter various internal program parameters
+ATsuch as those controlling rendering options. Each parameter has its
+ATown set or permissible parameter options. Typically, ommiting the
+ATparamter option resets that parameter to its default value. A list of 
+ATvalid parameter names is given below. 
+PTFor more information on each internal parameter type "help set
+PTparameter".
+AP
+
+NR    ambient         axes            background      bondmode
+NR    boundbox        display         fontsize        hbond
+NR    hetero          hourglass       hydrogen        kinemage
+NR    menus           mouse           radius          shadow
+NR    slabmode        solvent         specular        specpower
+NR    ssbonds         strands         unitcell        vectps
+
+HR<pre>
+HR    <a href="#setambient">Ambient</a>         <a href="#setaxes">Axes</a>            <a href="#setbackground">Background</a>
+HR    <a href="#setbondmode">BondMode</a>        <a href="#setboundbox">BoundBox</a>        <a href="#setdisplay">Display</a>
+HR    <a href="#setfontsize">FontSize</a>        <a href="#sethbonds">HBonds</a>          <a href="#sethetero">Hetero</a>
+HR    <a href="#sethourglass">HourGlass</a>       <a href="#sethydrogen">Hydrogen</a>        <a href="#setkinemage">Kinemage</a>
+HR    <a href="#setmenus">Menus</a>           <a href="#setmouse">Mouse</a>           <a href="#setradius">Radius</a>
+HR    <a href="#setshadow">Shadow</a>          <a href="#setslabmode">SlabMode</a>        <a href="#setsolvent">Solvent</a>
+HR    <a href="#setspecular">Specular</a>        <a href="#setspecpower">SpecPower</a>       <a href="#setssbonds">SSBonds</a>
+HR    <a href="#setstrands">Strands</a>         <a href="#setunitcell">UnitCell</a>        <a href="#setvectps">VectPS</a>
+HR</pre>
+
+RR\cellx1200\cellx2400\cellx3600\cellx4800
+RR\intbl
+RR{\uldb ambient}{\v setambient}\cell
+RR{\uldb axes}{\v setaxes}\cell
+RR{\uldb background}{\v setbackground}\cell
+RR{\uldb bondmode}{\v setbondmode}\cell
+RR\row\intbl
+RR{\uldb boundbox}{\v setboundbox}\cell
+RR{\uldb display}{\v setdisplay}\cell
+RR{\uldb fontsize}{\v setfontsize}\cell
+RR{\uldb hbonds}{\v sethbonds}\cell
+RR\row\intbl
+RR{\uldb hetero}{\v sethetero}\cell
+RR{\uldb hourglass}{\v sethourglass}\cell
+RR{\uldb hydrogen}{\v sethydrogen}\cell
+RR{\uldb kinemage}{\v setkinemage}\cell
+RR\row\intbl
+RR{\uldb menus}{\v setmenus}\cell
+RR{\uldb mouse}{\v setmouse}\cell
+RR{\uldb radius}{\v setradius}\cell
+RR{\uldb shadow}{\v setshadow}\cell
+RR\row\intbl
+RR{\uldb slabmode}{\v setslabmode}\cell
+RR{\uldb solvent}{\v setsolvent}\cell
+RR{\uldb specular}{\v setspecular}\cell
+RR{\uldb specpower}{\v setspecpower}\cell
+RR\row\intbl
+RR{\uldb ssbonds}{\v setssbonds}\cell
+RR{\uldb strands}{\v setstrands}\cell
+RR{\uldb unitcell}{\v setunitcell}\cell
+RR{\uldb vectps}{\v setvectps}\cell
+RR\row\pard\par\trowd
+AB
+
+ASShow
+NRSyntax:  show information
+NR         show sequence
+NR         show symmetry
+NR
+HR<pre>
+HRSyntax:  show information
+HR         show sequence
+HR         show symmetry
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRshow information\line\tab
+RRshow sequence\line\tab
+RRshow symmetry\par
+RR}\pard\par
+
+ATThe RasMol
+ACshow
+ATcommand display details of the status of the currently
+ATloaded molecule. The command
+ACshow information
+ATlists the molecule's name,
+ATclassification, PDB code and the number of atoms, chains, groups it contains.
+ATIf hydrogen bonding, disulphide bridges or secondary structure have been
+ATdetermined, the number of hbonds, ssbonds, helices, ladders and turns
+ATare also displayed respectively. The command
+ACshow sequence
+ATlists the residues that compose each chain of the molecule.
+AB
+
+ASSlab
+NRSyntax:  slab {<boolean>}
+NR         slab <value>
+NR
+HR<pre>
+HRSyntax:  slab {&lt;boolean&gt;}
+HR         slab &lt;value&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRslab \{<boolean>\}\line\tab
+RRslab <value>\par
+RR}\pard\par
+
+ATThe RasMol
+ACslab
+ATcommand enables, disables or positions the z-clipping plane of the
+ATmolecule. The program only draws those portions of the 
+ATmolecule that are further from the viewer than the slabbing plane. 
+ATValues range  from zero at the very back of the molecule to 
+AT100 which is completely in front of the molecule. Intermediate values 
+ATdetermine the percentage of the molecule to be drawn.
+AB
+
+PR?cpk
+RR#{\footnote cpk}
+ASSpacefill
+NRSyntax:  spacefill {<boolean>}
+NR         spacefill temperature
+NR         spacefill user
+NR         spacefill <value>
+NR
+HR<pre>
+HRSyntax:  spacefill {&lt;boolean&gt;}
+HR         spacefill temperature
+HR         spacefill user
+HR         spacefill &lt;value&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRspacefill \{<boolean>\}\line\tab
+RRspacefill temperature\line\tab
+RRspacefill user\line\tab
+RRspacefill <value>\par
+RR}\pard\par
+
+ATThe RasMol
+ACspacefill
+ATcommand is used to represent all of the currently selected atoms as solid 
+ATspheres. This command is used to produce both union-of-spheres and 
+ATball-and-stick models of a molecule. The command,
+ACspacefilll true,
+ATthe default, represents each atom as a sphere of van der Waals radius.
+ATThe command
+ACspacefill off
+ATturns off the representation of the selected atom as spheres. A sphere 
+ATradius may be specified as an integer in RasMol units (1/250th Angstrom)
+ATor a value containing a decimal point. A value of 500 (2.0 
+ATAngstroms) or greater results in a "Parameter value too large" error. 
+AP
+
+ATThe
+ACtemperature
+AToption sets the radius of each sphere to the value stored in its temperature
+ATfield. Zero or negative values causes have no effect and values greater than
+AT2.0 are truncated to 2. The
+ACuser
+AToption allows the radius of each spheres to be specified by additional lines
+ATin the molecule's PDB file using Raster 3D's COLOR record extension.
+AP
+ATThe RasMol command
+ACcpk
+ATis synonymous with the
+ACspacefill
+ATcommand.
+AB
+
+
+PR?ssbond
+PR?bridges
+PR?disulphide bridges
+RR#{\footnote ssbond}
+ASSSBonds
+NRSyntax:  ssbonds {<boolean>}
+NR         ssbonds <value>
+NR
+HR<pre>
+HRSyntax:  ssbonds {&lt;boolean&gt;}
+HR         ssbonds &lt;value&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRssbonds \{<boolean>\}\line\tab
+RRssbonds <value>\par
+RR}\pard\par
+
+ATThe RasMol 
+ACssbonds
+ATcommand is used to represent the disulphide bridges of the protein
+ATmolecule as either dotted lines or cylinders between the connected 
+ATcysteines. The first time that the
+ACssbonds
+ATcommand is used, the program searches the structure of the protein to 
+ATfind half-cysteine pairs (cysteines whose sulphurs are within 3 Angstroms
+ATof each other) and reports the number of bridges to the user. The command 
+ACssbonds on
+ATdisplays the selected `bonds' as dotted lines, and the command
+ACssbonds off
+ATdisables the display of ssbonds in the currently selected area. Selection
+ATof disulphide bridges is identical to normal bonds, and may be adjusted
+ATusing the RasMol
+AXsetbondmode set bondmode
+ATcommand. The colour of disulphide bonds may be changed using the 
+AXcolour colour ssbonds
+ATcommand. By default, each disulphide bond has the colours of its connected 
+ATatoms.
+AP
+
+ATBy default disulphide bonds are drawn between the sulphur atoms within
+ATthe cysteine groups. By using the 
+AXsetssbonds set ssbonds
+ATcommand the position of the cysteine's alpha carbons may be used instead. 
+AB
+
+
+ASStrands
+NRSyntax:  strands {<boolean>}
+NR         strands <value>
+NR
+HR<pre>
+HRSyntax:  strands {&lt;boolean&gt;}
+HR         strands &lt;value&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRstrands \{<boolean>\}\line\tab
+RRstrands <value>\par
+RR}\pard\par
+
+ATThe RasMol 
+ACstrands
+ATcommand displays the currently loaded protein or nucleic acid as a 
+ATsmooth "ribbon" of depth-cued curves passing along the backbone of the
+ATprotein. The ribbon is composed of a number of strands that run parallel
+ATto one another along the peptide plane of each residue. The ribbon is 
+ATdrawn between each amino acid whose alpha carbon is currently selected. 
+ATThe colour of the ribbon is changed by the RasMol 
+AXcolour colour ribbon
+ATcommand. If the current ribbon colour is
+ACnone
+AT(the default), the colour is taken from the alpha carbon at each
+ATposition along its length. The colour of the central and outermost
+ATstrands may be coloured independently using the
+AXcolour colour ribbon1
+ATand
+AXcolour colour ribbon2
+ATcommands respectively. The number of strands in the ribbon may be 
+ATaltered using the RasMol
+AXsetstrands set strands
+ATcommand.
+AP
+
+ATThe width of the ribbon at each position is determined by the optional
+ATparameter in the usual RasMol units. By default the width of the ribbon
+ATis taken from the secondary structure of the protein or a constant value
+ATof 720 for nucleic acids (which produces a ribbon 2.88 Angstroms wide).
+ATThe default width of protein alpha helices and beta sheets is 380 (1.52
+ATAngstroms) and 100 (0.4 Angstroms) for turns and random coil. The 
+ATsecondary structure assignment is either from the PDB file or calculated
+ATusing the DSSP algorithm as used by the
+AXstructure structure
+ATcommand. This command is similar to the RasMol command
+AXribbons ribbons
+ATwhich renders the biomolecular ribbon as a smooth shaded surface.
+AB
+
+
+ASStructure
+NRSyntax:  structure
+NR
+HR<pre>
+HRSyntax:  structure
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRstructure\par
+RR}\pard\par
+
+ATThe RasMol
+ACstructure
+ATcommand calculates secondary structure assignments
+ATfor the currently loaded protein. If the original PDB file contained 
+ATstructural assignment records (HELIX and SHEET) these are discarded.
+ATInitially, the hydrogen bonds of the current molecule are found, if this
+AThasn't been done already. The secondary structure is the determined using
+ATKabsch and Sander's DSSP algorithm. Once finished the program reports the
+ATnumber of helices, strands and turns found.
+AB
+
+
+ASTranslate
+NRSyntax:  translate <axis> {-} <value>
+NR
+HR<pre>
+HRSyntax:  translate &lt;axis&gt; {-} &lt;value&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRtranslate <axis> \{-\} <value>\par
+RR}\pard\par
+
+ATThe RasMol
+ACtranslate
+ATcommand moves the position of the centre of the molecule on the
+ATscreen. The axis parameter specifies along which axis the molecule
+ATis to be moved and the integer parameter specifies the absolute
+ATposition of the molecule centre from the middle of the screen. 
+ATPermited values for the axis parameter are 
+HT"<tt><b>x</b></tt>", "<tt><b>y</b></tt>" and "<tt><b>z</b></tt>".
+RT"{\f2\b x}", "{\f2\b y}" and "{\f2\b z}".
+MT"x", "y" and "z".
+NT"x", "y" and "z".
+
+ATDisplacement values must be between -100 and 100 which correspond to
+ATmoving the current molecule just off the screen. A positive
+HT"<tt><b>x</b></tt>"
+RT"{\f2\b x}"
+MT"x"
+NT"x"
+ATdisplacement moves the molecule to the right, and a positive
+HT"<tt><b>y</b></tt>"
+RT"{\f2\b y}"
+MT"y"
+NT"y"
+ATdisplacement moves the molecule down the screen. The pair of commands
+ACtranslate x 0
+ATand
+ACtranslate y 0
+ATcentres the molecule on the screen.
+AB
+
+
+ASWireframe
+NRSyntax:  wireframe {<boolean>}
+NR         wireframe <value>
+NR
+HR<pre>
+HRSyntax:  wireframe {&lt;boolean&gt;}
+HR         wireframe &lt;value&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRwireframe \{<boolean>\}\line\tab
+RRwireframe <value>\par
+RR}\pard\par
+
+ATThe RasMol
+ACwireframe
+ATcommand represents each bond within the selected region of the molecule 
+ATas either a cylinder, a line or depth-cued vector. The display of bonds
+ATas depth-cued vectors (drawn darker the further away from the viewer)
+ATis turned on by the command
+ACwireframe
+ATor
+ACwireframe on.
+ATThe selected bonds are displayed as cylinders by specifying a radius
+ATeither as an integer in RasMol units or containing a decimal point as
+ATa value in Angstroms.  A parameter value of 500 (2.0 Angstroms) or 
+ATabove results in an "Parameter value too large" error. Bonds may be
+ATcoloured using the
+AXcolour colour bonds
+ATcommand.
+AB
+
+ASWrite
+NRSyntax:  write {<format>} <filename>
+NR
+HR<pre>
+HRSyntax:  write {&lt;format&gt;} &lt;filename&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRwrite \{<format>\} <filename>\par
+RR}\pard\par
+
+ATWrite the current image to a file in a standard raster format. Currently 
+ATsupported image file formats include 
+AC"gif 
+AT(Compuserve GIF),
+AC"ppm
+AT(Portable Pixmap), 
+AC"ras
+AT(Sun rasterfile), 
+AC"ps
+ATand
+AC"epsf
+AT(Encapsulated PostScript), 
+AC"monops
+AT(Monochrome Encapsulated PostScript),
+AC"bmp
+AT(Microsoft bitmap) and
+AC"pict
+AT(Apple PICT). The
+ACwrite
+ATcommand may also be used to generate command scripts for other graphics
+ATprograms. The format
+ACscript
+ATwrites out a file containing the RasMol
+AXscript script
+ATcommands to reproduce the current image. The format
+ACmolscript
+ATwrites out the commands required to render the current view of the 
+ATmolecule as ribbons in Per Kraulis' Molscript program and the format
+ACkinemage
+ATthe commands for David Richardson's program Mage.
+AP
+
+ATThe distinction between this command and the RasMol
+AXsave save
+ATcommand has been dropped. The only difference is that without a format
+ATspecifier the
+AXsave save
+ATcommand generates a 
+ACPDB
+ATfile and the
+ACwrite
+ATcommand generates a 
+ACGIF
+ATimage.
+AB
+
+ASZap
+NRSyntax:  zap
+NR
+HR<pre>
+HRSyntax:  zap
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRzap\par
+RR}\pard\par
+
+ATDeletes the contents of the current database and resets parameter 
+ATvariables to their initial default state.
+AB
+
+
+ASZoom
+NRSyntax:  zoom {<boolean>}
+NR         zoom <value>
+NR
+HR<pre>
+HRSyntax:  zoom {&lt;boolean&gt;}
+HR         zoom &lt;value&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRzoom \{<boolean>\}\line\tab
+RRzoom <value>\par
+RR}\pard\par
+
+ATChange the magnification of the currently displayed image. Boolean 
+ATparameters either magnify or reset the scale of current molecule. An 
+ATinteger parameter specifies the desired magnification as a percentage
+ATof the default scale. The minimum parameter value is 10, the maximum
+ATparameter value is dependent upon the size of the molecule being
+ATdisplayed. For medium sized proteins this is about 500.
+AB
+
+TR    INTERNAL PARAMETERS
+TR    ===================
+TR
+PR?parameters
+PR?set parameters
+PR?internal parameters
+PRInternal Parameters
+RR#{\footnote chsetopt}
+RR${\footnote Internal Parameters}
+RR{\fs24\b Internal Parameters}\par\par
+XR2 Set_Parameters
+MR.SH SET PARAMETERS
+HR<a name="chsetopt"><h2>Internal Parameters</h2></a>
+
+ATRasMol has a number of internal parameters that may be modified using the
+AXset set
+ATcommand. These parameters control a number of program options such as
+ATrendering options and mouse button mappings.
+AP
+
+NTA complete list of internal parameter names is given below.
+PTType "help set <parametername>" for more information on each option.
+NP
+
+HTA complete list of internal parameter names is given below.
+HP
+
+RTA complete list of internal parameter names is given below.
+RP
+
+NR    ambient         axes            background      bondmode
+NR    boundbox        display         fontsize        hbond
+NR    hetero          hourglass       hydrogen        kinemage
+NR    menus           mouse           radius          shadow
+NR    slabmode        solvent         specular        specpower
+NR    ssbonds         strands         unitcell        vectps
+
+HR<pre>
+HR    <a href="#setambient">Ambient</a>         <a href="#setaxes">Axes</a>            <a href="#setbackground">Background</a>
+HR    <a href="#setbondmode">BondMode</a>        <a href="#setboundbox">BoundBox</a>        <a href="#setdisplay">Display</a>
+HR    <a href="#setfontsize">FontSize</a>        <a href="#sethbonds">HBonds</a>          <a href="#sethetero">Hetero</a>
+HR    <a href="#sethourglass">HourGlass</a>       <a href="#sethydrogen">Hydrogen</a>        <a href="#setkinemage">Kinemage</a>
+HR    <a href="#setmenus">Menus</a>           <a href="#setmouse">Mouse</a>           <a href="#setradius">Radius</a>
+HR    <a href="#setshadow">Shadow</a>          <a href="#setslabmode">SlabMode</a>        <a href="#setsolvent">Solvent</a>
+HR    <a href="#setspecular">Specular</a>        <a href="#setspecpower">SpecPower</a>       <a href="#setssbonds">SSBonds</a>
+HR    <a href="#setstrands">Strands</a>         <a href="#setunitcell">UnitCell</a>        <a href="#setvectps">VectPS</a>
+HR</pre>
+
+RR\cellx1200\cellx2400\cellx3600\cellx4800
+RR\intbl
+RR{\uldb ambient}{\v setambient}\cell
+RR{\uldb axes}{\v setaxes}\cell
+RR{\uldb background}{\v setbackground}\cell
+RR{\uldb bondmode}{\v setbondmode}\cell
+RR\row\intbl
+RR{\uldb boundbox}{\v setboundbox}\cell
+RR{\uldb display}{\v setdisplay}\cell
+RR{\uldb fontsize}{\v setfontsize}\cell
+RR{\uldb hbonds}{\v sethbonds}\cell
+RR\row\intbl
+RR{\uldb hetero}{\v sethetero}\cell
+RR{\uldb hourglass}{\v sethourglass}\cell
+RR{\uldb hydrogen}{\v sethydrogen}\cell
+RR{\uldb kinemage}{\v setkinemage}\cell
+RR\row\intbl
+RR{\uldb menus}{\v setmenus}\cell
+RR{\uldb mouse}{\v setmouse}\cell
+RR{\uldb radius}{\v setradius}\cell
+RR{\uldb shadow}{\v setshadow}\cell
+RR\row\intbl
+RR{\uldb slabmode}{\v setslabmode}\cell
+RR{\uldb solvent}{\v setsolvent}\cell
+RR{\uldb specular}{\v setspecular}\cell
+RR{\uldb specpower}{\v setspecpower}\cell
+RR\row\intbl
+RR{\uldb ssbonds}{\v setssbonds}\cell
+RR{\uldb strands}{\v setstrands}\cell
+RR{\uldb unitcell}{\v setunitcell}\cell
+RR{\uldb vectps}{\v setvectps}\cell
+RR\row\pard\par\trowd
+AB
+
+PR?ambient
+ASSet Ambient
+RRK{\footnote ambient}
+NRSyntax:  set ambient {<value>}
+NR
+HR<pre>
+HRSyntax:  set ambient {&lt;value&gt;}
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRset ambient \{<value>\}\par
+RR}\pard\par
+
+ATThe RasMol
+ACambient
+ATparameter is used to control the amount of ambient (or surrounding)
+ATlight in the scene. The
+ACambient
+ATvalue must be between 0 and 100 that controls the percentage intensity
+ATof the darkest shade of an object. For a solid object, this is the
+ATintensity of surfaces facing away from the light source or in shadow.
+ATFor depth-cued objects this is the intensity of objects furthest from
+ATthe viewer.
+AP
+ATThis parameter is commonly used to correct for monitors with different
+AT"gamma values" (brightness), to change how light or dark a hardcopy
+ATimage appears when printed or to alter the feeling of depth for
+ATwireframe or ribbon representations.
+AB
+
+PR?axis
+PR?axes
+PR?set axis
+ASSet Axes
+RRK{\footnote axes}
+NRSyntax:  set axes <boolean>
+NR
+HR<pre>
+HRSyntax:  set axes &lt;boolean&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRset axes <boolean>\par
+RR}\pard\par
+
+ATThe RasMol
+ACaxes
+ATparameter controls the display of orthogonal co-ordinate axes on 
+ATthe current display. The co-ordinate axes are those used in the 
+ATmolecule data file, and the origin is the centre of the molecule's
+ATbounding box. The
+ACset axes
+ATcommand is similar the the commands
+AXsetboundbox set boundbox
+ATand
+AXsetunitcell set unitcell
+ATthat display the bounding box and the crystallographic unit cell 
+ATrespectively.
+AB
+
+
+ASSet Background
+RRK{\footnote background}
+NRSyntax:  set background <colour>
+NR
+HR<pre>
+HRSyntax:  set background {&lt;colour&gt;}
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRset background <colour>\par
+RR}\pard\par
+
+ATThe RasMol
+ACbackground
+ATparameter is used to set the colour of the "canvas" background. The
+ATcolour may be given as either a colour name or a comma separated
+ATtriple of Red, Green, Blue (RGB) components enclosed in square
+ATbrackets. Typing the command
+AXhelp help colours
+ATwill give a list of the predefined colour names recognised by RasMol.
+ATWhen running under X Windows, RasMol also recognises colours in the
+ATX server's colour name database.
+AP
+ATThe command
+ACset background
+ATis synonymous with the RasMol command
+AXbackground background.
+AB
+
+
+PR?bondmode
+ASSet BondMode
+RRK{\footnote bondmode}
+NRSyntax:  set bondmode and
+NR         set bondmode or
+NR
+HR<pre>
+HRSyntax:  set bondmode and
+HR         set bondmode or
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRset bondmode and\line\tab
+RRset bondmode or\par
+RR}\pard\par
+
+ATThe RasMol
+ACset bondmode
+ATcommand controls the mechanism used to select individual bonds. When
+ATusing the
+AXselect select
+ATand
+AXrestrict restrict
+ATcommands, a given bond will be selected if i) the bondmode is
+ACor
+ATand either of the connected atoms is selected, or ii) the bondmode is
+ACand
+ATand both atoms connected by the bond are selected. Hence an individual
+ATbond may be uniquely identified by using the command
+AC"set bondmode and
+ATand then uniquely selecting the atoms at both ends.
+AB
+
+PR?boundbox
+PR?boundingbox
+PR?bounding box
+ASSet BoundBox
+RRK{\footnote boundbox}
+NRSyntax:  set boundbox <boolean>
+NR
+HR<pre>
+HRSyntax:  set boundbox &lt;boolean&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRset boundbox <boolean>\par
+RR}\pard\par
+
+ATThe RasMol
+ACboundbox
+ATparameter controls the display of the current molecules bounding box
+ATon the display. The bounding box is orthogonal to the data file's
+AToriginal co-ordinate axes. The
+ACset boundbox
+ATcommand is similar the the commands
+AXsetaxes set axes
+ATand
+AXsetboundbox set unitcell
+ATthat display orthogonal co-ordinate axes and the bounding box 
+ATrespectively.
+AB
+
+PR?display
+ASSet Display
+RRK{\footnote display}
+NRSyntax:  set display selected
+NR         set display normal
+NR
+HR<pre>
+HRSyntax:  set display selected
+HR         set display normal
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRset display selected\line\tab
+RRset display normal\par
+RR}\pard\par
+
+ATThis command controls the display mode within RasMol. By default,
+ACset display normal,
+ATRasMol displays the molecule in the representation specified by the
+ATuser. The command
+ACset display selected
+ATchanges the display mode such that the molecule is temporarily drawn
+ATso as to indicate currently selected portion of the molecule. The
+ATuser specified colour scheme and representation remains unchanged.
+ATIn this representation all selected atoms are shown in yellow and
+ATall non selected atoms are shown in blue. The colour of the background
+ATis also changed to a dark grey to indicate the change of display mode.
+ATThis command is typically only used by external Graphical User 
+ATInterfaces (GUIs).
+AB
+
+
+ASSet HBonds
+RRK{\footnote hbonds}
+RRK{\footnote sidechain}
+RRK{\footnote backbone}
+NRSyntax:  set hbonds backbone
+NR         set hbonds sidechain
+NR
+HR<pre>
+HRSyntax:  set hbonds backbone
+HR         set hbonds sidechain
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRset hbonds backbone\line\tab
+RRset hbonds sidechain\par
+RR}\pard\par
+
+ATThe RasMol
+AChbonds
+ATparameter determines whether hydrogen bonds are drawn between
+ATthe donor and acceptor atoms of the hydrogen bond,
+ACset hbonds sidechain
+ATor between the alpha carbon atoms of the protein backbone and between
+ATthe phosphorous atoms of the nucleic acid backbone,
+ACset hbonds backbone.
+ATThe actual display of hydrogen bonds is controlled by the
+AXhbonds hbonds
+ATcommand. Drawing hydrogen bonds between protein alpha carbons or
+ATnucleic acid phosphorous atoms is useful when the rest of the molecule
+ATis shown in only a schematic representation such as
+AXbackbone backbone,
+AXribbons ribbons
+ATor
+AXstrands strands.
+AThis parameter is similar to the RasMol
+AXsetssbonds ssbonds
+ATparameter.
+AB
+
+
+PR?fontsize
+ASSet FontSize
+RRK{\footnote fontsize}
+NRSyntax:  set fontsize {<value>}
+NR
+HR<pre>
+HRSyntax:  set fontsize {&lt;value&gt;}
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRset fontsize \{<value>\}\par
+RR}\pard\par
+
+ATThe RasMol
+ACset fontsize
+ATcommand is used to control the size of the characters that
+ATform atom labels. This value corresponds to the height of 
+ATthe displayed character in pixels. The maximum value of
+ACfontsize
+ATis 32 pixels, and the default value is 8 pixels high. To
+ATdisplay atom labels on the screen use the RasMol
+AXlabel label
+ATcommand and to change the colour of displayed labels, use
+ATthe
+AXcolour colour labels
+ATcommand.
+AB
+
+
+PR?hetero
+ASSet Hetero
+RRK{\footnote hetero}
+NRSyntax:  set hetero <boolean>
+NR
+HR<pre>
+HRSyntax:  set hetero &lt;boolean&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRset hetero <boolean>\par
+RR}\pard\par
+
+ATThe RasMol
+AChetero
+ATparameter is used to modify the `default' behaviour of the RasMol
+AXselect select
+ATcommand, i.e. the behaviour of
+ACselect
+ATwithout any parameters. When this value is
+ACfalse,
+ATthe default
+AXselect select
+ATregion does not include an heterogeneous atoms (refer to the
+ATpredefined set 
+AXheteroset hetero
+AT). When this value is
+ACtrue,
+ATthe default
+AXselect select
+ATregion may contain hetero atoms. This parameter is similar to 
+ATthe RasMol
+AXsethydrogen hydrogen
+ATparameter which determines whether hydrogen atoms should be
+ATincluded in the default set. If both
+AChetero
+ATand
+AXsethydrogen hydrogen
+ATare
+ACtrue,
+AXselect select
+ATwithout any parameters is equivalent to
+AXselect select all.
+AB
+
+
+PR?hourglass
+ASSet HourGlass
+RRK{\footnote hourglass}
+NRSyntax:  set hourglass <boolean>
+NR
+HR<pre>
+HRSyntax:  set hourglass &lt;boolean&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRset hourglass \{<boolean>\}\par
+RR}\pard\par
+
+ATThe RasMol
+AChourglass
+ATparameter allows the user to enable and disable the use of the `hour
+ATglass' cursor used by RasMol to indicate that the program is currently
+ATbusy drawing the next frame. The command
+ACset hourglass on
+ATenable the indicator, whilst
+ACset hourglass off
+ATprevents RasMol from changing the cursor. This is useful when spinning
+ATthe molecule, running a sequence of commands from a script file or
+ATusing interprocess communication to execute complex sequences of
+ATcommands. In these cases a `flashing' cursor may be distracting.
+AB
+
+PR?hydrogen
+ASSet Hydrogen
+RRK{\footnote hydrogen}
+NRSyntax:  set hydrogen <boolean>
+NR
+HR<pre>
+HRSyntax:  set hydrogen &lt;boolean&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRset hydrogen <boolean>\par
+RR}\pard\par
+
+ATThe RasMol
+AChydrogen
+ATparameter is used to modify the `default' behaviour of the RasMol 
+AXselect select
+ATcommand, i.e. the behaviour of
+ACselect
+ATwithout any parameters. When this value is
+ACfalse,
+ATthe default 
+AXselect select
+ATregion does not include any hydrogen or deuterium atoms (refer 
+ATto the predefined set 
+AXhydrogenset hydrogen
+AT). When this value is
+ACtrue,
+ATthe default
+AXselect select
+ATregion may contain hydrogen atoms. This parameter is similar to 
+ATthe RasMol
+AXsethetero hetero
+ATparameter which determines whether heterogeneous atoms should be
+ATincluded in the default set. If both
+AChydrogen
+ATand
+AXsethetero hetero
+ATare 
+ACtrue,
+AXselect select
+ATwithout any parameters is equivalent to 
+AXselect select all.
+AB
+
+
+PR?mage
+PR?kinemage
+ASSet Kinemage
+RRK{\footnote mage}
+RRK{\footnote kinemage}
+NRSyntax:  set kinemage <boolean>
+NR
+HR<pre>
+HRSyntax:  set kinemage &lt;boolean&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRset kinemage <boolean>\par
+RR}\pard\par
+
+ATThe RasMol
+ACset kinemage
+ATcommand controls the amount of detail stored in a Kinemage output
+ATfile generated by the RasMol
+AXwrite write kinemage
+ATcommand. The output kinemage files are intended to be displayed by
+ATDavid Richardson's Mage program.
+ACset kinemage false,
+ATthe default, only stores the currently displayed representation in
+ATthe generated output file. The command
+ACset kinemage true,
+ATgenerates a more complex Kinemage that contains both the wireframe
+ATand backbone representations as well as the co-ordinate axes,
+ATbounding box and crystal unit cell.
+AB
+
+
+ASSet Menus
+RRK{\footnote menus}
+NRSyntax:  set menus <boolean>
+NR
+HR<pre>
+HRSyntax:  set menus &lt;boolean&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRset menus <boolean>\par
+RR}\pard\par
+
+ATThe RasMol
+ACset menus
+ATcommand enables the canvas window's menu buttons or menu bar. This 
+ATcommand is typically only used by graphical user interfaces or to
+ATcreate as large as image as possible when using Microsoft Windows.
+AB
+
+
+PR?mouse
+ASSet Mouse
+RRK{\footnote mouse}
+RRK{\footnote rasmol}
+RRK{\footnote insight}
+RRK{\footnote quanta}
+NRSyntax:  set mouse rasmol
+NR         set mouse insight
+NR         set mouse quanta
+NR
+HR<pre>
+HRSyntax:  set mouse rasmol
+HR         set mouse insight
+HR         set mouse quanta
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRset mouse rasmol\line\tab
+RRset mouse insight\line\tab
+RRset mouse quanta\par
+RR}\pard\par
+
+ATThe RasMol
+ACset mouse
+ATcommand sets the rotation, translation, scaling and zooming mouse 
+ATbindings. The default value is
+ACrasmol
+ATwhich is suitable for two button mice (for three button mice the
+ATsecond and third buttons are synonymous); X-Y rotation is controlled
+ATby the first button, and X-Y translation by the second. Additional
+ATfunctions are controlled by holding a modifier key on the keyboard.
+AT[Shift] and the first button performs scaling, [shift] and the second
+ATbutton performs Z-rotation, and [control] and the first mouse button
+ATcontrols the clipping plane. The
+ACinsight
+ATand
+ACquanta
+ATprovide the same mouse bindings as other packages for experienced
+ATusers.
+AB
+
+
+PR?radius
+ASSet Radius
+RRK{\footnote radius}
+NRSyntax:  set radius {<value>}
+NR
+HR<pre>
+HRSyntax:  set radius {&lt;value&gt;}
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRset radius \{<value>\}\par
+RR}\pard\par
+
+ATThe RasMol
+ACset radius
+ATcommand is used to alter the behaviour of the RasMol
+AXdots dots
+ATcommand depending upon the value of the
+AXsetsolvent solvent
+ATparameter.
+ATWhen
+AXsetsolvent solvent
+ATis
+ACtrue,
+ATthe
+ACradius
+ATparameter controls whether a true van der Waal's surface
+ATis generated by the
+AXdots dots
+ATcommand. If the value of 
+ACradius
+ATis anything other than zero, that value is used as the
+ATradius of each atom instead of it true VdW value. When
+ATthe value of
+AXsetsolvent solvent
+ATis 
+ACtrue,
+ATthis parameter determines the `probe sphere' (solvent) radius.
+ATThe parameter may be given as an integer in rasmol units or
+ATcontaining a decimal point in Angstroms. The default value of
+ATthis parameter is determined by the value of
+AXsetsolvent solvent
+ATand changing
+AXsetsolvent solvent
+ATresets
+ACradius
+ATto its new default value.
+AB
+
+PR?shadow
+PR?shadows
+ASSet Shadow
+RRK{\footnote shadow}
+NRSyntax:  set shadow <boolean>
+NR
+HR<pre>
+HRSyntax:  set shadow &lt;boolean&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRset shadow <boolean>\par
+RR}\pard\par
+
+ATThe RasMol
+ACset shadow
+ATcommand enables and disables raytracing of the currently rendered image.
+ATCurrently only the spacefilling representation is shadowed or can cast
+ATshadows. Enabling shadowing will automatically disable the Z-clipping
+AT(slabbing) plane using the command
+AXslab slab off.
+ATRaytracing typically takes about 10s for a moderately sized protein.
+ATIt is recommended that shadowing is normally disabled whilst the
+ATmolecule is being transformed or manipulated, and only enabled once
+ATan appropiate viewpoint is selected, to provide a greater impression 
+ATof depth.
+AB
+
+
+PR?slabmode
+PR?set slab
+ASSet SlabMode
+RRK{\footnote slabmode}
+RRK{\footnote reject}
+RRK{\footnote half}
+RRK{\footnote hollow}
+RRK{\footnote solid}
+RRK{\footnote section}
+NRSyntax:  set slabmode <slabmode>
+NR
+HR<pre>
+HRSyntax:  set slabmode &lt;slabmode&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRset slabmode <slabmode>\par
+RR}\pard\par
+
+ATThe RasMol
+ACslabmode
+ATparameter controls the rendering method of objects cut by the 
+ATslabbing (z-clipping) plane. Valid slabmode parameters are
+HT"<tt><b>reject</b></tt>", "<tt><b>half</b></tt>", 
+HT"<tt><b>hollow</b></tt>", "<tt><b>solid</b></tt>" and 
+HT"<tt><b>section</b></tt>".
+RT"{\f2\b reject}", "{\f2\b half}", "{\f2\b hollow}", 
+RT"{\f2\b solid}" and "{\f2\b section}".
+NT"reject", "half", "hollow", "solid" and "section".
+MT"reject", "half", "hollow", "solid" and "section".
+AB
+
+PR?solvent
+ASSet Solvent
+RRK{\footnote solvent}
+NRSyntax:  set solvent <boolean>
+NR
+HR<pre>
+HRSyntax:  set solvent &lt;boolean&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRset solvent <boolean>\par
+RR}\pard\par
+
+ATThe RasMol
+ACset solvent
+ATcommand is used to control the behaviour of the RasMol
+AXdots dots
+ATcommand. Depending upon the value of the
+ACsolvent
+ATparameter, the 
+AXdots dots
+ATcommand either generates a van der Waal's or a solvent 
+ATacessible surface around the currently selected set of
+ATatoms. Changing this parameter automatically resets the
+ATvalue of the RasMol
+AXsetradius radius
+ATparameter.
+ATThe command
+ACset solvent false,
+ATthe default value, indicates that a van der Waal's surface
+ATshould be generated and resets the value of
+AXsetradius radius
+ATto zero. The command
+ACset solvent true
+ATindicates that a `Connolly' or `Richards' solvent 
+ATaccessible surface should be drawn and sets the
+AXsetradius radius
+ATparameter, the solvent radius, to 1.2 Angstroms (or 300
+ATRasMol units).
+AB
+
+PR?specular
+ASSet Specular
+RRK{\footnote specular}
+NRSyntax:  set specular <boolean>
+NR
+HR<pre>
+HRSyntax:  set specular &lt;boolean&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRset specular <boolean>\par
+RR}\pard\par
+
+ATThe RasMol
+ACset specular
+ATcommand enables and disables the display of specular highlights on
+ATsolid objects drawn by RasMol. Specular highlights appear as white
+ATreflections of the light source on the surface of the object. The
+ATcurrent RasMol implementation uses an approximation function to
+ATgenerate this highlight.
+AP
+
+ATThe specular highlights on the surfaces of solid objects may be
+ATaltered by using the specular reflection coefficient, which is
+ATaltered using the RasMol
+AXsetspecpower set specpower
+ATcommand.
+AB
+
+
+PR?specpower
+ASSet SpecPower
+RRK{\footnote specpower}
+NRSyntax:  set specpower {<value>}
+NR
+HR<pre>
+HRSyntax:  set specpower {&lt;value&gt;}
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRset specpower \{<value>\}\par
+RR}\pard\par
+
+ATThe
+ACspecpower
+ATparameter determines the shininess of solid objects rendered by
+ATRasMol. This value between 0 and 100 adjusts the reflection
+ATcoeffient used in specular highlight calculations. The specular
+AThighlights are enabled and disabled by the RasMol
+AXsetspecular set specular
+ATcommand. Values around 20 or 30 produce plastic looking surfaces.
+ATHigh values represent more shiny surfaces such as metals, while
+ATlower values produce more diffuse/dull surfaces.
+AB
+
+
+ASSet SSBonds
+RRK{\footnote ssbonds}
+RRK{\footnote backbone}
+RRK{\footnote sidechain}
+NRSyntax:  set ssbonds backbone
+NR         set ssbonds sidechain
+NR
+HR<pre>
+HRSyntax:  set ssbonds backbone
+HR         set ssbonds sidechain
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRset ssbonds backbone\line\tab
+RRset ssbonds sidechain\par
+RR}\pard\par
+
+ATThe RasMol
+ACssbonds
+ATparameter determines whether disulphide bridges are drawn between
+ATthe sulphur atoms in the sidechain (the default) or between the alpha
+ATcarbon atoms in the backbone of the cysteines residues. The actual
+ATdisplay of disulphide bridges is controlled by the
+AXssbonds ssbonds
+ATcommand. Drawing disulphide bridges between alpha carbons is useful
+ATwhen the rest of the protein is shown in only a schematic
+ATrepresentation such as
+AXbackbone backbone,
+AXribbons ribbons
+ATor
+AXstrands strands.
+AThis parameter is similar to the RasMol
+AXsethbonds hbonds
+ATparameter.
+AB
+
+
+ASSet Strands
+RRK{\footnote strands}
+NRSyntax:  set strands {<value>}
+NR
+HR<pre>
+HRSyntax:  set strands {&lt;value&gt;}
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRset strands \{<value>\}\par
+RR}\pard\par
+
+ATThe RasMol
+ACstrands
+ATparameter controls the number of parallel strands that are displayed
+ATin the ribbon representations of proteins. The permissible values for
+ATthis parameter are 1, 2, 3, 4, 5 and 9. The default value is 5. The
+ATnumber of strands is constant for all ribbons being displayed.
+ATHowever, the ribbon width (the separation between strands) may be
+ATcontrolled on a residue by residue basis using the RasMol
+AXribbons ribbons
+ATcommand.
+AB
+
+PR?unitcell
+PR?unit cell
+ASSet UnitCell
+RRK{\footnote unitcell}
+NRSyntax:  set unitcell <boolean>
+NR
+HR<pre>
+HRSyntax:  set unitcell &lt;boolean&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRset unitcell <boolean>\par
+RR}\pard\par
+
+ATThe RasMol
+ACunitcell
+ATparameter controls the display of the crystallographic unit cell on 
+ATthe current display. The crystal cell is only enabled if the appropriate
+ATcrystal symmetry information is contained in the PDB data file. The
+ATRasMol command
+AXshow show symmetry
+ATdisplay details of the crystal's space group and unit cell axes. The
+ACset unitcell
+ATcommand is similar the the commands
+AXsetaxes set axes
+ATand
+AXsetboundbox set boundbox
+ATthat display orthogonal co-ordinate axes and the bounding box 
+ATrespectively.
+AB
+
+PR?vectps
+ASSet VectPS
+RRK{\footnote vectps}
+NRSyntax:  set vectps <boolean>
+NR
+HR<pre>
+HRSyntax:  set vectps &lt;boolean&gt;
+HR</pre><p>
+RR\tx1200
+RR{\f2\b Syntax:\tab
+RRset vectps <boolean>\par
+RR}\pard\par
+
+ATThe RasMol
+ACvectps
+ATparameter is use to control the way in which the RasMol
+AXwrite write
+ATcommand generates vector PostScript output files. The command
+ACset vectps on
+ATenables to use of black outlines around spheres and cylinder bonds
+ATproducing `cartoon-like' high resolution output. However, the current
+ATimplementation of RasMol incorrectly cartoons spheres that are intersected 
+ATby more than one other sphere. Hence `ball and stick' models are rendered
+ATcorrectly by not large spacefilling spheres models. Cartoon outlines
+ATcan be disabled, the default, by the command
+ACset vectps off
+AB
+
+TR    ATOM EXPRESSIONS
+TR    ================
+TR
+PR?expression
+PR?expressions
+PR?atom expressions
+PRAtom Expressions
+RR#{\footnote chexprs}
+RR${\footnote Atom Expressions}
+RR{\fs24\b Atom Expressions}\par\par
+MR.SH ATOM EXPRESSIONS
+XR2 Atom_Expressions
+HR<a name="chexprs"><h2>Atom Expressions</h2></a>
+
+ATRasMol atom expressions uniquely identify an arbitrary group of atoms
+ATwithin a molecule. Atom expressions are composed of either primitive
+ATexpressions,
+PT(for more details type "help primitives"),
+ATpredefined sets,
+PT(type "help sets"),
+ATcomparison operators,
+PT("help comparisons"),
+ACwithin
+ATexpressions,
+PT("help within")
+ATor logical (boolean) combinations of the above expression types.
+AP
+
+ATThe logical operators allow complex queries to be constructed out of
+ATsimpler ones using the standard boolean connectives
+ACand, or
+ATand
+ACnot.
+ATThese may be abbreviated by the symbols
+HT"<tt>&amp;</tt>", "<tt>|</tt>" and "<tt>!</tt>"
+RT"{\f2\b &}", "{\f2\b |}" and "{\f2\b !}"
+MT"&", "|" and "!"
+NT"&", "|" and "!"
+ATrespectively. Parentheses (brackets) may be used to alter the
+ATprecedence of the operators. For convenience, a comma may also
+ATbe used for boolean disjunction. 
+AP
+
+ATThe atom expression is evaluated for each atom, hence
+ACprotein and backbone
+ATselects protein bacbone atoms, not the protein and [nucleic] acid
+ATbackbone atoms!
+AP
+
+NRExamples:    backbone and not helix
+NR             within( 8.0, ser70 )
+NR             not (hydrogen or hetero)
+NR             not *.FE and hetero
+NR             8, 12, 16, 20-28
+NR             arg, his, lys
+
+HR<pre>
+HRExamples:    <b>backbone and not helix</b>
+HR             <b>within( 8.0, ser70 )</b>
+HR             <b>not (hydrogen or hetero)</b>
+HR             <b>not *.FE and hetero</b>
+HR             <b>8, 12, 16, 20-28</b>
+HR             <b>arg, his, lys</b>
+HR</pre>
+
+XRExamples:    backbone and not helix
+XR             within( 8.0, ser70 )
+XR             not (hydrogen or hetero)
+XR             not *.FE and hetero
+XR             8, 12, 16, 20-28
+XR             arg, his, lys
+
+RR\cellx1200\cellx4500
+RR\intbl
+RRExamples:\cell {\f2\b backbone and not helix}\cell\row\intbl
+RR         \cell {\f2\b within( 8.0, ser70 )}\cell\row\intbl
+RR         \cell {\f2\b not (hydrogen or hetero)}\cell\row\intbl
+RR         \cell {\f2\b not *.FE and hetero}\cell\row\intbl
+RR         \cell {\f2\b 8, 12, 16, 20-28}\cell\row\intbl
+RR         \cell {\f2\b arg, his, lys}\cell\row
+RR\pard\par\trowd
+
+HR<ul>
+HR<li><a href="#primitiveexpressions">Primitive Expressions</a>
+HR<li><a href="#predefinedsets">Predefined Sets</a>
+HR<li><a href="#comparisonoperators">Comparison Operators</a>
+HR<li><a href="#withinexpressions"><tt>Within</tt> Expressions</a>
+HR<p><li><a href="#exampleexpressions">Examples</a>
+HR</ul>
+
+RR\tx250\li250\fi-250
+RR{\f1\'b7}\tab
+RR{\uldb Primitive Expressions}{\v primitiveexpressions}\par
+RR{\f1\'b7}\tab
+RR{\uldb Predefined Sets}{\v predefinedsets}\par
+RR{\f1\'b7}\tab
+RR{\uldb Comparison Operators}{\v comparisonoperators}\par
+RR{\f1\'b7}\tab
+RR{\uldb Within Expressions}{\v withinexpressions}\par\par
+RR{\f1\'b7}\tab
+RR{\uldb Example Expressions}{\v exampleexpressions}\par
+RR\pard
+AB
+
+VSExample Expressions
+VTThe following table gives some useful examples of RasMol
+VTatom expressions.
+VP
+
+PR?examples
+PSExample Expressions
+PTThe following table gives some useful examples of RasMol
+PTatom expressions.
+PTFor examples of the precise syntax, type "help expressions".
+PP
+
+NR    Expression      Interpretation
+NR
+NR    *               All atoms
+NR    cys             Atoms in cysteines
+NR    hoh             Atoms in heterogeneous water molecules
+NR    as?             Atoms in either asparagine or aspartic acid 
+NR    *120            Atoms at residue 120 of all chains
+NR    *p              Atoms in chain P
+NR    *.n?            Nitrogen atoms
+NR    cys.sg          Sulphur atoms in cysteine residues
+NR    ser70.c?        Carbon atoms in serine-70
+NR    hem*p.fe        Iron atoms in the Heme groups of chain P
+
+HR<pre>
+HR    <b>Expression</b>      <b>Interpretation</b>
+HR
+HR    *               All atoms
+HR    cys             Atoms in cysteines
+HR    hoh             Atoms in heterogeneous water molecules
+HR    as?             Atoms in either asparagine or aspartic acid 
+HR    *120            Atoms at residue 120 of all chains
+HR    *p              Atoms in chain P
+HR    *.n?            Nitrogen atoms
+HR    cys.sg          Sulphur atoms in cysteine residues
+HR    ser70.c?        Carbon atoms in serine-70
+HR    hem*p.fe        Iron atoms in the Heme groups of chain P
+HR</pre>
+
+
+RR\tx1500\li1500\fi-1250
+RR{\b Expression}
+RR\tab{\b Interpretation}\line\par
+RR{\f2\b *}
+RR\tab All atoms\par
+RR{\f2\b cys}
+RR\tab Atoms in cysteines\par
+RR{\f2\b hoh}
+RR\tab Atoms in heterogeneous water molecules\par
+RR{\f2\b as?}
+RR\tab Atoms in either asparagine or aspartic acid\par
+RR{\f2\b *120}
+RR\tab Atoms at residue 120 of all chains\par
+RR{\f2\b *p}
+RR\tab Atoms in chain P\par
+RR{\f2\b *.n?}
+RR\tab Nitrogen atoms\par
+RR{\f2\b cys.sg}
+RR\tab Sulphur atoms in cysteine residues\par
+RR{\f2\b ser70.c?}
+RR\tab Carbon atoms in serine-70\par
+RR{\f2\b hem*p.fe}
+RR\tab Iron atoms in the Heme groups of chain P\par 
+RR\par\pard
+AB
+
+PR?primitive
+PR?primitives
+PR?primitive expression
+ASPrimitive Expressions
+
+ATRasMol primitive expressions are the fundamental building blocks
+ATof atom expressions. There are two types of primitive expression.
+ATThe first type is used to identify a given residue number or range
+ATof residue numbers. A single residue is identified by its number
+AT(position in the sequence), and a range is specified by lower and
+ATupper bounds separated by a hyphen character. For example
+ACselect 5,6,7,8
+ATis also
+ACselect 5-8.
+ATNote that this selects the given residue numbers in all macromolecule
+ATchains.
+AP
+
+ATThe second type of primitive expression specifies a sequence of fields
+ATthat must match for a given atom. The first part specifies a residue
+AT(or group of residues) and an optional second part specifies the atoms
+ATwithin those residues. The first part consists of a residue name,
+AToptionally followed by a residue number and/or chain identifier.
+VP
+
+VTA residue name typically consists of up to three alphabetic characters,
+VTwhich are case insensitive. Hence the primitive expressions
+VCSER
+VTand
+VCser
+VTare equivalent, identifying all serine residues.
+VTResidue names that contain non-alphabetic characters, such as
+VTsulphate groups, may be delimited using square brackets, i.e.
+VC[SO4]
+VP
+
+VTThe residue number is the residue's position in the macromolecule
+VTsequence. Negative sequence numbers are permited. For example,
+VCSER70
+VTCare must be taken when specifying both residue name and number,
+VTit the group at the specified position isn't the specified residue
+VTno atoms are selected.
+VP
+
+VTThe chain identifier is typically a single case-insensitive 
+VTalphabetic or numeric character. Numeric chain identifiers must
+VTbe distinguished or separated from residue numbers by a colon
+VTcharacter. For example,
+VCSER70A
+VTor
+VCSER70:1
+VP
+
+ATThe second part consists of a period character followed by an atom
+ATname.
+VTAn atom name may be up to four alphabetic or numeric characters.
+VP
+
+ATAn asterisk may be used as a wild card for a whole field and a
+ATquestion mark as a single character wildcard.
+PP
+
+PTFor examples of RasMol expressions type "help examples".
+AB
+
+PR?comparison
+PR?comparisons
+PR?comparison expressions
+ASComparison Operators
+
+ATParts of a molecule may also be distinguished using equality,
+ATinequality and ordering operators on their properties. The format
+ATof such comparison expression is a property name, followed by a
+ATcomparison operator and then an integer value.
+AP
+ATThe atom properties that may be used in RasMol are
+ACatomno
+ATfor the atom serial number,
+ACelemno
+ATfor the atom's atomic number (element),
+ACresno
+ATfor the residue number,
+ACradius
+ATfor the spacefill radius in RasMol units (or zero if not represented
+ATas a sphere) and
+ACtemperature
+ATfor the PDB anisotropic temperature value.
+AP
+ATThe equality operator is denoted either
+RT"{\f2\b =}" or "{\f2\b ==}".
+HT"<tt><b>=</b></tt>" or "<tt><b>==</b></tt>".
+NT"=" or "==".
+MT"=" or "==".
+ATThe inequality operator as either
+RT"{\f2\b <>}", "{\f2\b !=}" or "{\f2\b /=}".
+HT"<tt><b>&lt;&gt;</b></tt>", "<tt><b>!=</b></tt>" or 
+HT"<tt><b>/=</b></tt>".
+NT"<>", "!=" or "/=".
+MT"<>", "!=" or "/=".
+ATThe ordering operators are
+RT"{\f2\b <}"
+HT"<tt><b>&lt;</b></tt>"
+NT"<"
+MT"<"
+ATfor less than,
+RT"{\f2\b <=}"
+HT"<tt><b>&lt;=</b></tt>"
+NT"<="
+MT"<="
+ATfor less than or equal to,
+RT"{\f2\b >}"
+HT"<tt><b>&gt;</b></tt>"
+NT">"
+MT">"
+ATfor greater than, and
+RT"{\f2\b >=}"
+HT"<tt><b>&gt;=</b></tt>"
+NT">"
+MT">"
+ATfor greater than or equal to.
+AP
+
+PRExamples:    resno < 23
+PR             temperature >= 900
+PR             atomno == 487
+
+HR<pre>
+HRExamples:    resno < 23
+HR             temperature >= 900
+HR             atomno == 487
+HR</pre>
+
+RR\tx1500
+RR{\f2\b Examples:
+RR\tab resno < 23\par
+RR\tab temperature >= 900\par
+RR\tab atomno == 487\par
+RR}\pard\par
+AB
+
+ASWithin Expressions
+RRK{\footnote within}
+
+ATA RasMol
+ACwithin
+ATexpression allows atoms to be selected on their proximity to
+ATanother set of atoms. A
+ACwithin
+ATexpression takes two parameters separated by a comma and surrounded
+ATby parenthesis. The first argument is an integer value called the
+AT"cut-off" distance of the within expression and the second argument
+ATis any  valid atom expression. The cut-off distance is expressed in
+ATeither integer RasMol units or Angstroms containing a decimal point. 
+ATAn atom is selected if it is within the cut-off distance of any of 
+ATthe atoms defined by the second argument. This allows complex 
+ATexpressions to be constructed containing nested
+ACwithin
+ATexpressions.
+AP
+ATFor example, the command
+ACselect within(3.2,backbone)
+ATselects any atom within a 3.2 Angstrom radius of any atom in a 
+ATprotein or nucleic acid backbone.
+ACWithin
+ATexpressions are particularly useful for selecting the atoms 
+ATaround an active site. 
+AB
+
+PR?sets
+PR?predefined
+VSPredefined Sets
+SSPredefined Sets
+XR2 Predefined_Sets
+RRK{\footnote sets}
+
+ATRasMol atom expressions may contain predefined sets. These sets
+ATare single keywords that represent portions of a molecule of interest.
+ATPredefined sets are often abbreviations primitive atom expressions,
+ATand in some cases of selecting areas of a molecule that could not 
+ATotherwise be distinguished. A list of the currently predefined sets
+ATis given below.
+ATIn addition to the sets listed here, RasMol also treats element names
+AT(and their plurals) as predefined sets containing all atoms of that
+ATelement type, i.e. the command
+AXselect select oxygen
+ATis equivalent to the command
+AXselect select elemno=8.
+PTType "help sets setname" for more information about a given set.
+AP
+
+PR    at              acidic          acyclic         aliphatic
+PR    alpha           amino           aromatic        backbone
+PR    basic           bonded          buried          cg
+PR    charged         cyclic          cystine         helix
+PR    hetero          hydrogen        hydrophobic     ions
+PR    large           ligand          medium          neutral
+PR    nucleic         polar           protein         purine
+PR    pyrimidine      selected        sheet           sidechain
+PR    small           solvent         surface         turn
+PR    water
+
+HR<pre>
+HR    <a href="#atset">AT</a>              <a href="#acidicset">Acidic</a>          <a href="#acyclicset">Acyclic</a>
+HR    <a href="#aliphaticset">Aliphatic</a>       <a href="#alphaset">Alpha</a>           <a href="#aminoset">Amino</a>
+HR    <a href="#aromaticset">Aromatic</a>        <a href="#backboneset">Backbone</a>        <a href="#basicset">Basic</a>
+HR    <a href="#bondedset">Bonded</a>          <a href="#buriedset">Buried</a>          <a href="#cgset">CG</a>
+HR    <a href="#chargedset">Charged</a>         <a href="#cyclicset">Cyclic</a>          <a href="#cystineset">Cystine</a>         
+HR    <a href="#helixset">Helix</a>           <a href="#heteroset">Hetero</a>          <a href="#hydrogenset">Hydrogen</a>
+HR    <a href="#hydrophobicset">Hydrophobic</a>     <a href="#ionsset">Ions</a>            <a href="#largeset">Large</a>
+HR    <a href="#ligandset">Ligand</a>          <a href="#mediumset">Medium</a>          <a href="#neutralset">Neutral</a>
+HR    <a href="#nucleicset">Nucleic</a>         <a href="#polarset">Polar</a>           <a href="#proteinset">Protein</a>
+HR    <a href="#purineset">Purine</a>          <a href="#pyrimidineset">Pyrimidine</a>      <a href="#selectedset">Selected</a>
+HR    <a href="#sheetset">Sheet</a>           <a href="#sidechainset">Sidechain</a>       <a href="#smallset">Small</a>
+HR    <a href="#solventset">Solvent</a>         <a href="#surfaceset">Surface</a>         <a href="#turnset">Turn</a>
+HR    <a href="#waterset">Water</a>
+HR</pre>
+
+RR\cellx1200\cellx2400\cellx3600\cellx4800
+RR\intbl
+RR{\uldb at}{\v atset}\cell
+RR{\uldb acidic}{\v acidicset}\cell
+RR{\uldb acyclic}{\v acyclicset}\cell
+RR{\uldb aliphatic}{\v aliphaticset}\cell
+RR\row\intbl
+RR{\uldb alpha}{\v alphaset}\cell
+RR{\uldb amino}{\v aminoset}\cell
+RR{\uldb aromatic}{\v aromaticset}\cell
+RR{\uldb backbone}{\v backboneset}\cell
+RR\row\intbl
+RR{\uldb basic}{\v basicset}\cell
+RR{\uldb bonded}{\v bondedset}\cell
+RR{\uldb buried}{\v buriedset}\cell
+RR{\uldb cg}{\v cgset}\cell
+RR\row\intbl
+RR{\uldb charged}{\v chargedset}\cell
+RR{\uldb cyclic}{\v cyclicset}\cell
+RR{\uldb cystine}{\v cystineset}\cell
+RR{\uldb helix}{\v helixset}\cell
+RR\row\intbl
+RR{\uldb hetero}{\v heteroset}\cell
+RR{\uldb hydrogen}{\v hydrogenset}\cell
+RR{\uldb hydrophobic}{\v hydrophobicset}\cell
+RR{\uldb ions}{\v ionsset}\cell
+RR\row\intbl
+RR{\uldb large}{\v largeset}\cell
+RR{\uldb ligand}{\v ligandset}\cell
+RR{\uldb medium}{\v mediumset}\cell
+RR{\uldb neutral}{\v neutralset}\cell
+RR\row\intbl
+RR{\uldb nucleic}{\v nucleicset}\cell
+RR{\uldb polar}{\v polarset}\cell
+RR{\uldb protein}{\v proteinset}\cell
+RR{\uldb purine}{\v purineset}\cell
+RR\row\intbl
+RR{\uldb pyrimidine}{\v pyrimidineset}\cell
+RR{\uldb selected}{\v selectedset}\cell
+RR{\uldb sheet}{\v sheetset}\cell
+RR{\uldb sidechain}{\v sidechainset}\cell
+RR\row\intbl
+RR{\uldb small}{\v smallset}\cell
+RR{\uldb solvent}{\v solventset}\cell
+RR{\uldb surface}{\v surfaceset}\cell
+RR{\uldb turn}{\v turnset}\cell
+RR\row\intbl
+RR{\uldb water}{\v waterset}\cell
+RR\row\pard\par\trowd
+AB
+
+MR.SH Predefined Sets
+
+PR?at
+PR?sets at
+ASAT Set
+RRK{\footnote at}
+ATThis set contains the atoms in the complementary nucleotides
+ATadenosine and thymidine (A and T respectively). All nucleotides
+ATare classified as either the set
+ACat
+ATor the set
+AXcgset cg
+ATThis set is equivalent to the RasMol atom expressions
+AC"a,t
+ATand
+AC"nucleic and not cg
+AB
+
+PR?acidic
+PR?sets acidic
+ASAcidic Set
+RRK{\footnote acidic}
+ATThe set of acidic amino acids. 
+ATThese are the residue types Asp and Glu. 
+ATAll amino acids are classified as either 
+ACacidic,
+AXbasicset basic
+ACor
+AXneutralset neutral.
+ATThis set is equivalent to the RasMol atom expressions
+AC"asp, glu
+ATand
+AC"amino and not (basic or neutral)
+AB
+
+PR?acyclic
+PR?sets acyclic
+ASAcyclic Set
+RRK{\footnote acyclic}
+ATThe set of atoms in amino acids not containing a cycle or
+ATring. All amino acids are classified as either
+AXcyclicset cyclic
+ATor
+ACacyclic.
+ATThis set is equivalent to the RasMol atom expression
+AC"amino and not cyclic
+AB
+
+PR?aliphatic
+PR?sets aliphatic
+ASAliphatic Set
+RRK{\footnote aliphatic}
+ATThis set contains the aliphatic amino acids.
+ATThese are the amino acids Ala, Gly, Ile, Leu and Val.
+ATThis set is equiavlent to the RasMol atom expression
+AC"ala, gly, ile, leu, val
+AB
+
+PR?alpha
+PR?alpha carbon
+PR?alpha carbons
+PR?sets alpha
+ASAlpha Set
+RRK{\footnote alpha}
+ATThe set of alpha carbons in the protein molecule. This set is
+ATapproximately equivalent to the RasMol atom expression
+AC"*.CA
+ATThis command should not be confused with the predefined set
+AXhelixset helix
+ATwhich contains the atoms in the amino acids of the protein's
+ATalpha helices.
+AB
+
+PR?amino
+PR?sets amino
+ASAmino Set
+RRK{\footnote amino}
+ATThis set contains all the atoms contained in amino acid residues.
+ATThis is useful for distinguishing the protein from the nucleic
+ATacid and heterogeneous atoms in the current molecule database.
+AB
+
+PR?aromatic
+PR?sets aromatic
+ASAromatic Set
+RRK{\footnote aromatic}
+ATThe set of atoms in amino acids containing aromatic rings.
+ATThese are the amino acids His, Phe, Trp and Tyr.
+ATBecause they contain aromatic rings all members of this
+ATset are member of the predefined set
+AXcyclicset cyclic.
+ATThis set is equivalent to the RasMol atom expressions
+AC"his, phe, trp, tyr
+ATand
+AC"cyclic and not pro
+AB
+
+PR?mainchain
+PR?sets backbone
+PR?sets mainchain
+ASBackbone Set
+RRK{\footnote backbone}
+RRK{\footnote mainchain}
+ATThis set contains the four atoms of each amino acid that form the
+ATpolypeptide N-C-C-O backbone of proteins, and the atoms the sugar
+ATphosphate backbone of nucleic acids.
+ATUse the RasMol predefined sets
+ACprotein
+ATand
+ACnucleic
+ATto distinguish between the two forms of backbone. 
+ATAtoms in nucleic acids and proteins are either
+ACbackbone
+ATor
+AXsidechainset sidechain.
+ATThis set is equivalent to the RasMol expression
+AC"(protein or nucleic) and not sidechain
+AP
+ATThe predefined set
+ACmainchain
+ATis synonymous with the set
+ACbackbone.
+AB
+
+PR?basic
+PR?sets basic
+ASBasic Set
+RRK{\footnote basic}
+ATThe set of basic amino acids. 
+ATThese are the residue types Arg, His and Lys. 
+ATAll amino acids are classified as either 
+AXacidicset acidic,
+ACbasic
+ATor
+AXneutralset neutral.
+ATThis set is equivalent to the RasMol atom expressions
+AC"arg, his, lys
+ATand
+AC"amino and not (acidic or neutral)
+AB
+
+PR?bonded
+PR?sets bonded
+ASBonded Set
+RRK{\footnote bonded}
+ATThis set contain all the atoms in the current molecule database that
+ATare bonded to atleast one other atom.
+AB
+
+PR?buried
+PR?sets buried
+ASBuried Set
+RRK{\footnote buried}
+ATThis set contains the atoms in those amino acids that tend
+AT(prefer) to buried inside protein, away from contact with
+ATsolvent molecules. This set refers to the amino acids 
+ATpreference and not the actual solvent acessibility for
+ATthe current protein.
+ATAll amino acids are classified as either
+AXsurfaceset surface
+ATor
+ACburied.
+ATThis set is equivalent to the RasMol atom expression
+AC"amino and not surface
+AB
+
+PR?cg
+PR?sets cg
+ASCG Set
+RRK{\footnote cg}
+ATThis set contains the atoms in the complementary nucleotides
+ATcytidine and guanoine (C and G respectively). All nucleotides
+ATare classified as either the set
+AXatset at
+ATor the set
+ACcg
+ATThis set is equivalent to the RasMol atom expressions
+AC"c,g
+ATand
+AC"nucleic and not at
+AB
+
+
+PR?charged
+PR?sets charged
+ASCharged Set
+RRK{\footnote charged}
+ATThis set contains the charged amino acids. These are the amino
+ATacids that are either
+AXacidicset acidic
+ATor
+AXbasicset basic.
+ATAmino acids are classified as being either
+ACcharged
+ATor
+AXneutralset neutral.
+ATThis set is equivalent to the RasMol atom expressions
+AC"acidic or basic
+ATand
+AC"amino and not neutral
+AB
+
+PR?cyclic
+PR?sets cyclic
+ASCyclic Set
+RRK{\footnote cyclic}
+ATThe set of atoms in amino acids containing a cycle or rings.
+ATAll amino acids are classified as either
+ACcyclic
+ATor
+AXacyclicset acyclic.
+ATThis set consists of the amino acids His, Phe, Pro, Trp and Tyr.
+ATThe members of the predefined set
+AXaromaticset aromatic
+ATare members of this set.
+ATThe only cyclic but non-aromatic amino acid is proline.
+ATThis set is equivalent to the RasMol atom expressions
+AC"his, phe, pro, trp, tyr
+ATand
+AC"aromatic or pro
+ATand
+AC"amino and not acyclic
+AB
+
+PR?cystine
+PR?sets cystine
+ASCystine Set
+RRK{\footnote cystine}
+ATThis set contains the atoms of cysteine residues that form part
+ATof a disulphide bridge, i.e. half cystines. RasMol automatically
+ATdetermines disulphide bridges, if neither the predefined set
+ACcystine
+ATnor the RasMol
+AXssbonds ssbonds
+ATcommand have been used since the molecule was loaded. The set of
+ATfree cysteines may be determined using the RasMol atom expression
+AC"cys and not cystine
+AB
+
+PR?helix
+PR?helices
+PR?alpha helix
+PR?alpha helices
+PR?sets helix
+PR?sets helices
+ASHelix Set
+RRK{\footnote helix}
+ATThis set contains all atoms that form part of a protein alpha
+AThelix as determined by either the PDB file author or Kabsch and 
+ATSander's DSSP algorithm. By default, RasMol uses the secondary
+ATstructure determination given in the PDB file if it exists.
+ATOtherwise, it uses the DSSP algorithm as used by the RasMol
+AXstructure structure
+ATcommand.
+AP
+ATThis predefined set should not be confused with the predefined set
+AXalphaset alpha
+ATwhich contains the alpha carbon atoms of a protein.
+AB
+
+PR?hetero
+PR?sets hetero
+ASHetero Set
+RRK{\footnote hetero}
+ATThis set contains all the heterogeneous atoms in the molecule. These
+ATare the atoms described by HETATM entries in the PDB file. These
+ATtypically contain water, cofactors and other solvents and ligands. All
+AChetero
+ATatoms are classified as either
+AXligandset ligand
+ATor
+AXsolventset solvent
+ATatoms. These heterogeneous
+AXsolventset solvent
+ATatoms are further classified as either
+AXwaterset water
+ATor
+AXionsset ions.
+AB
+
+PR?hydrogen
+PR?sets hydrogen
+ASHydrogen Set
+RRK{\footnote hydrogen}
+ATThis predefined set contains all the hydrogen and deuterium atoms
+ATof the current molecule. This predefined set is equivalent to the
+ATRasMol atom expression
+AC"elemno=1
+AB
+
+PR?hydrophobic
+PR?sets hydrophobic
+ASHydrophobic Set
+RRK{\footnote hydrophobic}
+ATThis set contains all the hydrophobic amino acids.
+ATThese are the amino acids Ala, Leu, Val, Ile, Pro, Phe, Met and Trp.
+ATAll amino acids are classified as either
+AChydrophobic
+ATor
+AXpolarset polar.
+ATThis set is equivalent to the RasMol atom expressions
+AC"ala, leu, val, ile, pro, phe, met, trp
+ATand
+AC"amino and not polar
+AB
+
+PR?ions
+PR?sets ions
+ASIons Set
+RRK{\footnote ions}
+ATThis set contains all the heterogeneous phosphate and sulphate ions in
+ATthe current molecule data file. A large number of these ions are
+ATsometimes associated with protein and nucleic acid structures determined
+ATby X-ray crystallography. These atoms tend to clutter an image. All
+AXheteroset hetero
+ATatoms are classified as either
+AXligandset ligand
+ATor
+AXsolventset solvent
+ATatoms. All
+AXsolventset solvent
+ATatoms are classified as either
+AXwaterset water
+ATor
+ACions.
+AB
+
+PR?large
+PR?sets large
+ASLarge Set
+RRK{\footnote large}
+ATAll amino acids are classified as either
+AXsmallset small,
+AXmediumset medium
+ATor
+AClarge.
+ATThis set is equivalent to the RasMol atom expression
+AC"amino and not (small or medium)
+AB
+
+PR?ligand
+PR?sets ligand
+ASLigand Set
+RRK{\footnote ligand}
+ATThis set contains all the heterogeneous cofactor and ligand moieties that
+ATare contained in the current molecule data file. At this set is defined
+ATto be all 
+AXheteroset hetero
+ATatoms that are not
+AXsolventset solvent
+ATatoms. Hence this set is equivalent to the RasMol atom expression
+AC"hetero and not solvent
+AB
+
+PR?medium
+PR?sets medium
+ASMedium Set
+RRK{\footnote medium}
+ATAll amino acids are classified as either
+AXsmallset small,
+ACmedium
+ATor
+AXlargeset large.
+ATThis set is equivalent to the RasMol atom expression
+AC"amino and not (large or small)
+AB
+
+PR?neutral
+PR?sets neutral
+ASNeutral Set
+RRK{\footnote neutral}
+ATThe set of neutral amino acids. 
+ATAll amino acids are classified as either 
+AXacidicset acidic,
+ACbasic
+ATor
+AXneutralset neutral.
+ATThis set is equivalent to the RasMol atom expression
+AC"amino and not (acidic or basic)
+AB
+
+
+PR?nucleic
+PR?sets nucleic
+ASNucleic Set
+RRK{\footnote nucleic}
+ATThe set of all atoms in nucleic acids, which consists of the four 
+ATnucleotide bases adenosine, cytidine, guanosine and thymidine (A,
+ATC, G and T respectively). All neucleotides are classified as either
+AXpurineset purine
+ATor
+AXpyrimidineset pyrimidine.
+ATThis set is equivalent to the RasMol atom expressions
+AC"a,c,g,t
+ATand
+AC"purine or pyrimidine
+AB
+
+PR?polar
+PR?sets polar
+ASPolar Set
+RRK{\footnote polar}
+ATThis set contains the polar amino acids.
+ATAll amino acids are classified as either
+AXhydrophobicset hydrophobic
+ATor
+ACpolar.
+ATThis set is equivalent to the RasMol atom expression
+AC"amino and not hydrophobic
+AB
+
+PR?protein
+PR?sets protein
+ASProtein Set
+RRK{\footnote protein}
+ATThe set of all atoms in proteins. This consists of the RasMol
+ATpredefined set
+AXaminoset amino
+ATand common post-translation modifications.
+AB
+
+PR?purine
+PR?sets purine
+ASPurine Set
+RRK{\footnote purine}
+ATThe set of purine nucleotides.
+ATThese are the bases adenosine and guanosine (A and G respectively).
+ATAll nucleotides are either
+ACpurines
+ATor
+AXpyrimidineset pyrimidines.
+ATThis set is equivalent to the RasMol atom expressions
+AC"a,g
+ATand
+AC"nucleic and not purine
+AB
+
+PR?pyrimidine
+PR?sets pyrimidine
+ASPyrimidine Set
+RRK{\footnote pyrimidine}
+ATThe set of pyrimidine nucleotides.
+ATThese are the bases cytidine and thymidine (C and T respectively).
+ATAll nucleotides are either
+AXpurineset purines
+ATor
+ACpyrimidines.
+ATThis set is equivalent to the RasMol atom expressions
+AC"c,t
+ATand
+AC"nucleic and not pyrimidine
+AB
+
+PR?selected
+PR?sets selected
+ASSelected Set
+RRK{\footnote selected}
+ATThis set contains the set of atoms in the currently selected 
+ATregion. The currently selected region is defined by the preceding
+AXselect select
+ATor
+AXrestrict restrict
+ATcommand and not the atom expression containing the
+ACselected
+ATkeyword.
+AB
+
+PR?sheet
+PR?sheets
+PR?beta sheet
+PR?beta sheets
+PR?sets sheet
+PR?sets sheets
+ASSheet Set
+RRK{\footnote sheet}
+ATThis set contains all atoms that form part of a protein beta
+ATsheet as determined by either the PDB file author or Kabsch and 
+ATSander's DSSP algorithm. By default, RasMol uses the secondary
+ATstructure determination given in the PDB file if it exists.
+ATOtherwise, it uses the DSSP algorithm as used by the RasMol
+AXstructure structure
+ATcommand.
+AB
+
+PR?sidechain
+PR?sets sidechain
+ASSidechain Set
+RRK{\footnote sidechain}
+ATThis set contains the functional sidechains of any amino acids
+ATand the base of each nucleotide. These are the atoms not part of
+ATthe polypeptide N-C-C-O backbone of proteins or the sugar
+ATphosphate backbone of nucleic acids.
+ATUse the RasMol predefined sets
+ACprotein
+ATand
+ACnucleic
+ATto distinguish between the two forms of sidechain. 
+ATAtoms in nucleic acids and proteins are either
+AXbackboneset backbone
+ATor
+ACsidechain.
+ATThis set is equivalent to the RasMol expression
+AC"(protein or nucleic) and not backbone
+AB
+
+PR?small
+PR?sets small
+ASSmall Set
+RRK{\footnote small}
+ATAll amino acids are classified as either
+ACsmall,
+AXmediumset medium
+ATor
+AXlargeset large.
+ATThis set is equivalent to the RasMol atom expression
+AC"amino and not (medium or large)
+AB
+
+PR?solvent
+PR?sets solvent
+ASSolvent Set
+RRK{\footnote solvent}
+ATThis set contains the solvent atoms in the molecule co-ordinate file.
+ATThese are the heterogeneous water molecules, phosphate and sulphate 
+ATions. All
+AXheteroset hetero
+ATatoms are classified as either
+AXligandset ligand
+ATor
+ACsolvent
+ATatoms. All
+ACsolvent
+ATatoms are classified as either
+AXwaterset water
+ATor
+AXionsset ions.
+ATThis set is equivalent to the RasMol atom expressions
+AC"hetero and not ligand
+ATand
+AC"water or ions
+AB
+
+PR?surface
+PR?sets surface
+ASSurface Set
+RRK{\footnote surface}
+ATThis set contains the atoms in those amino acids that tend
+AT(prefer) to be on the surface of proteins, in contact with
+ATsolvent molecules. This set refers to the amino acids 
+ATpreference and not the actual solvent accessibility for
+ATthe current protein.
+ATAll amino acids are classified as either
+ACsurface
+ATor
+AXburiedset buried.
+ATThis set is equivalent to the RasMol atom expression
+AC"amino and not buried
+AB
+
+PR?turn
+PR?turns
+PR?sets turn
+PR?sets turns
+ASTurn Set
+RRK{\footnote turn}
+ATThis set contains all atoms that form part of a protein turns
+ATas determined by either the PDB file author or Kabsch and 
+ATSander's DSSP algorithm. By default, RasMol uses the secondary
+ATstructure determination given in the PDB file if it exists.
+ATOtherwise, it uses the DSSP algorithm as used by the RasMol
+AXstructure structure
+ATcommand.
+AB
+
+PR?water
+PR?waters
+PR?sets water
+PR?sets waters
+ASWater Set
+RRK{\footnote water}
+ATThis set contains all the heterogeneous water molecules in the current
+ATdatabase. A large number of water molecules are sometimes associated 
+ATwith protein and nucleic acid structures determined by X-ray 
+ATcrystallography. These atoms tend to clutter an image.
+ATAll
+AXheteroset hetero
+ATatoms are classified as either
+AXligandset ligand
+ATor
+AXsolventset solvent
+ATatoms. The 
+AXsolventset solvent
+ATatoms are further classified as either
+ACwater
+ATor
+AXionsset ions.
+AB
+
+TR    Colour Schemes
+TR    ==============
+TR
+PR?colors
+PR?colours
+PR?color schemes
+PR?colour schemes
+PR?color names
+PR?colour names
+PR?predefined colors
+PR?predefined colours
+PRColour Schemes
+RR#{\footnote chcolours}
+RR${\footnote Colour Schemes}
+RR{\fs24\b Colour Schemes}\par\par
+MR.SH COLOUR SCHEMES
+XR2 Colours_Schemes
+HR<a name="chcolours"><h2>Colour Schemes</h2></a>
+
+ATThe RasMol
+AXcolour colour
+ATcommand allows different objects (such as atoms, bonds and ribbon segments)
+ATto be given a specified colour. Typically this colour is either a RasMol
+ATpredefined colour name or an RGB triple. Additionally RasMol also supports
+AXcpkcolours cpk,
+AXaminocolours amino,
+AXchaincolours chain,
+AXgroupcolours group,
+AXshapelycolours shapely,
+AXstructurecolours structure,
+AXtemperaturecolours temperature,
+AXchargecolours charge
+ATand
+AXusercolours user
+ATcolour schemes for atoms, a
+AXhbondtypecolours hbond type
+ATcolour scheme for hydrogen bonds and
+AXpotentialcolours electrostatic potential
+ATcolour scheme for dot surfaces.
+ATThe currently predefined colour
+ATnames are
+
+MTblue, black, cyan, green, greenblue, magenta, orange, purple,
+MTred, redorange, violet, white and yellow.
+
+NTlisted below with their corresponding RGB triplet.
+NP
+NR    blue         [0,0,255]          black        [0,0,0]
+NR    cyan         [0,255,255]        green        [0,255,0]
+NR    greenblue    [46,139,87]        magenta      [255,0,255]
+NR    orange       [255,165,0]        purple       [160,32,240]
+NR    red          [255,0,0]          redorange    [255,69,0]
+NR    violet       [238,130,238]      white        [255,255,255]
+NR    yellow       [255,255,0]
+
+HTlisted below with their corresponding RGB triplet.
+HP
+HR<pre>
+HR    blue         [0,0,255]          black        [0,0,0]
+HR    cyan         [0,255,255]        green        [0,255,0]
+HR    greenblue    [46,139,87]        magenta      [255,0,255]
+HR    orange       [255,165,0]        purple       [160,32,240]
+HR    red          [255,0,0]          redorange    [255,69,0]
+HR    violet       [238,130,238]      white        [255,255,255]
+HR    yellow       [255,255,0]
+HR</pre>
+
+XTlisted below with their corresponding RGB triplet.
+XP
+XR    blue         [0,0,255]          black        [0,0,0]
+XR    cyan         [0,255,255]        green        [0,255,0]
+XR    greenblue    [46,139,87]        magenta      [255,0,255]
+XR    orange       [255,165,0]        purple       [160,32,240]
+XR    red          [255,0,0]          redorange    [255,69,0]
+XR    violet       [238,130,238]      white        [255,255,255]
+XR    yellow       [255,255,0]
+
+RTlisted below with their corresponding RGB triplet.
+RP
+RR\cellx1000\cellx2500\cellx3500\cellx5000
+RR\intbl
+RRblue\cell [0,0,256]\cell
+RRblack\cell [0,0,0]\cell
+RR\row\intbl
+RRcyan\cell [0,255,255]\cell
+RRgreen\cell [0,255,0]\cell
+RR\row\intbl
+RRgreenblue\cell [46,139,87]\cell
+RRmagenta\cell [255,0,255]\cell
+RR\row\intbl
+RRorange\cell [255,165,0]\cell
+RRpurple\cell [160,32,240]\cell
+RR\row\intbl
+RRred\cell [255,0,0]\cell
+RRredorange\cell [255,69,0]\cell
+RR\row\intbl
+RRviolet\cell [238,130,238]\cell
+RRwhite\cell [255,255,255]\cell
+RR\row\intbl
+RRyellow\cell [255,255,0]\cell
+RR\row\pard\par\trowd
+AB
+
+PR?color amino
+PR?colour amino
+ASAmino Colours
+ATThe RasMol
+ACamino
+ATcolour scheme colours amino acids according to traditional amino acid
+ATproperties. The purpose of colouring is to identify amino acids in an
+ATunusual or surprising environment. The outer parts of a protein that are
+ATpolar are visible (bright) colours and non-polar residues darker. Most
+ATcolours are hallowed by tradition. This colour scheme is similar to the
+AXshapelycolours shapely
+ATscheme.
+NP
+NR   ASP,GLU bright red [230,10,10]     CYS,MET     yellow [230,230,0]
+NR   LYS,ARG blue       [20,90,255]     SER,THR     orange [250,150,0]
+NR   PHE,TYR mid blue   [50,50,170]     ASN,GLN     cyan   [0,220,220]     
+NR   GLY     light grey [235,235,235]   LEU,VAL,ILE green  [15,130,15]     
+NR   ALA     dark grey  [200,200,200]   TRP         pink   [180,90,180]    
+NR   HIS     pale blue  [130,130,210]   PRO         flesh  [220,150,130]
+
+HP
+HR<pre>
+HR   ASP,GLU bright red [230,10,10]     CYS,MET     yellow [230,230,0]
+HR   LYS,ARG blue       [20,90,255]     SER,THR     orange [250,150,0]
+HR   PHE,TYR mid blue   [50,50,170]     ASN,GLN     cyan   [0,220,220]     
+HR   GLY     light grey [235,235,235]   LEU,VAL,ILE green  [15,130,15]     
+HR   ALA     dark grey  [200,200,200]   TRP         pink   [180,90,180]    
+HR   HIS     pale blue  [130,130,210]   PRO         flesh  [220,150,130]
+HR</pre>
+
+XP
+XR   ASP,GLU bright red [230,10,10]     CYS,MET     yellow [230,230,0]
+XR   LYS,ARG blue       [20,90,255]     SER,THR     orange [250,150,0]
+XR   PHE,TYR mid blue   [50,50,170]     ASN,GLN     cyan   [0,220,220]     
+XR   GLY     light grey [235,235,235]   LEU,VAL,ILE green  [15,130,15]     
+XR   ALA     dark grey  [200,200,200]   TRP         pink   [180,90,180]    
+XR   HIS     pale blue  [130,130,210]   PRO         flesh  [220,150,130]
+
+RP
+RR\cellx1500\cellx2500\cellx3500
+RR\intbl
+RRASP, GLU\cell bright red\cell [230,10,10]\cell\row\intbl
+RRLYS, ARG\cell blue\cell [20,90,255]\cell\row\intbl
+RRCYS, MET\cell yellow\cell [230,230,0]\cell\row\intbl
+RRSER, THR\cell orange\cell [250,150,0]\cell\row\intbl
+RRPHE, TYR\cell mid blue\cell [50,50,170]\cell\row\intbl
+RRASN, GLN\cell cyan\cell [230,230,0]\cell\row\intbl
+RRGLY\cell light grey\cell [235,235,235]\cell\row\intbl
+RRLEU, VAL, ILE\cell green\cell [15,130,15]\cell\row\intbl
+RRALA\cell dark grey\cell [200,200,200]\cell\row\intbl
+RRTRP\cell pink\cell [180,90,180]\cell\row\intbl
+RRHIS\cell pale blue\cell [130,130,210]\cell\row\intbl
+RRPRO\cell flesh\cell [220,150,130]\cell\row\pard\par
+RR\trowd
+AB
+
+PR?chain
+PR?color chain
+PR?colour chain
+ASChain Colours
+ATThe RasMol
+ACchain
+ATcolour scheme assigns each macromolecular chain a unique colour. This
+ATcolour scheme is particularly useful for distinguishing the parts of
+ATmultimeric structure or the individual `strands' of a DNA chain. 
+AB
+
+PR?color cpk
+PR?colour cpk
+ASCPK Colours
+ATThe RasMol
+ACcpk
+ATcolour scheme is based upon the colours of the popular plastic
+ATspacefilling models which were developed by Corey, Pauling and later
+ATimproved by Kultun. This colour scheme colour `atom' objects by the
+ATatom (element) type. This is the scheme conventionally used by chemists.
+
+NTThe assignment of element type to colours is given below.
+NP
+NR    Carbon       light grey       Chlorine         green
+NR    Oxygen       red              Bromine, Zinc    brown
+NR    Hydogen      white            Sodium           blue
+NR    Nitrogen     light blue       Iron             purple
+NR    Sulphur      yellow           Calcium, Metals  dark grey
+NR    Phosphorous  orange           Unknown          deep pink
+
+HTThe assignment of element type to colours is given below.
+HP
+HR<pre>
+HR    Carbon       light grey       Chlorine         green
+HR    Oxygen       red              Bromine, Zinc    brown
+HR    Hydogen      white            Sodium           blue
+HR    Nitrogen     light blue       Iron             purple
+HR    Sulphur      yellow           Calcium, Metals  dark grey
+HR    Phosphorous  orange           Unknown          deep pink
+HR</pre>
+
+XTThe assignment of element type to colours is given below.
+XP
+XR    Carbon       light grey       Chlorine         green
+XR    Oxygen       red              Bromine, Zinc    brown
+XR    Hydogen      white            Sodium           blue
+XR    Nitrogen     light blue       Iron             purple
+XR    Sulphur      yellow           Calcium, Metals  dark grey
+XR    Phosphorous  orange           Unknown          deep pink
+
+RTThe assignment of element type to colours is given below.
+RP
+RR\cellx1500\cellx2500\cellx3500
+RR\intbl
+RRCarbon\cell light grey\cell [200,200,200]\cell\row\intbl
+RROxygen\cell red\cell [240,0,0]\cell\row\intbl
+RRHydrogen\cell white\cell [255,255,255]\cell\row\intbl
+RRNitrogen\cell light blue\cell [143,143,255]\cell\row\intbl
+RRSulphur\cell yellow\cell [255,200,50]\cell\row\intbl
+RRPhosphorous\cell orange\cell [255,165,0]\cell\row\intbl
+RRChlorine\cell green\cell [0,255,0]\cell\row\intbl
+RRBromine, Zinc\cell brown\cell [165,42,42]\cell\row\intbl
+RRSodium\cell blue\cell [0,0,255]\cell\row\intbl
+RRIron\cell purple\cell [160,32,240]\cell\row\intbl
+RRCalcium, Metals\cell dark grey\cell [128,128,144]\cell\row\intbl
+RRunknown\cell deep pink\cell [255,20,147]\cell\row\pard\par
+RR\trowd
+AB
+
+PR?group
+PR?color group
+PR?colour group
+ASGroup Colours
+ATThe RasMol
+ACgroup
+ATcolour scheme colour codes residues by their position in a macromolecular
+ATchain. Each chain is drawn as a smooth spectrum from blue through green,
+ATyellow and orange to red. Hence the N terminus of proteins and 5' terminus 
+ATof nucleic acids are coloured red and the C terminus of proteins and 3' 
+ATterminus of nucleic acids are drawn in blue. If a chain has a large number 
+ATof heterogeneous molecules associated with it, the macromolecule may not be
+ATdrawn in the full `range' of the spectrum.
+AB
+
+PR?shapely
+PR?shapely colors
+PR?shapely colours
+ASShapely Colours
+ATThe RasMol
+ACshapely
+ATcolour scheme colour codes residues by amino acid property. This scheme
+ATis based upon Bob Fletterick's "Shapely Models". Each amino acid and
+ATnucleic acid residue is given a unique colour. The
+ACshapely
+ATcolour scheme is used by David Bacon's Raster3D program. This colour
+ATscheme is similar to the
+AXaminocolours amino
+ATcolour scheme.
+AB
+
+PR?color structure
+PR?colour structure
+ASStructure Colours
+ATThe RasMol
+ACstructure
+ATcolour scheme colours the molecule by protein secondary structure.
+ATAlpha helices are coloured magenta, [240,0,128], beta sheets are 
+ATcoloured yellow, [255,255,0], turns are coloured pale blue, [96,128,255]
+ATand all other residues are coloured white. The secondary structure
+ATis either read from the PDB file (HELIX and SHEET records), if available,
+ATor determined using Kabsch and Sander's DSSP algorithm. The RasMol
+AXstructure structure
+ATcommand may be used to force DSSP's structure assignment to be used.
+AB
+
+PR?temperature
+PR?color temperature
+PR?colour temperature
+ASTemperature Colours
+ATThe RasMol
+ACtemperature
+ATcolour scheme colour codes each atom according to the anisotropic
+ATtemperature (beta) value stored in the PDB file. Typically this gives
+ATa measure of the mobility/uncertainty of a given atom's position. High
+ATvalues are coloured in warmer (red) colours and lower values in colder
+AT(blue) colours. This feature is often used to associate a "scale" value
+AT[such as amino acid variability in viral mutants] with each atom in a
+ATPDB file, and colour the molecule appropriately.
+AP
+ATThe difference between the
+ACtemperature
+ATand
+AXchargecolours charge
+ATcolour schemes is that increasing temperature values proceed from blue
+ATto red, whereas increasing charge valuse go from red to blue.
+AB
+
+PR?charge
+PR?color charge
+PR?colour temperature
+ASCharge Colours
+ATThe RasMol
+ACcharge
+ATcolour scheme colour codes each atom according to the charge value
+ATstored in the input file (or beta factor field of PDB files). High
+ATvalues are coloured in blue (positive) and lower values coloured in
+ATred (negative). Rather than use a fixed scale this scheme determines
+ATthe maximum and minimum values of the charge/temperature field and
+ATinterpolates from red to blue appropriately. Hence, green cannot be
+ATassumed to be `no net charge' charge.
+AP
+ATThe difference between the
+AXchargecolours charge
+ATand
+ACtemperature
+ATcolour schemes is that increasing temperature values proceed from blue
+ATto red, whereas increasing charge valuse go from red to blue.
+AP
+ATIf the charge/temperature field stores reasonable values it is possible
+ATto use the RasMol
+AXpotentialcolours colour dots potential
+ATcommand to colour code a dot surface (generated by the
+AXdots dots
+ATcommand) by electrostatic potential.
+AB
+
+
+PR?user
+PR?color user
+PR?colour user
+ASUser Colours
+ATThe RasMol
+ACuser
+ATcolour scheme allows RasMol to use the colour scheme stored in the
+ATPDB file. The colours for each atom are stored in COLO records placed
+ATin the PDB data file. This convention was introduced by David Bacon's
+ATRaster3D program.
+AB
+
+PR?type
+PR?color type
+PR?colour type
+ASHBond Type Colours
+ATThe RasMol
+ACtype
+ATcolour scheme applies only to hydrogen bonds, hence is used in the command
+AC"colour hbonds type
+ATThis scheme colour codes each hydrogen bond according to the 
+ATdistance along a protein chain between hydrogen bond donor and acceptor.
+ATThis schematic representation was introduced by Belhadj-Mostefa and
+ATMilner-White. This representation gives a good insight into protein
+ATsecondary structure (hbonds forming alpha helices appear red, those
+ATforming sheets appear yellow and those forming turns appear magenta).
+
+NP
+NR      Offset    Colour    Triple
+NR        +2      white     [255,255,255]
+NR        +3      magenta   [255,0,255]
+NR        +4      red       [255,0,0]
+NR        +5      orange    [255,165,0]
+NR        -3      cyan      [0,255,255]
+NR        -4      green     [0,255,0]
+NR      default   yellow    [255,255,0]
+
+HP
+HR<pre>
+HR      Offset    Colour    Triple
+HR        +2      white     [255,255,255]
+HR        +3      magenta   [255,0,255]
+HR        +4      red       [255,0,0]
+HR        +5      orange    [255,165,0]
+HR        -3      cyan      [0,255,255]
+HR        -4      green     [0,255,0]
+HR      default   yellow    [255,255,0]
+HR</pre>
+
+RP
+RR\cellx1000\cellx2000\cellx3000
+RR\intbl
+RROffset\cell Colour\cell Triple\cell\row\intbl
+RR  +2\cell white  \cell [255,255,255]\cell\row\intbl
+RR  +3\cell magenta\cell [255,0,255]\cell\row\intbl
+RR  +4\cell red    \cell [255,0,0]\cell\row\intbl
+RR  +5\cell orange \cell [255,165,0]\cell\row\intbl
+RR  -3\cell cyan   \cell [0,255,255]\cell\row\intbl
+RR  -4\cell green  \cell [0,255,0]\cell\row\intbl
+RRdefault\cell yellow\cell [255,255,0]\cell\row
+RR\pard\pat\trowd
+
+XP
+XR      Offset    Colour    Triple
+XR        +2      white     [255,255,255]
+XR        +3      magenta   [255,0,255]
+XR        +4      red       [255,0,0]
+XR        +5      orange    [255,165,0]
+XR        -3      cyan      [0,255,255]
+XR        -4      green     [0,255,0]
+XR      default   yellow    [255,255,0]
+AB
+
+PR?potential
+PR?electrostatic
+PR?electrostatic potential
+ASPotential Colours
+ATThe RasMol
+ACpotential
+ATcolour scheme applies only to dot surfaces, hence is used in the command
+AC"colour dots potential
+ATThis scheme colours each currently displayed dot by the electrostatic
+ATpotential at that point in space. This potential is calculated using 
+ATCoulomb's law taking the temperature/charge field of the input file to
+ATbe the charge assocated with that atom. This is the same interpretation
+ATused by the
+AXchargecolours colour charge
+ATcommand. Like the
+AXchargecolours charge
+ATcolour scheme low values are blue/white and high values are red. 
+PTThe table below shows the static assignment of colours using a 
+PTdielectric constant value of 10.
+VTThe table below shows the static assignment of colours using a 
+VTdielectric constant value of 10.
+
+NP
+NR     25 < V          red       [255,0,0]
+NR     10 < V <  25    orange    [255,165,0]
+NR      3 < V <  10    yellow    [255,255,0]
+NR      0 < V <   3    green     [0,255,0]
+NR     -3 < V <   0    cyan      [0,255,255]
+NR    -10 < V <   3    blue      [0,0,255]
+NR    -25 < V < -10    purple    [160,32,240]
+NR          V < -25    white     [255,255,255]
+
+HP
+HR<pre>
+HR     25 < V          red       [255,0,0]
+HR     10 < V <  25    orange    [255,165,0]
+HR      3 < V <  10    yellow    [255,255,0]
+HR      0 < V <   3    green     [0,255,0]
+HR     -3 < V <   0    cyan      [0,255,255]
+HR    -10 < V <   3    blue      [0,0,255]
+HR    -25 < V < -10    purple    [160,32,240]
+HR          V < -25    white     [255,255,255]
+HR</pre>
+
+RP
+RR\cellx1500\cellx2200\cellx3500
+RR\intbl
+RR{ 25 < V      }\cell red   \cell [255,0,0]\cell\row\intbl 
+RR{ 10 < V <  25}\cell orange\cell [255,165,0]\cell\row\intbl
+RR{  3 < V <  10}\cell yellow\cell [255,255,0]\cell\row\intbl
+RR{  0 < V <   3}\cell green \cell [0,255,0]\cell\row\intbl
+RR{ -3 < V <   0}\cell cyan  \cell [0,255,255]\cell\row\intbl
+RR{-10 < V <  -3}\cell blue  \cell [0.0.255]\cell\row\intbl
+RR{-25 < V < -10}\cell purple\cell [160,32,240]\cell\row\intbl
+RR{        V < -25}\cell white \cell [255,255,255]\cell\row
+RR\pard\par\trowd
+
+XP
+XR     25 < V          red       [255,0,0]
+XR     10 < V <  25    orange    [255,165,0]
+XR      3 < V <  10    yellow    [255,255,0]
+XR      0 < V <   3    green     [0,255,0]
+XR     -3 < V <   0    cyan      [0,255,255]
+XR    -10 < V <   3    blue      [0,0,255]
+XR    -25 < V < -10    purple    [160,32,240]
+XR          V < -25    white     [255,255,255]
+AP
+
+%%
+%% General Help
+%%
+PR?codes
+PR?amino codes
+PR?amino acid codes
+PRAmino Acid Codes
+PTThe following table lists the names, single letter and three letter
+PTcodes of each of the amino acids.
+PP
+
+PR    Alanine         A  ALA         Arginine        R  ARG
+PR    Asparagine      N  ASN         Aspartic acid   D  ASP
+PR    Cysteine        C  CYS         Glutamic acid   E  GLU
+PR    Glutamine       Q  GLN         Glycine         G  GLY
+PR    Histidine       H  HIS         Isoleucine      I  ILE
+PR    Leucine         L  LEU         Lysine          K  LYS
+PR    Methionine      M  MET         Phenylalanine   F  PHE
+PR    Proline         P  PRO         Serine          S  SER
+PR    Threonine       T  THR         Tryptophan      W  TRP
+PR    Tyrosine        Y  TYR         Valine          V  VAL
+PB
+
+
+PR?boolean
+PR?booleans
+PR?boolean expression
+PR?boolean expressions
+PRBooleans
+PTA boolean parameter is a truth value. Valid boolean values are `true' and
+PT`false', and their synonyms `on' and `off'. Boolean parameters are commonly
+PTused by RasMol to either enable or disable a representation or option.
+PP
+
+%%
+%% Signature
+%%
+%%
+MT.SH SEE ALSO
+MTThe RasMol User Manual!
+MT
+MT.SH AUTHOR
+MT1992-1998 by Roger Sayle (rasmol@ggr.co.uk)
+
+%%
+%% RTF Closing
+%%
+RT}

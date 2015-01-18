@@ -1,0 +1,69 @@
+CC   = CL /nologo /J /W3
+LD   = LINK /nologo /WARN:3 /SUBSYSTEM:windows /NODEFAULTLIB:oldnames.lib
+
+DEBUG = 0
+
+!if $(DEBUG)
+CFLAGS = /Zi /Od
+LFLAGS = /DEBUG /MAP:raswin.map
+!else
+.SILENT:
+
+# 386 CPU or above:  /G3
+# 486 CPU or above:  /G4
+CFLAGS = /G4rs /O2gipab1
+LFLAGS =
+!endif
+
+LIBS   = user32.lib gdi32.lib comdlg32.lib shell32.lib
+
+OBJS   = raswin.obj molecule.obj command.obj abstree.obj transfor.obj \
+	 render.obj pixutils.obj mswin31.obj outfile.obj scripts.obj
+
+
+goal:           raswin.exe
+
+raswin.exe:     $(OBJS) raswin.def raswin.res
+		$(LD) $(LFLAGS) $(OBJS) raswin.res $(LIBS) /OUT:raswin.exe
+
+raswin.obj:     raswin.c rasmol.h raswin.idm molecule.h command.h \
+		abstree.h transfor.h render.h pixutils.h graphics.h \
+		outfile.h
+		$(CC) /c $(CFLAGS) raswin.c
+
+molecule.obj:   molecule.c molecule.h rasmol.h abstree.h command.h \
+		transfor.h render.h
+		$(CC) /c $(CFLAGS) molecule.c
+
+transfor.obj:   transfor.c transfor.h rasmol.h molecule.h command.h \
+		render.h graphics.h
+		$(CC) /c $(CFLAGS) transfor.c
+
+command.obj:    command.c command.h rasmol.h tokens.h abstree.h \
+		molecule.h transfor.h render.h graphics.h pixutils.h \
+		outfile.h
+		$(CC) /c $(CFLAGS) command.c
+
+abstree.obj:    abstree.c abstree.h rasmol.h molecule.h
+		$(CC) /c $(CFLAGS) abstree.c
+
+render.obj:     render.c render.h rasmol.h molecule.h transfor.h \
+		command.h graphics.h pixutils.h
+		$(CC) /c $(CFLAGS) render.c
+
+mswin31.obj:    mswin31.c graphics.h rasmol.h render.h
+		$(CC) /c $(CFLAGS) mswin31.c
+
+pixutils.obj:   pixutils.c pixutils.h rasmol.h render.h graphics.h
+		$(CC) /c $(CFLAGS) pixutils.c
+
+outfile.obj:    outfile.c outfile.h rasmol.h command.h transfor.h \
+		render.h graphics.h pixutils.h scripts.h
+		$(CC) /c $(CFLAGS) outfile.c
+
+scripts.obj:	scripts.c scripts.h rasmol.h command.h transfor.h \
+		render.h graphics.h pixutils.h
+		$(CC) /c $(CFLAGS) scripts.c
+
+raswin.res:     raswin.rc raswin.idm
+		$(RC) /fo raswin.res /r raswin.rc 

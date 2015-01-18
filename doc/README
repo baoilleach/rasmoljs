@@ -1,0 +1,27 @@
+
+
+                            RasMol 2.6
+              Molecular Graphics Visualisation tool.
+
+                           Roger Sayle 
+                          December 1998
+
+
+This documentation directory contains the following files:
+
+	manual.doc	Microsoft Word for Windows copy of User Manual.
+	manual.ps	PostScript version of the RasMol User Manual.
+
+	refcard.doc	Microsoft Word for Windows copy of Ref. Card.
+	refcard.ps	PostScript version of Quick Reference Card.
+
+	rasmol.0	ASCII text formatted version of UNIX 'man' page.
+	rasmol.1	Nroff macro version of the UNIX `man' page.
+
+	rasmol.html	HTML version of User Manual for WWW/HTTP.
+	raswin.rtf	RTF version for Microsoft Help Compiler.
+	rasmol.vms	VAX/VMS HELP command format help file.
+	rasmol.txt	ASCII Text format help file.
+
+	prepdoc.c	Source code for document preparation system.
+

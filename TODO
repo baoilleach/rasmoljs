@@ -1,0 +1,44 @@
+# File TODO
+# RasMol2, Roger Sayle
+# Last Modified 24/10/94
+
+# Current Projects:
+
+[1] POVRay output file format.
+------------------------------
+    Implement a "write povray" command, potentially based upon
+    Eric Suchanek's "pdb2pov" program much like "Personal 
+    Computer-based Visualization of Molecular Models by
+    Available Ray-tracing Software", Arnold S. Dion, J. Mol. Graph.,
+    Vol.12, March 1994, p.41-44.
+
+[3] Add Gaussian format files.
+---------------------------------------
+    This requires a "torsional driver" to handle atom co-ordinates
+    in "internal" z-matrix format. Clever parsing of these files
+    avoids the need for babel's internal/cartesian distinction.
+
+[4] Write out solid ribbons and strands in vector PostScript.
+-------------------------------------------------------------
+    Create a structure to store the complete knot description at
+    every alpha carbon. Depth sort these knots as part of the
+    painter's algorithm. Write them out in the PostScript using
+    suitable macros. Need to handle oblique polygons specially,
+    and may need to subdivide to more accuracy than when rendering
+    on the screen.
+
+[5] Improve Cylinder Quality.
+-----------------------------
+    The current algorithm for rendering cylinders for stick
+    bonds and backbones is slower and less efficient than it
+    could be. This also results in strange aliasing effect 
+    for oblique cylinders. Correcting these problems should
+    permit cylinders of much large diameter, such as cylinder
+    representations of helices. Similarly add the ability to
+    have flat (and rounded) cylinder ends.
+
+[6] PDB Directory Structure.
+----------------------------
+    Add support for PDB's latest directory structuring using
+    file names of the form $RASMOLPDBPATH/cr/pdb2cro.ent.
+  

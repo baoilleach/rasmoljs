@@ -1,0 +1,71 @@
+
+
+                           RasMol 2.6.4
+              Molecular Graphics Visualisation tool.
+
+                           Roger Sayle 
+                          December 1998
+
+
+    This posting is to announce the release of RasMol version 2.6.4.
+RasMol is a molecular graphics program intended for the visualisation 
+of proteins, nucleic acids and small molecules. The program is aimed 
+at display, teaching and generation of publication quality images. 
+The program has been developed at the University of Edinburgh's 
+Biocomputing Research Unit and in the Bioinformatics Group of
+Glaxo-Wellcome Research and Development, Stevenage, UK.  This latest 
+version is available for the Apple Macintosh, Microsoft Windows, UNIX
+and VMS.  A text-only version has also been developed to run on other
+architectures including MS-DOS.
+
+    RasMol reads in molecular co-ordinate files in a number of formats and
+interactively displays the molecule on the screen in a variety of colour
+schemes and representations. Currently supported input file formats include
+Brookhaven Protein Databank (PDB), Tripos' Alchemy and Sybyl Mol2 formats,
+Molecular Design Limited's (MDL) Mol file format, Minnesota Supercomputer
+Center's (MSC) XMol XYZ format and CHARMm format files. If connectivity
+information and/or secondary structure information is not contained in the
+file this is calculated automatically. The loaded molecule may be shown as
+wireframe, cylinder (Dreiding) stick bonds, alpha-carbon trace, spacefilling
+(CPK) spheres, macromolecular ribbons (either smooth shaded solid ribbons
+or parallel strands), hydrogen bonding and dot surface. Atoms may also be
+labelled with arbitrary text strings. Different parts of the molecule may be
+displayed and coloured independently of the rest of the molecule or shown in
+different representations simultaneously. The space filling spheres can even
+be shadowed. The displayed molecule may be rotated, translated, zoomed, 
+z-clipped (slabbed) interactively using either the mouse, the scroll bars, 
+the command line or an attached dials box. RasMol can read a prepared list 
+of commands from a `script' file (or via interprocess communication) to 
+allow a given image or viewpoint to be restored quickly. RasMol can also
+create a script file containing the commands required to regenerate the 
+current image. Finally the rendered image may be written out in a variety 
+of formats including both raster and vector PostScript, GIF, PPM, BMP, PICT,
+Sun rasterfile or as a MolScript input script or Kinemage.
+
+    RasMol will run on a wide range of architectures and systems including 
+SGI, sun4, sun3, sun386i, DEC, HP and E&S workstations, IBM RS/6000, 
+Cray, Sequent, DEC Alpha (OSF/1, OpenVMS and Windows NT), IBM PC (under 
+Microsoft Windows 3.1, Windows 95, Windows 98, Windows NT, OS/2, Linux,
+BSD386, *BSD and MSDOS), Apple Macintosh (68K or PowerMac using MacOS 7.0
+or later), PowerMac and VAX VMS (under DEC Windows).  UNIX and VMS versions
+require an 1bit, 8bit, 16bit, 24bit or 32bit X Windows frame buffer (X11R4
+or later). The X Windows version of RasMol provides optional support for a
+hardware dials box and accelerated shared memory rendering (via the XInput
+and MIT-SHM extensions) if available.
+
+    The source code is public domain and freely distributable provided that
+the original author is suitably acknowledged. The complete source code and
+user documentation may be obtained by anonymous FTP from ftp.dcs.ed.ac.uk
+[129.215.160.5] in the directory /pub/rasmol. The source code, documentation
+and Microsoft Windows executables are stored in several files appropriate
+for the receiving operating system. Please read the "README" file in the
+distribution directory. UNIX and VAX systems should retreive the
+RasMol2.tar.gz. Apple Macintosh users should retrieve rasmac.sit.hqx.
+Microsoft Windows users should retrieve raswin32.zip.  All these files 
+include on-line help, user manual and reference card. RasMac.sit.hqx and
+RasWin32.zip also contain executables for the required platform.
+RasMol2.tar.gz includes the complete source code for all platforms.
+Please remember to use "binary" mode when transferring these files 
+between systems. Check that the file size is the same before and after 
+transfer.
+

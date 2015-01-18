@@ -1,0 +1,145 @@
+# Makefile.in
+# RasMol2 Molecular Graphics
+# Roger Sayle, December 1998
+# Version 2.6.4
+
+# Simply edit CC and CFLAGS for your local compiler/system
+# For Sun OpenWindows, add "-I/usr/openwin/include" to CFLAGS
+
+CC = gcc
+CFLAGS = -O2 -finline-functions
+
+
+#CFLAGS_sun4     = -O4
+#CFLAGS_sun3     = -O4 -f68881
+#CFLAGS_hp9000   = -O +bfpa
+#CFLAGS_sequent  = -O -f1167
+#CFLAGS_mips     = -O2 -Olimit 800
+#CFLAGS_gcc2.0   = -O2 -funroll-all-loops
+#CFLAGS_esv      = -O2 -Olimit 800 -systype bsd43
+#CFLAGS_hpux9    = -Ae +O2 +Onolimit
+#CFLAGS_hpux9new = -Ae +O4 +Onolimit +Oconservative +ESlit -I/usr/include/X11R5
+#CFLAGS_sgi      = -O2 -xansi -DFUNCPROTO
+#CFLAGS_gcc      = -O -fomit-frame-pointer -fstrength-reduce -finline-functions
+
+# For Debugging use LFLAGS = 
+LFLAGS = -s
+
+# -lXi required if using DIALBOX
+EXTLIBS = -lm -lXi -lXext -lX11
+
+# Library path required for HPUX
+# LIBS = -lm -L/usr/lib/X11R5 -lXext -lX11
+# -lXextSam required by MITSHM on RS600 AIX
+# LIBS = -lm -lXextSam -lXext -lX11
+
+# -lmmioc required for MMIO
+# -L. -lXext -lX11 -lmmioc -lm
+
+# On SUN Solaris systems when compiling RasMol with the SOCKETS option
+# LIBS = -lm -lsocket -lnsl 
+
+# Normal Libraries
+LIBS = -lm
+X11LIBS = -lXext -lX11 $(LIBS)
+
+
+INCS = abstree.h cmndline.h command.h font.h graphics.h infile.h \
+       molecule.h outfile.h pixutils.h rasmol.h render.h repres.h \
+       scripts.h tokens.h transfor.h
+
+SRCS = abstree.c cmndline.c command.c infile.c molecule.c outfile.c \
+       pixutils.c render.c repres.c scripts.c transfor.c tokens.c
+
+OBJS = abstree.o cmndline.o command.o infile.o molecule.o outfile.o \
+       pixutils.o render.o repres.o scripts.o transfor.o tokens.o
+
+X11INCS = $(INCS) bitmaps.h
+X11SRCS = rasmol.c x11win.c $(SRCS)
+X11OBJS = rasmol.o x11win.o $(OBJS)
+
+TXTINCS = $(INCS)
+TXTSRCS = rastxt.c $(SRCS)
+TXTOBJS = rastxt.o $(OBJS)
+
+
+rasmol:		$(X11OBJS)
+		$(CC) -o rasmol $(LFLAGS) $(X11OBJS) $(X11LIBS)
+		chmod 755 rasmol
+
+rasmol.o:	rasmol.c rasmol.h molecule.h transfor.h cmndline.h \
+		command.h abstree.h render.h graphics.h pixutils.h \
+		outfile.h scripts.h
+		$(CC) -c $(CFLAGS) rasmol.c
+
+rastxt:		$(TXTOBJS)
+		$(CC) -o rastxt $(LFLAGS) $(TXTOBJS) $(LIBS)
+		chmod 755 rastxt
+
+rastxt.o:	rastxt.c rasmol.h molecule.h transfor.h cmndline.h \
+		command.h abstree.h render.h graphics.h pixutils.h \
+		outfile.h scripts.h
+		$(CC) -c $(CFLAGS) rastxt.c
+
+molecule.o:	molecule.c molecule.h rasmol.h command.h abstree.h \
+		transfor.h render.h
+		$(CC) -c $(CFLAGS) molecule.c
+
+infile.o:	infile.c infile.h rasmol.h abstree.h cmndline.h command.h \
+		molecule.h transfor.h
+		$(CC) -c $(CFLAGS) infile.c
+
+transfor.o:	transfor.c transfor.h rasmol.h abstree.h cmndline.h \
+		command.h molecule.h render.h graphics.h
+		$(CC) -c $(CFLAGS) transfor.c
+
+cmndline.o:	cmndline.c cmndline.h rasmol.h graphics.h
+		$(CC) -c $(CFLAGS) cmndline.c
+
+command.o:	command.c command.h rasmol.h tokens.h abstree.h \
+		molecule.h transfor.h cmndline.h render.h graphics.h \
+		pixutils.h outfile.h
+		$(CC) -c $(CFLAGS) command.c
+
+tokens.o:	tokens.c tokens.h
+		$(CC) -c $(CFLAGS) tokens.c
+
+abstree.o:	abstree.c abstree.h rasmol.h molecule.h
+		$(CC) -c $(CFLAGS) abstree.c
+
+render.o:	render.c render.h rasmol.h molecule.h transfor.h \
+		command.h abstree.h graphics.h pixutils.h
+		$(CC) -c $(CFLAGS) render.c
+
+repres.o:	repres.c repres.h rasmol.h
+		$(CC) -c $(CFLAGS) repres.c
+
+x11win.o:	x11win.c graphics.h rasmol.h bitmaps.h command.h render.h
+		$(CC) -c $(CFLAGS) x11win.c
+
+pixutils.o:	pixutils.c pixutils.h rasmol.h font.h molecule.h \
+		transfor.h render.h graphics.h
+		$(CC) -c $(CFLAGS) pixutils.c
+
+outfile.o:	outfile.c outfile.h rasmol.h molecule.h command.h \
+		abstree.h transfor.h render.h graphics.h pixutils.h \
+		scripts.h
+		$(CC) -c $(CFLAGS) outfile.c
+
+scripts.o:	scripts.c scripts.h rasmol.h molecule.h command.h \
+		abstree.h transfor.h render.h graphics.h pixutils.h
+		$(CC) -c $(CFLAGS) scripts.c
+
+
+esv:		$(X11SRCS) $(X11INCS)
+		cc -systype bsd43 -O3 -Olimit 600 -s -o rasmol \
+		-I/bsd43/usr/include -I/usr/include $(X11SRCS) $(EXTLIBS)
+		rm *.u
+
+cflow:
+		cflow -I/usr/local/include $(X11SRCS)
+
+clean:
+		rm -f rasmol rasmol.o x11win.o
+		rm -f rastxt rastxt.o
+		rm -f $(OBJS)
