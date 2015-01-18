@@ -1,0 +1,17 @@
+
+RasMol Version 2.6.4 is a minor update of the RasMol molecuar graphics
+package.  This update includes mainly minor bug fixes and portability
+enhancements.  I'm not actively working on improving RasMol, alas the 
+commercial exploitation of RasMol provides little motivation for me to 
+work on major enhancements for the public domain.  Fortunately, RasMol 
+already provides most of the functionality required by its 100,000+ 
+users.  However over the last few years I have made a significant 
+number of small changes to the version I use internally.  As these fix 
+a number of portability problems that are becoming more widespread, 
+I thought it was time to release this internal version and prevent 
+"bit rot".
+
+Questions are best sent to the rasmol mailing list organized by Eric 
+Martz (and his group) at the University of Massachusetts at Amherst. 
+They have a RasMol WWW page at http://www.umass.edu/microbio/rasmol/
+
