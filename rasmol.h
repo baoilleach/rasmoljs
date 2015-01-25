@@ -12,7 +12,7 @@
 /* #define IBMPC        */
 /* #define MSWIN        */
 /* #define APPLEMAC     */
-#define X11WIN
+
 #define UNIX
 
 #define DIALBOX
