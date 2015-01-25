@@ -269,6 +269,23 @@ int CreateImage( void )
 
 void TransferImage( void )
 {
+  Pixel __huge *src;
+  int x, y;
+  Uint32 *dst;
+
+  if (SDL_MUSTLOCK(Screen)) SDL_LockSurface(Screen);
+  
+  dst = (Uint32 *)Screen->pixels;
+  src = FBuffer;
+  for( y=0; y<YRange; y++ ) {
+    for( x=0; x<XRange; x++ ) {
+      *dst++ = *src++;
+    }
+  }
+  
+  if (SDL_MUSTLOCK(Screen)) SDL_UnlockSurface(Screen);
+  
+  SDL_Flip(Screen);
 }
 
 
@@ -470,13 +487,8 @@ static struct {
             { "xyz",        FormatXYZ      }
                                 };
 
-int SdlMain()
-{
-  Pixel __huge *src;
-  int i, x, y;
-  SDL_PixelFormat* format;
-  Uint32 *dst;
-  
+int InitializeSDL()
+{  
   if(SDL_Init(SDL_INIT_VIDEO)<0) {
     printf("Failed SDL_Init %s\n", SDL_GetError());
     return False;
@@ -488,24 +500,25 @@ int SdlMain()
     SDL_Quit();
     return False;
   }
-  format = Screen->format;
   
-  if (SDL_MUSTLOCK(Screen)) SDL_LockSurface(Screen);
-  dst = (Uint32 *)Screen->pixels;
-  src = FBuffer;
-  for( y=0; y<YRange; y++ ) {
-    for( x=0; x<XRange; x++ ) {
-      *dst++ = *src++;
-    }
-  }
-  if (SDL_MUSTLOCK(Screen)) SDL_UnlockSurface(Screen);
-  SDL_Flip(Screen);
-  SDL_Delay(2000);
-  SDL_Quit();
+  TransferImage();
   
   return True;
 }
 
+void MainLoop()
+{
+  SDL_Event event;
+  int quit = False;
+  
+  while(quit==False) {
+    while(SDL_PollEvent(&event)) {
+      if(event.type == SDL_QUIT)
+        quit = True;
+    }
+  }
+  
+}
 
 int main( int argc, char *argv[] )
 {
@@ -536,7 +549,10 @@ int main( int argc, char *argv[] )
     EnableWireframe(CylinderFlag,40);
     RefreshScreen();    
 
-    SdlMain();
+    InitializeSDL();
+    MainLoop();
+    
+    SDL_Quit();
     return 0;
 }
 
