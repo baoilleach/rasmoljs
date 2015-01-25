@@ -3,6 +3,15 @@
  * Roger Sayle, December 1998
  * Version 2.6.4
  */
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
+#include <SDL/SDL.h>
+static SDL_Surface* Screen;
+
+
+
 #ifndef sun386
 #include <stdlib.h>
 #endif
@@ -461,105 +470,53 @@ static struct {
             { "xyz",        FormatXYZ      }
                                 };
 
-
-static void ProcessOptions( int argc, char *argv[] )
+int SdlMain()
 {
-    register char *ptr;
-    register int i,j;
+  Pixel __huge *src;
+  int i, x, y;
+  SDL_PixelFormat* format;
+  Uint32 *dst;
+  
+  if(SDL_Init(SDL_INIT_VIDEO)<0) {
+    printf("Failed SDL_Init %s\n", SDL_GetError());
+    return False;
+  }
 
-    for( i=1; i<argc; i++ )
-    {   ptr = argv[i];
-        if( (*ptr=='-') && ptr[1] )
-        {   ptr++;
-
-            if( !strcmp(ptr,"prof") ||
-                !strcmp(ptr,"profile") )
-            {   ProfCount = 200;
-            } else if( !strcmp(ptr,"noconnect") )
-            {   CalcBondsFlag = False;
-            } else if( !strcmp(ptr,"connect") )
-            {   CalcBondsFlag = True;
-
-            } else if( !strcmp(ptr,"script") )
-            {   if( i == argc-1 ) DisplayUsage();
-                ScriptNamePtr = argv[++i];
-            } else if( !strcmp(ptr,"insecure") )
-            {   AllowWrite = True;
-            } else if( !strcmp(ptr,"width") ||
-                       !strcmp(ptr,"wide") )
-            {   if( i == argc-1 ) DisplayUsage();
-                InitialWide = atoi(argv[++i]);
-                if( InitialWide < 48 )
-                    InitialWide = 48;
-            } else if( !strcmp(ptr,"height") ||
-                       !strcmp(ptr,"high") )
-            {   if( i == argc-1 ) DisplayUsage();
-                InitialHigh = atoi(argv[++i]);
-                if( InitialHigh < 48 )
-                    InitialHigh = 48;
-
-            } else if( !strcmp(ptr,"sybyl") )
-            {   FileFormat = FormatMol2;
-            } else if( !strcmp(ptr,"pdbnmr") )
-            {   FileFormat = FormatNMRPDB;
-#ifdef CEXIOLIB
-            } else if( !strcmp(ptr,"cex") )
-            {   FileFormat = FormatCEX;
-#endif
-
-            } else  /* File Formats! */
-            {   for( j=0; j<FORMATOPTMAX; j++ )
-                    if( !strcmp(ptr,FormatOpt[j].ident) )
-                    {   FileFormat = FormatOpt[j].format;
-                        break;
-                    }
-
-                if( j==FORMATOPTMAX )
-                    DisplayUsage();
-            }
-        } else
-            if( !FileNamePtr )
-            {   FileNamePtr = ptr;
-            } else DisplayUsage();
+  Screen=SDL_SetVideoMode(InitialWide,InitialHigh,32,SDL_ANYFORMAT);
+  if(Screen==NULL) {
+    printf("Failed SDL_SetVideoMode: %s\n", SDL_GetError());
+    SDL_Quit();
+    return False;
+  }
+  format = Screen->format;
+  
+  if (SDL_MUSTLOCK(Screen)) SDL_LockSurface(Screen);
+  dst = (Uint32 *)Screen->pixels;
+  src = FBuffer;
+  for( y=0; y<YRange; y++ ) {
+    for( x=0; x<XRange; x++ ) {
+      *dst++ = *src++;
     }
+  }
+  if (SDL_MUSTLOCK(Screen)) SDL_UnlockSurface(Screen);
+  SDL_Flip(Screen);
+  SDL_Delay(2000);
+  SDL_Quit();
+  
+  return True;
 }
 
 
 int main( int argc, char *argv[] )
 {
-    register FILE *fp;
     register int done;
-    register char ch;
 
     InitDefaultValues();
-    ProcessOptions(argc,argv);
+
     ReDrawFlag = 0;
-    
-    setbuf(OutFp,(char *)NULL);
-    OpenDisplay(InitialWide,InitialHigh);
-    InitTerminal();
 
-#ifdef UNIX
-    signal(SIGINT,RasMolSignalExit);
-    signal(SIGPIPE,SIG_IGN);
-#endif
+    done = OpenDisplay(InitialWide,InitialHigh);
 
-    WriteString("RasMol Molecular Renderer\n");
-    WriteString("Roger Sayle, December 1998\n");
-    WriteString("Version 2.6.4\n");
-
-#ifdef EIGHTBIT
-    WriteString("[8bit version]\n\n");
-#endif
-#ifdef SIXTEENBIT
-    WriteString("[16bit version]\n\n");
-#endif
-#ifdef THIRTYTWOBIT
-    WriteString("[32bit version]\n\n");
-#endif
-
-    InitialiseCmndLine();
-    InitialiseCommand();
     InitialiseTransform();
     InitialiseDatabase();
     InitialiseRenderer();
@@ -567,75 +524,19 @@ int main( int argc, char *argv[] )
     InitialiseAbstree();
     InitialiseOutFile();
     InitialiseRepres();
-
-    if( ProfCount )
-    {   if( FileNamePtr )
-        {   strcpy(DataFileName,FileNamePtr);
-
-            if( strcmp(FileNamePtr,"-") )
-            {   done = FetchFile(FileFormat,True,FileNamePtr);
-            } else done = ProcessFile(FileFormat,True,stdin);
-            if( !done )
-                RasMolFatalExit("Profile Error: Unable to read data file!");
-        } else RasMolFatalExit("Profile Error: No molecule filename!");
-
-        ReDrawFlag |= RFRefresh | RFColour;
-
-        /* SetVanWaalRadius(); */
-        /* CPKColourAttrib();  */
-
-        FakeSpecular = True;
-        ScaleColourAttrib(GroupAttr);
-        SetRibbonCartoons();
-        EnableWireframe(WireFlag,0);
-        RefreshScreen();
-
-        /* Avoid Pending Events */
-        ProfileExecution();
-        RasMolExit();
+    
+    FileFormat = FormatPDB;
+    done = FetchFile(FileFormat,True,"pdb1crn.ent");
+    if( !done ) {
+      RasMolFatalExit("Profile Error: Unable to read data file!");
     }
+    DefaultRepresentation();
+ 
+    SetRadiusValue(120);
+    EnableWireframe(CylinderFlag,40);
+    RefreshScreen();    
 
-    if( FileNamePtr )
-    {   strcpy(DataFileName,FileNamePtr);
-
-        if( !strcmp(FileNamePtr,"-") )
-        {   done = ProcessFile(FileFormat,True,stdin);
-        } else done = FetchFile(FileFormat,True,FileNamePtr);
-
-        if( done )
-        {   DefaultRepresentation();
-            RefreshScreen();
-        }
-    }
-
-    ResetCommandLine(1);
-
-    LoadInitFile();
-    if( ScriptNamePtr )
-    {   if( !(fp=fopen(ScriptNamePtr,"rb")) )
-        {   fprintf(OutFp,"Error: File '%s' not found!\n",ScriptNamePtr);
-        } else LoadScriptFile(fp,ScriptNamePtr);
-    }
-
-    if( FileNamePtr && !strcmp(FileNamePtr,"-") )
-    {   /* Finished Processing after stdin? */
-        RasMolExit();
-    }
-
-
-    done = False;
-    while( !done )
-    {   /* Command Line Only! */
-        ch = ReadCharacter();
-        if( ProcessCharacter(ch) )
-        {   if( !ExecuteCommand() )
-            {   RefreshScreen();
-                if( !CommandActive )
-                    ResetCommandLine(0);
-            } else done = True;
-        }
-    }
-    RasMolExit();
+    SdlMain();
     return 0;
 }
 
