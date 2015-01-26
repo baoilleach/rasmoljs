@@ -279,7 +279,13 @@ void TransferImage( void )
   src = FBuffer;
   for( y=0; y<YRange; y++ ) {
     for( x=0; x<XRange; x++ ) {
+#ifdef EMSCRIPTEN // Swap Red and Blue
+      Pixel pix = *src;
+      *dst++ = (pix>>16)&0x0000ff | (pix&0x00ff00) | (pix&0x0000ff)<<16;
+      src++;
+#else
       *dst++ = *src++;
+#endif      
     }
   }
   
