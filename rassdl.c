@@ -415,6 +415,7 @@ void RefreshScreen( void )
         {   if( ReDrawFlag & RFApply ) 
                 ApplyTransform();
             DrawFrame();
+            TransferImage();
         }
         ReDrawFlag = 0;
     }
@@ -449,7 +450,7 @@ static void ProfileExecution( void )
 
 static void InitDefaultValues( void )
 {
-    Interactive = False;
+    Interactive = True;
 
     FileNamePtr = NULL;
     ScriptNamePtr = NULL;
@@ -507,9 +508,36 @@ int InitializeSDL()
     return False;
   }
   
-  TransferImage();
-  
   return True;
+}
+
+static int GetStatus(SDL_MouseButtonEvent bevent)
+{
+  int status = 0;
+  Uint8 *keys;
+  
+  switch(bevent.button)
+  {
+    case SDL_BUTTON_LEFT:
+      status |= MMLft;
+      break;
+    case SDL_BUTTON_RIGHT:
+      status |= MMRgt;
+      break;
+    case SDL_BUTTON_MIDDLE:
+      status |= MMMid;
+      break;
+    default:
+      break;
+  }
+
+  keys = SDL_GetKeyState(NULL);
+  if ( keys[SDLK_LSHIFT] == SDL_PRESSED )
+    status |= MMSft;
+  if ( keys[SDLK_LCTRL] == SDL_PRESSED )
+    status |= MMCtl;
+    
+  return status;
 }
 
 void MainLoop()
@@ -519,9 +547,26 @@ void MainLoop()
   
   while(quit==False) {
     while(SDL_PollEvent(&event)) {
-      if(event.type == SDL_QUIT)
+      switch(event.type)
+      {
+      case SDL_QUIT:
         quit = True;
+        break;
+      case SDL_MOUSEBUTTONDOWN:
+        ProcessMouseDown(event.button.x, event.button.y, GetStatus(event.button));
+        break;
+      case SDL_MOUSEBUTTONUP:
+        ProcessMouseUp(event.button.x, event.button.y, GetStatus(event.button));
+        break;
+      case SDL_MOUSEMOTION:
+        ProcessMouseMove(event.button.x, event.button.y, GetStatus(event.button));
+        break;
+      default:
+        break;
+      }
     }
+    if(ReDrawFlag)
+      RefreshScreen();
   }
   
 }
@@ -536,6 +581,8 @@ int main( int argc, char *argv[] )
 
     done = OpenDisplay(InitialWide,InitialHigh);
 
+    InitialiseCmndLine();
+    InitialiseCommand();
     InitialiseTransform();
     InitialiseDatabase();
     InitialiseRenderer();
@@ -553,9 +600,10 @@ int main( int argc, char *argv[] )
  
     SetRadiusValue(120);
     EnableWireframe(CylinderFlag,40);
-    RefreshScreen();    
-
+    
     InitializeSDL();
+    RefreshScreen();
+    
     MainLoop();
     
     SDL_Quit();
