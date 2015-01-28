@@ -279,7 +279,7 @@ void TransferImage( void )
   src = FBuffer;
   for( y=0; y<YRange; y++ ) {
     for( x=0; x<XRange; x++ ) {
-#ifdef EMSCRIPTEN // Swap Red and Blue
+#ifdef __EMSCRIPTEN__ // Swap Red and Blue
       Pixel pix = *src;
       *dst++ = (pix>>16)&0x0000ff | (pix&0x00ff00) | (pix&0x0000ff)<<16;
       src++;
@@ -531,7 +531,11 @@ static int GetStatus(SDL_MouseButtonEvent bevent)
       break;
   }
 
+#ifdef __EMSCRIPTEN__
+  keys = SDL_GetKeyboardState(NULL);
+#else
   keys = SDL_GetKeyState(NULL);
+#endif
   if ( keys[SDLK_LSHIFT] == SDL_PRESSED )
     status |= MMSft;
   if ( keys[SDLK_LCTRL] == SDL_PRESSED )
@@ -543,32 +547,28 @@ static int GetStatus(SDL_MouseButtonEvent bevent)
 void MainLoop()
 {
   SDL_Event event;
-  int quit = False;
-  
-  while(quit==False) {
-    while(SDL_PollEvent(&event)) {
-      switch(event.type)
-      {
-      case SDL_QUIT:
-        quit = True;
-        break;
-      case SDL_MOUSEBUTTONDOWN:
-        ProcessMouseDown(event.button.x, event.button.y, GetStatus(event.button));
-        break;
-      case SDL_MOUSEBUTTONUP:
-        ProcessMouseUp(event.button.x, event.button.y, GetStatus(event.button));
-        break;
-      case SDL_MOUSEMOTION:
-        ProcessMouseMove(event.button.x, event.button.y, GetStatus(event.button));
-        break;
-      default:
-        break;
-      }
+  while(SDL_PollEvent(&event)) {
+    switch(event.type)
+    {
+    case SDL_QUIT:
+      SDL_Quit();
+      exit(0);
+      break;
+    case SDL_MOUSEBUTTONDOWN:
+      ProcessMouseDown(event.button.x, event.button.y, GetStatus(event.button));
+      break;
+    case SDL_MOUSEBUTTONUP:
+      ProcessMouseUp(event.button.x, event.button.y, GetStatus(event.button));
+      break;
+    case SDL_MOUSEMOTION:
+      ProcessMouseMove(event.button.x, event.button.y, GetStatus(event.button));
+      break;
+    default:
+      break;
     }
-    if(ReDrawFlag)
-      RefreshScreen();
   }
-  
+  if(ReDrawFlag)
+    RefreshScreen();
 }
 
 int main( int argc, char *argv[] )
@@ -603,10 +603,13 @@ int main( int argc, char *argv[] )
     
     InitializeSDL();
     RefreshScreen();
-    
-    MainLoop();
-    
-    SDL_Quit();
+
+#ifdef __EMSCRIPTEN__
+    emscripten_set_main_loop(MainLoop, 0, True);
+#else    
+    while(True)
+      MainLoop();
+#endif    
     return 0;
 }
 
