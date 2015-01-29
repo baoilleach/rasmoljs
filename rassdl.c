@@ -501,13 +501,13 @@ int InitializeSDL()
     return False;
   }
 
-  Screen=SDL_SetVideoMode(InitialWide,InitialHigh,32,SDL_ANYFORMAT);
+  Screen=SDL_SetVideoMode(InitialWide,InitialHigh,32,SDL_ANYFORMAT|SDL_RESIZABLE);
   if(Screen==NULL) {
     printf("Failed SDL_SetVideoMode: %s\n", SDL_GetError());
     SDL_Quit();
     return False;
   }
-  
+  SDL_WM_SetCaption("Rasmol 2.6.4", NULL);
   return True;
 }
 
@@ -562,6 +562,14 @@ void MainLoop()
       break;
     case SDL_MOUSEMOTION:
       ProcessMouseMove(event.button.x, event.button.y, GetStatus(event.button));
+      break;
+    case SDL_VIDEORESIZE:
+      Screen = SDL_SetVideoMode( event.resize.w, event.resize.h, 32, SDL_ANYFORMAT | SDL_RESIZABLE );
+      XRange = event.resize.w;   WRange = XRange>>1;
+      YRange = event.resize.h;   HRange = YRange>>1;
+      Range = MinFun(XRange, YRange);
+      ReDrawFlag |= RFReSize;
+      ReSizeScreen();
       break;
     default:
       break;
