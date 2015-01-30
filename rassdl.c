@@ -579,15 +579,33 @@ void MainLoop()
     RefreshScreen();
 }
 
+void HandleCommand(const char* command)
+{
+  if (strlen(command) >= MAXBUFFLEN-1)
+    return;
+    
+  strcpy(CurLine, command);
+  ExecuteCommand();
+}
+
 int main( int argc, char *argv[] )
 {
+    register FILE *fp;
     register int done;
+    register char ch;
 
     InitDefaultValues();
 
     ReDrawFlag = 0;
+    
+    setbuf(OutFp,(char *)NULL);
+    OpenDisplay(InitialWide,InitialHigh);
+    InitTerminal();
 
-    done = OpenDisplay(InitialWide,InitialHigh);
+    WriteString("RasMol Molecular Renderer\n");
+    WriteString("Roger Sayle, December 1998\n");
+    WriteString("Version 2.6.4\n");
+    WriteString("[32bit version]\n\n");
 
     InitialiseCmndLine();
     InitialiseCommand();
@@ -599,11 +617,8 @@ int main( int argc, char *argv[] )
     InitialiseOutFile();
     InitialiseRepres();
     
-    FileFormat = FormatPDB;
-    done = FetchFile(FileFormat,True,"pdb1crn.ent");
-    if( !done ) {
-      RasMolFatalExit("Profile Error: Unable to read data file!");
-    }
+    HandleCommand("load pdb1crn.ent");
+    
     DefaultRepresentation();
  
     SetRadiusValue(120);
@@ -611,6 +626,8 @@ int main( int argc, char *argv[] )
     
     InitializeSDL();
     RefreshScreen();
+
+    ResetCommandLine(1);
 
 #ifdef __EMSCRIPTEN__
     emscripten_set_main_loop(MainLoop, 0, True);
