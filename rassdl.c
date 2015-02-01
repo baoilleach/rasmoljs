@@ -87,7 +87,43 @@ void WriteChar( int ch )
 
 
 void WriteString( char *ptr )
-{   fputs(ptr,OutFp);
+{
+#ifdef __EMSCRIPTEN__
+  char buf[MAXBUFFLEN];
+  char *start = "$('#terminal').terminal().echo(\"";
+  char *end = "\");";
+  char *dst, *src;
+  int i;
+  
+  dst = buf;
+  src = start;
+  while(*src != '\0')
+  {
+    *dst++ = *src++;
+  }
+  src = ptr;
+  while(*src != '\0')
+  {
+    if (*src == '\n') { // Replace with literal \n
+      *dst++ = '\\';
+      *dst++ = 'n';
+      src++;
+    }
+    else
+      *dst++ = *src++;
+  }
+  src = end;
+  while(*src != '\0')
+  {
+    *dst++ = *src++;
+  }
+  *dst = '\0';
+  //for (i=0; i<strlen(buf); i++)
+  //  printf("%c (%d) ", buf[i], buf[i]);
+  emscripten_run_script(buf);
+#else
+  fputs(ptr,OutFp);
+#endif
 }
 
 
@@ -281,7 +317,7 @@ void TransferImage( void )
     for( x=0; x<XRange; x++ ) {
 #ifdef __EMSCRIPTEN__ // Swap Red and Blue
       Pixel pix = *src;
-      *dst++ = (pix>>16)&0x0000ff | (pix&0x00ff00) | (pix&0x0000ff)<<16;
+      *dst++ = ((pix>>16)&0x0000ff) | (pix&0x00ff00) | (pix&0x0000ff)<<16;
       src++;
 #else
       *dst++ = *src++;
