@@ -82,7 +82,14 @@ static int ProfCount;
 
 
 void WriteChar( int ch )
-{   putc(ch,OutFp);
+{   
+#ifdef __EMSCRIPTEN__
+  char buf[2];
+  buf[0] = ch; buf[1] = '\0';
+  WriteString(buf);
+#else
+  putc(ch,OutFp);
+#endif
 }
 
 
@@ -90,7 +97,7 @@ void WriteString( char *ptr )
 {
 #ifdef __EMSCRIPTEN__
   char buf[MAXBUFFLEN];
-  char *start = "$('#terminal').terminal().echo(\"";
+  char *start = "handleEcho(\"";
   char *end = "\");";
   char *dst, *src;
   int i;
@@ -663,11 +670,10 @@ int main( int argc, char *argv[] )
     InitializeSDL();
     RefreshScreen();
 
-    ResetCommandLine(1);
-
 #ifdef __EMSCRIPTEN__
     emscripten_set_main_loop(MainLoop, 0, True);
 #else    
+    ResetCommandLine(1);
     while(True)
       MainLoop();
 #endif    
