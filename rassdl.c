@@ -76,6 +76,7 @@ static int InitialHigh;
 
 static char *FileNamePtr;
 static char *ScriptNamePtr;
+static int LabelOptFlag;
 static int FileFormat;
 static int ProfCount;
 
@@ -438,6 +439,209 @@ int OpenDisplay( int x, int y )
 void AdviseUpdate( int item )
 {
     UnusedArgument(item);
+}
+
+void HandleMenu( int hand )
+{
+    register int menu;
+    register int item;
+    register int mask;
+
+    menu = hand>>8;
+    item = hand&0xff;
+    switch( menu )
+    {   case(0):  /* File Menu */
+                  switch( item )
+                  {   case(1):  /* Open */
+                                if( !Database )
+                                    ResetCommandLine(2);
+                                break;
+
+                      case(2):  /* Save As */
+                                if( Database )
+                                    ResetCommandLine(4);
+                                break;
+
+                      case(3):  /* Close */
+                                ZapDatabase();
+                                break;
+
+                      case(5):  /* Exit */
+                                RasMolExit();
+                                break;
+                  } 
+                  break;
+
+        case(1):  /* Display Menu */
+                  switch( item )
+                  {   case(1):  /* Wireframe */
+                                DisableSpacefill();
+                                EnableWireframe(WireFlag,0);
+                                SetRibbonStatus(False,0,0);
+                                DisableBackbone();
+                                ReDrawFlag |= RFRefresh;
+                                break;
+
+                      case(2):  /* Backbone */
+                                DisableSpacefill();
+                                DisableWireframe();
+                                SetRibbonStatus(False,0,0);
+                                EnableBackbone(CylinderFlag,80);
+                                ReDrawFlag |= RFRefresh;
+                                break;
+
+                      case(3):  /* Sticks */
+                                DisableSpacefill();
+                                if( MainAtomCount<256 )
+                                {   EnableWireframe(CylinderFlag,40);
+                                } else EnableWireframe(CylinderFlag,80);
+                                SetRibbonStatus(False,0,0);
+                                ReDrawFlag |= RFRefresh;
+                                DisableBackbone();
+                                break;
+
+                      case(4):  /* Spheres */
+                                SetVanWaalRadius();
+                                DisableWireframe();
+                                SetRibbonStatus(False,0,0);
+                                DisableBackbone();
+                                ReDrawFlag |= RFRefresh;
+                                break;
+
+                      case(5):  /* Ball & Stick */
+                                SetRadiusValue(120);
+                                EnableWireframe(CylinderFlag,40);
+                                SetRibbonStatus(False,0,0);
+                                DisableBackbone();
+                                ReDrawFlag |= RFRefresh;
+                                break;
+
+                      case(6):  /* Ribbons */
+                                DisableSpacefill();
+                                DisableWireframe();
+                                SetRibbonStatus(True,RibbonFlag,0);
+                                DisableBackbone();
+                                ReDrawFlag |= RFRefresh;
+                                break;
+
+                      case(7):  /* Strands */
+                                DisableSpacefill();
+                                DisableWireframe();
+                                SetRibbonStatus(True,StrandFlag,0);
+                                DisableBackbone();
+                                ReDrawFlag |= RFRefresh;
+                                break;
+
+                      case(8):  /* Cartoons */
+                                DisableSpacefill();
+                                DisableWireframe();
+                                SetRibbonCartoons();
+                                DisableBackbone();
+                                ReDrawFlag |= RFRefresh;
+                  }
+                  break;
+
+        case(2):  /* Colours Menu */
+                  switch( item )
+                  {   case(1):  /* Monochrome */
+                                MonoColourAttrib(255,255,255);
+                                ReDrawFlag |= RFColour;  break;
+                      case(2):  /* CPK */
+                                CPKColourAttrib();
+                                ReDrawFlag |= RFColour;  break;
+                      case(3):  /* Shapely */
+                                ShapelyColourAttrib();
+                                ReDrawFlag |= RFColour;  break;
+                      case(4):  /* Group */
+                                ScaleColourAttrib( GroupAttr );
+                                ReDrawFlag |= RFColour;  break;
+                      case(5):  /* Chain */
+                                ScaleColourAttrib( ChainAttr );
+                                ReDrawFlag |= RFColour;  break;
+                      case(6):  /* Temperature */
+                                ScaleColourAttrib( TempAttr );
+                                ReDrawFlag |= RFColour;  break;
+                      case(7):  /* Structure */
+                                StructColourAttrib();
+                                ReDrawFlag |= RFColour;  break;
+                      case(8):  /* User */
+                                UserMaskAttrib(MaskColourFlag);
+                                ReDrawFlag |= RFColour;  break;
+                  }
+                  break;
+
+        case(3):  /* Option Menu */
+                  switch( item )
+                  {   case(1):  /* Slabbing */
+                                ReDrawFlag |= RFRefresh;
+                                UseSlabPlane = !UseSlabPlane;
+                                if( UseSlabPlane )
+                                    UseShadow = False;
+                                break;
+
+                      case(2):  /* Hydrogens */
+                                mask = NormAtomFlag;
+                                if( HetaGroups )
+                                    mask |= HeteroFlag;
+                                Hydrogens = !Hydrogens;
+                                ReDrawFlag |= RFRefresh;
+                                      
+                                if( Hydrogens )
+                                {   SelectZone(mask|HydrogenFlag);
+                                } else RestrictZone(mask);
+                                break;
+
+                      case(3):  /* Hetero Atoms */
+                                mask = NormAtomFlag;
+                                if( Hydrogens )
+                                    mask |= HydrogenFlag;
+                                HetaGroups = !HetaGroups;
+                                ReDrawFlag |= RFRefresh;
+                                
+                                if( HetaGroups )
+                                {   SelectZone(mask|HeteroFlag);
+                                } else RestrictZone(mask);
+                                break;
+
+                      case(4):  /* Specular */
+                                FakeSpecular = !FakeSpecular;
+                                ReDrawFlag |= RFColour;
+                                break;
+
+                      case(5):  /* Shadows */
+                                ReDrawFlag |= RFRefresh;
+                                UseShadow = !UseShadow;
+                                if( UseShadow )
+                                {   ReviseInvMatrix();
+                                    VoxelsClean = False;
+                                    UseSlabPlane = False;
+                                    ReAllocBuffers();
+                                }
+                                break;
+
+                      case(6):  /* Stereo */
+                                if( UseStereo )
+                                {   SetStereoMode(False);
+                                } else SetStereoMode(True);
+                                ReDrawFlag |= RFRefresh;
+                                break;
+
+                      case(7):  /* Labels */
+                                LabelOptFlag = !LabelOptFlag;
+                                DefaultLabels(LabelOptFlag);
+                                ReDrawFlag |= RFRefresh;
+                                break;
+                  }
+                  break;
+
+        case(4):  /* Export Menu */
+                  ResetCommandLine(3);
+                  StateOption = item;
+                  break;
+
+        case(5):  /* Help Menu */
+                  break;
+    }
 }
 
 
