@@ -554,10 +554,40 @@ int InitializeSDL()
   return True;
 }
 
-static int GetStatus(SDL_MouseButtonEvent bevent)
+static void UpdateStatusKeys(int *status)
+{
+  Uint8 *keys;
+  
+#ifdef __EMSCRIPTEN__
+  keys = SDL_GetKeyboardState(NULL);
+#else
+  keys = SDL_GetKeyState(NULL);
+#endif
+  if ( keys[SDLK_LSHIFT] == SDL_PRESSED )
+    *status |= MMSft;
+  if ( keys[SDLK_LCTRL] == SDL_PRESSED )
+    *status |= MMCtl;
+}
+
+static int GetStatusFromMotion(SDL_MouseMotionEvent bevent)
 {
   int status = 0;
-  Uint8 *keys;
+  
+  if (bevent.state & SDL_BUTTON_LMASK)
+    status |= MMLft;
+  if (bevent.state & SDL_BUTTON_MMASK)
+    status |= MMMid;
+  if (bevent.state & SDL_BUTTON_RMASK)
+    status |= MMRgt;
+
+  UpdateStatusKeys(&status);
+
+  return status;    
+}
+
+static int GetStatusFromButton(SDL_MouseButtonEvent bevent)
+{
+  int status = 0;
   
   switch(bevent.button)
   {
@@ -574,16 +604,8 @@ static int GetStatus(SDL_MouseButtonEvent bevent)
       break;
   }
 
-#ifdef __EMSCRIPTEN__
-  keys = SDL_GetKeyboardState(NULL);
-#else
-  keys = SDL_GetKeyState(NULL);
-#endif
-  if ( keys[SDLK_LSHIFT] == SDL_PRESSED )
-    status |= MMSft;
-  if ( keys[SDLK_LCTRL] == SDL_PRESSED )
-    status |= MMCtl;
-    
+  UpdateStatusKeys(&status);
+
   return status;
 }
 
@@ -598,13 +620,13 @@ void MainLoop()
       exit(0);
       break;
     case SDL_MOUSEBUTTONDOWN:
-      ProcessMouseDown(event.button.x, event.button.y, GetStatus(event.button));
+      ProcessMouseDown(event.button.x, event.button.y, GetStatusFromButton(event.button));
       break;
     case SDL_MOUSEBUTTONUP:
-      ProcessMouseUp(event.button.x, event.button.y, GetStatus(event.button));
+      ProcessMouseUp(event.button.x, event.button.y, GetStatusFromButton(event.button));
       break;
     case SDL_MOUSEMOTION:
-      ProcessMouseMove(event.button.x, event.button.y, GetStatus(event.button));
+      ProcessMouseMove(event.button.x, event.button.y, GetStatusFromMotion(event.motion));
       break;
     case SDL_VIDEORESIZE:
       Screen = SDL_SetVideoMode( event.resize.w, event.resize.h, 32, SDL_ANYFORMAT | SDL_RESIZABLE );
