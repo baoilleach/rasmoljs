@@ -813,6 +813,16 @@ static int GetStatusFromButton(SDL_MouseButtonEvent bevent)
   return status;
 }
 
+void SetScreenSize(int width, int height)
+{
+  Screen = SDL_SetVideoMode( width, height, 32, SDL_ANYFORMAT | SDL_RESIZABLE );
+  XRange = width;   WRange = XRange>>1;
+  YRange = height;   HRange = YRange>>1;
+  Range = MinFun(XRange, YRange);
+  ReDrawFlag |= RFReSize;
+  ReSizeScreen();
+}
+
 void MainLoop()
 {
   SDL_Event event;
@@ -833,12 +843,7 @@ void MainLoop()
       ProcessMouseMove(event.button.x, event.button.y, GetStatusFromMotion(event.motion));
       break;
     case SDL_VIDEORESIZE:
-      Screen = SDL_SetVideoMode( event.resize.w, event.resize.h, 32, SDL_ANYFORMAT | SDL_RESIZABLE );
-      XRange = event.resize.w;   WRange = XRange>>1;
-      YRange = event.resize.h;   HRange = YRange>>1;
-      Range = MinFun(XRange, YRange);
-      ReDrawFlag |= RFReSize;
-      ReSizeScreen();
+      SetScreenSize(event.resize.w, event.resize.h);
       break;
     default:
       break;
