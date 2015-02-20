@@ -1,0 +1,160 @@
+#----------------------------------------------------------------------------
+#  $CX_ROOT/src/applics/rasmol/Makefile -- RasMol v2.6.4 with CEX support
+#----------------------------------------------------------------------------
+#  Usage:
+#     make ............ same as make install
+#     make all ........ makes everything, including test programs
+#     make install .... make & install  everything except test programs
+#     make clean ...... cleans out everything except sources
+#----------------------------------------------------------------------------
+#  Contributing authors and institutions: Roger Sayle, Glaxo Wellcome R&D,
+#  Modified by Dave Weininger, Daylight CIS, v033
+#  Modified by Roger Sayle, Metaphorics LLC, v121
+#
+#  This source code is contributed to the public domain and may be freely
+#  copied and redistributed for research, profit, fun or any other reason,
+#  with these restrictions: (1) unmodified or functionally equivalent code
+#  derived from CX code must contain this notice, (2) all derived code must
+#  acknowledge the author and institution, and (3) the functional definition
+#  of symbols starting CX_ or cx_ may not be changed (if you need to change
+#  a function, CHANGE THE NAME: prefixes CU_ and cu_ are suggested).
+#----------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------
+#  O/S specific definitions
+#----------------------------------------------------------------------------
+
+include $(CX_ROOT)/include/makefile.mdep
+
+BINDIR    = $(CX_ROOT)/bin
+INC       = $(CX_ROOT)/include
+RASMOLDIR = $(CX_ROOT)/lib/rasmol
+LOCALINCS = $(XINCS) -DFUNCPROTO -DRASMOLDIR=\"$(RASMOLDIR)\" -DCEXIOLIB
+APPLICS   = rasmol
+TESTPROGS =
+
+#----------------------------------------------------------------------------
+#  Installable headers (none)
+#----------------------------------------------------------------------------
+
+HEADERS	  = 
+
+#----------------------------------------------------------------------------
+#  Libraries
+#----------------------------------------------------------------------------
+
+CXLIB  = $(CX_ROOT)/lib/libcx.a
+LIBS   = $(CXLIB) $(XLIBS) $(SYSLIBS) -lm
+
+#----------------------------------------------------------------------------
+#  default, install
+#----------------------------------------------------------------------------
+
+install:	$(APPLICS)
+		@echo "Installing application programs ..." 
+		cp $(APPLICS) $(BINDIR); cd $(BINDIR); $(STRIP) $(APPLICS);
+		if [ ! -d $(RASMOLDIR) ] ; then mkdir $(RASMOLDIR); fi;
+		cp rasmol.hlp $(RASMOLDIR)
+		@echo "+-----------------------------------------------"
+		@echo "| RasMol v2.6.4 with CEX support is installed."
+		@echo "+-----------------------------------------------"
+
+#----------------------------------------------------------------------------
+#  all -- make install and testprogs
+#----------------------------------------------------------------------------
+
+all:    	install $(TESTPROGS)
+		@echo "+------------------------------------------------"
+		@echo "| RasMol v2.6.4 with CEX support is up to date.
+		@echo "+------------------------------------------------"
+
+
+#----------------------------------------------------------------------------
+#  man pages (none yet)
+#----------------------------------------------------------------------------
+
+#----------------------------------------------------------------------------
+#  program dependencies
+#----------------------------------------------------------------------------
+
+SRCS = rasmol.c cmndline.c command.c abstree.c molecule.c infile.c \
+       transfor.c render.c repres.c x11win.c pixutils.c outfile.c \
+       scripts.c cexio.c tokens.c
+
+OBJS = rasmol.o cmndline.o command.o abstree.o molecule.o infile.o \
+       transfor.o render.o repres.o x11win.o pixutils.o outfile.o \
+       scripts.o cexio.o tokens.o
+
+
+rasmol.o:	rasmol.c rasmol.h molecule.h transfor.h command.h \
+		abstree.h render.h graphics.h pixutils.h outfile.h \
+		cmndline.h repres.h infile.h
+		$(CC) -c $(CFLAGS) rasmol.c
+
+
+abstree.o:	abstree.c abstree.h rasmol.h molecule.h
+		$(CC) -c $(CFLAGS) abstree.c
+
+cmndline.o:	cmndline.c cmndline.h rasmol.h molecule.h command.h \
+		render.h graphics.h
+		$(CC) -c $(CFLAGS) cmndline.c
+
+command.o:	command.c command.h rasmol.h tokens.h abstree.h \
+		molecule.h infile.h transfor.h cmndline.h render.h \
+		repres.h graphics.h pixutils.h outfile.h scripts.h
+		$(CC) -c $(CFLAGS) command.c
+
+infile.o:	infile.c infile.h
+		$(CC) -c $(CFLAGS) infile.c
+
+molecule.o:	molecule.c molecule.h rasmol.h command.h abstree.h \
+		transfor.h render.h
+		$(CC) -c $(CFLAGS) molecule.c
+
+outfile.o:	outfile.c outfile.h rasmol.h molecule.h command.h \
+		abstree.h transfor.h render.h graphics.h pixutils.h \
+		scripts.h
+		$(CC) -c $(CFLAGS) outfile.c
+
+pixutils.o:	pixutils.c pixutils.h rasmol.h font.h molecule.h \
+		transfor.h render.h graphics.h
+		$(CC) -c $(CFLAGS) pixutils.c
+
+render.o:	render.c render.h rasmol.h molecule.h transfor.h \
+		command.h abstree.h graphics.h pixutils.h
+		$(CC) -c $(CFLAGS) render.c
+
+repres.o:	repres.c repres.h rasmol.h
+		$(CC) -c $(CFLAGS) repres.c
+
+
+scripts.o:	scripts.c scripts.h rasmol.h molecule.h command.h \
+		abstree.h transfor.h render.h graphics.h pixutils.h
+		$(CC) -c $(CFLAGS) scripts.c
+
+tokens.o:	tokens.c tokens.h
+		$(CC) -c $(CFLAGS) tokens.c
+
+transfor.o:	transfor.c transfor.h rasmol.h molecule.h command.h \
+		abstree.h render.h graphics.h
+		$(CC) -c $(CFLAGS) transfor.c
+
+x11win.o:	x11win.c graphics.h rasmol.h bitmaps.h command.h render.h
+		$(CC) -c $(CFLAGS) x11win.c
+
+
+#----------------------------------------------------------------------------
+#  programs
+#----------------------------------------------------------------------------
+
+progs:		$(APPLICS)
+
+rasmol:		$(OBJS) $(CXLIB)
+		$(PURIFY) $(CC) -o $@ $(CFLAGS) $(LDFLAGS) $(OBJS) $(LIBS)
+
+#----------------------------------------------------------------------------
+#  Clean up instructions
+#----------------------------------------------------------------------------
+
+clean:
+		rm -f *.[oa] $(TESTPROGS) $(APPLICS) *pure* core

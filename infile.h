@@ -20,6 +20,7 @@ int LoadXYZMolecule( FILE* );
 int LoadCEXMolecule( FILE* );
 
 int SaveAlchemyMolecule( char* );
+int SaveMol2Molecule( char* );
 int SavePDBMolecule( char* );
 int SaveMDLMolecule( char* );
 int SaveXYZMolecule( char* );

@@ -1,145 +1,134 @@
 # Makefile.in
 # RasMol2 Molecular Graphics
-# Roger Sayle, December 1998
-# Version 2.6.4
+# Roger Sayle, December 1999
+# Version 2.6.4+
 
-# Simply edit CC and CFLAGS for your local compiler/system
-# For Sun OpenWindows, add "-I/usr/openwin/include" to CFLAGS
+DEFS    = -DEIGHTBIT
 
-CC = gcc
-CFLAGS = -O2 -finline-functions
-
-
-#CFLAGS_sun4     = -O4
-#CFLAGS_sun3     = -O4 -f68881
-#CFLAGS_hp9000   = -O +bfpa
-#CFLAGS_sequent  = -O -f1167
-#CFLAGS_mips     = -O2 -Olimit 800
-#CFLAGS_gcc2.0   = -O2 -funroll-all-loops
-#CFLAGS_esv      = -O2 -Olimit 800 -systype bsd43
-#CFLAGS_hpux9    = -Ae +O2 +Onolimit
-#CFLAGS_hpux9new = -Ae +O4 +Onolimit +Oconservative +ESlit -I/usr/include/X11R5
-#CFLAGS_sgi      = -O2 -xansi -DFUNCPROTO
-#CFLAGS_gcc      = -O -fomit-frame-pointer -fstrength-reduce -finline-functions
-
-# For Debugging use LFLAGS = 
-LFLAGS = -s
-
-# -lXi required if using DIALBOX
-EXTLIBS = -lm -lXi -lXext -lX11
-
-# Library path required for HPUX
-# LIBS = -lm -L/usr/lib/X11R5 -lXext -lX11
-# -lXextSam required by MITSHM on RS600 AIX
-# LIBS = -lm -lXextSam -lXext -lX11
-
-# -lmmioc required for MMIO
-# -L. -lXext -lX11 -lmmioc -lm
-
-# On SUN Solaris systems when compiling RasMol with the SOCKETS option
-# LIBS = -lm -lsocket -lnsl 
-
-# Normal Libraries
-LIBS = -lm
-X11LIBS = -lXext -lX11 $(LIBS)
-
+CC      = @CC@
+CFLAGS  = @ABI@ @CFLAGS@ @COPTS2@ $(DEFS)
+LFLAGS  = @ABI@ @LFLAGS@ @LOPTS@
+LIBS    = @SYSSOCKLIBS@ -lm
+RM      = @RM@ -f
+CHMOD   = @CHMOD@
+STRIP   = @STRIP@
+WINDRES = @WINDRES@
 
 INCS = abstree.h cmndline.h command.h font.h graphics.h infile.h \
        molecule.h outfile.h pixutils.h rasmol.h render.h repres.h \
-       scripts.h tokens.h transfor.h
+       scripts.h tokens.h transfor.h tmesh.h
 
-SRCS = abstree.c cmndline.c command.c infile.c molecule.c outfile.c \
-       pixutils.c render.c repres.c scripts.c transfor.c tokens.c
-
-OBJS = abstree.o cmndline.o command.o infile.o molecule.o outfile.o \
-       pixutils.o render.o repres.o scripts.o transfor.o tokens.o
+OBJS = abstree@OBJ@ cmndline@OBJ@ command@OBJ@ infile@OBJ@ molecule@OBJ@ \
+       outfile@OBJ@ pixutils@OBJ@ render@OBJ@ repres@OBJ@ scripts@OBJ@ \
+       tokens@OBJ@ transfor@OBJ@ cad@OBJ@ tmesh@OBJ@
 
 X11INCS = $(INCS) bitmaps.h
-X11SRCS = rasmol.c x11win.c $(SRCS)
-X11OBJS = rasmol.o x11win.o $(OBJS)
+X11OBJS = rasmol@OBJ@ x11win@OBJ@ $(OBJS)
+X11LIBS = @X11LIBS@ -lXi -lXext -lX11 $(LIBS)
+
+WININCS = $(INCS) raswin.idm
+WINOBJS = raswin@OBJ@ mswin@OBJ@ $(OBJS) raswin.res
+WINLIBS = -mwindows -luser32 -lgdi32 -lcomdlg32 -lwsock32 -lshell32
 
 TXTINCS = $(INCS)
-TXTSRCS = rastxt.c $(SRCS)
-TXTOBJS = rastxt.o $(OBJS)
+TXTOBJS = rastxt@OBJ@ $(OBJS)
+TXTLIBS = $(LIBS)
 
+
+# Applications
+default:	rasmol@EXE@
+
+all:		rasmol@EXE@ rastxt@EXE@
+
+rasmol.exe:	raswin32.exe
 
 rasmol:		$(X11OBJS)
-		$(CC) -o rasmol $(LFLAGS) $(X11OBJS) $(X11LIBS)
-		chmod 755 rasmol
+		$(CC) $(LFLAGS) -o rasmol $(X11OBJS) $(X11LIBS) > /dev/null
+		$(CHMOD) 755 rasmol@EXE@
+		$(STRIP) rasmol@EXE@
 
-rasmol.o:	rasmol.c rasmol.h molecule.h transfor.h cmndline.h \
-		command.h abstree.h render.h graphics.h pixutils.h \
-		outfile.h scripts.h
-		$(CC) -c $(CFLAGS) rasmol.c
+rasmol@OBJ@:	rasmol.c $(X11INCS)
+		$(CC) $(CFLAGS) -c rasmol.c
 
-rastxt:		$(TXTOBJS)
-		$(CC) -o rastxt $(LFLAGS) $(TXTOBJS) $(LIBS)
-		chmod 755 rastxt
+rastxt@EXE@:	$(TXTOBJS)
+		$(CC) $(LFLAGS) -o rastxt $(TXTOBJS) $(TXTLIBS) > /dev/null
+		$(CHMOD) 755 rastxt@EXE@
+		$(STRIP) rastxt@EXE@
 
-rastxt.o:	rastxt.c rasmol.h molecule.h transfor.h cmndline.h \
-		command.h abstree.h render.h graphics.h pixutils.h \
-		outfile.h scripts.h
-		$(CC) -c $(CFLAGS) rastxt.c
-
-molecule.o:	molecule.c molecule.h rasmol.h command.h abstree.h \
-		transfor.h render.h
-		$(CC) -c $(CFLAGS) molecule.c
-
-infile.o:	infile.c infile.h rasmol.h abstree.h cmndline.h command.h \
-		molecule.h transfor.h
-		$(CC) -c $(CFLAGS) infile.c
-
-transfor.o:	transfor.c transfor.h rasmol.h abstree.h cmndline.h \
-		command.h molecule.h render.h graphics.h
-		$(CC) -c $(CFLAGS) transfor.c
-
-cmndline.o:	cmndline.c cmndline.h rasmol.h graphics.h
-		$(CC) -c $(CFLAGS) cmndline.c
-
-command.o:	command.c command.h rasmol.h tokens.h abstree.h \
-		molecule.h transfor.h cmndline.h render.h graphics.h \
-		pixutils.h outfile.h
-		$(CC) -c $(CFLAGS) command.c
-
-tokens.o:	tokens.c tokens.h
-		$(CC) -c $(CFLAGS) tokens.c
-
-abstree.o:	abstree.c abstree.h rasmol.h molecule.h
-		$(CC) -c $(CFLAGS) abstree.c
-
-render.o:	render.c render.h rasmol.h molecule.h transfor.h \
-		command.h abstree.h graphics.h pixutils.h
-		$(CC) -c $(CFLAGS) render.c
-
-repres.o:	repres.c repres.h rasmol.h
-		$(CC) -c $(CFLAGS) repres.c
-
-x11win.o:	x11win.c graphics.h rasmol.h bitmaps.h command.h render.h
-		$(CC) -c $(CFLAGS) x11win.c
-
-pixutils.o:	pixutils.c pixutils.h rasmol.h font.h molecule.h \
-		transfor.h render.h graphics.h
-		$(CC) -c $(CFLAGS) pixutils.c
-
-outfile.o:	outfile.c outfile.h rasmol.h molecule.h command.h \
-		abstree.h transfor.h render.h graphics.h pixutils.h \
-		scripts.h
-		$(CC) -c $(CFLAGS) outfile.c
-
-scripts.o:	scripts.c scripts.h rasmol.h molecule.h command.h \
-		abstree.h transfor.h render.h graphics.h pixutils.h
-		$(CC) -c $(CFLAGS) scripts.c
+rastxt@OBJ@:	rastxt.c $(TXTINCS)
+		$(CC) $(CFLAGS) -c rastxt.c
 
 
-esv:		$(X11SRCS) $(X11INCS)
-		cc -systype bsd43 -O3 -Olimit 600 -s -o rasmol \
-		-I/bsd43/usr/include -I/usr/include $(X11SRCS) $(EXTLIBS)
-		rm *.u
+raswin32.exe:	$(WINOBJS)
+		$(CC) $(LFLAGS) -o raswin32 $(WINOBJS) $(WINLIBS)
 
-cflow:
-		cflow -I/usr/local/include $(X11SRCS)
+raswin@OBJ@:	raswin.c $(WININCS)
+		$(CC) $(CFLAGS) -c raswin.c
+
+raswin.res:	raswin.rc raswin.cur raswin.ico
+		$(WINDRES) raswin.res raswin.rc
+
+
+# Common Libraries
+abstree@OBJ@:	abstree.c $(INCS)
+		$(CC) $(CFLAGS) -c abstree.c
+
+cmndline@OBJ@:	cmndline.c $(INCS)
+		$(CC) $(CFLAGS) -c cmndline.c
+
+command@OBJ@:	command.c $(INCS)
+		$(CC) $(CFLAGS) -c command.c
+
+infile@OBJ@:	infile.c $(INCS)
+		$(CC) $(CFLAGS) -c infile.c
+
+molecule@OBJ@:	molecule.c $(INCS)
+		$(CC) $(CFLAGS) -c molecule.c
+
+outfile@OBJ@:	outfile.c $(INCS)
+		$(CC) $(CFLAGS) -c outfile.c
+
+pixutils@OBJ@:	pixutils.c $(INCS)
+		$(CC) $(CFLAGS) -c pixutils.c
+
+render@OBJ@:	render.c $(INCS)
+		$(CC) $(CFLAGS) -c render.c
+
+repres@OBJ@:	repres.c $(INCS)
+		$(CC) $(CFLAGS) -c repres.c
+
+scripts@OBJ@:	scripts.c $(INCS)
+		$(CC) $(CFLAGS) -c scripts.c
+
+tokens@OBJ@:	tokens.c $(INCS)
+		$(CC) $(CFLAGS) -c tokens.c
+
+transfor@OBJ@:	transfor.c $(INCS)
+		$(CC) $(CFLAGS) -c transfor.c
+
+cad@OBJ@:	cad.c $(INCS)
+		$(CC) $(CFLAGS) -c cad.c
+
+tmesh@OBJ@:	tmesh.c $(INCS)
+		$(CC) $(CFLAGS) -c tmesh.c
+
+
+
+x11win@OBJ@:	x11win.c $(X11INCS)
+		$(CC) $(CFLAGS) @X11INCS@ -c x11win.c
+
+mswin@OBJ@:	mswin.c $(WININCS)
+		$(CC) $(CFLAGS) -c mswin.c
+
+cexio@OBJ@:	cexio.c $(INCS)
+		$(CC) $(CFLAGS) -c cexio.c
+
 
 clean:
-		rm -f rasmol rasmol.o x11win.o
-		rm -f rastxt rastxt.o
-		rm -f $(OBJS)
+		$(RM) rasmol rasmol.exe rastxt rastxt.exe
+		$(RM) raswin32.exe raswin.res
+		$(RM) *.o *.obj *.u core
+
+distclean:	clean
+		$(RM) Makefile
+

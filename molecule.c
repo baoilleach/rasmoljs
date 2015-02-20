@@ -158,7 +158,7 @@ void DescribeMolecule( void )
     sprintf(buffer,"Number of Atoms ..... %ld",(long)MainAtomCount);
     WriteString(buffer);
     if( HetaAtomCount )
-    {   sprintf(buffer," (%d)\n",HetaAtomCount);
+    {   sprintf(buffer," (%ld)\n",(long)HetaAtomCount);
         WriteString(buffer);
     } else WriteChar('\n');
 
@@ -231,13 +231,13 @@ void CreateChain( int ident )
             CurMolecule = (Molecule __far *)_fmalloc(sizeof(Molecule));
             if( !CurMolecule ) FatalDataError("Memory allocation failed");
             RegisterAlloc( CurMolecule );
-        } else FreeMolecule = (void __far*)0;
+        } else FreeMolecule = (Molecule __far*)0;
 
-        CurChain = (void __far*)0;
-        CurMolecule->slist = (void __far*)0;
-        CurMolecule->hlist = (void __far*)0;
-        CurMolecule->blist = (void __far*)0;
-        CurMolecule->clist = (void __far*)0;
+        CurChain = (Chain __far*)0;
+        CurMolecule->slist = (HBond __far*)0;
+        CurMolecule->hlist = (HBond __far*)0;
+        CurMolecule->clist = (Chain __far*)0;
+        CurMolecule->blist = (Bond __far*)0;
         Database = CurMolecule;
     }
 
@@ -260,13 +260,13 @@ void CreateChain( int ident )
     if( prev )
     {   prev->cnext = CurChain;
     } else CurMolecule->clist = CurChain;
-    CurChain->cnext = (void __far*)0;
+    CurChain->cnext = (Chain __far*)0;
      
     CurChain->ident = ident;
     CurChain->model = NMRModel;
-    CurChain->glist = (void __far*)0;
-    CurChain->blist = (void __far*)0;
-    CurGroup = (void __far*)0;
+    CurChain->glist = (Group __far*)0;
+    CurChain->blist = (Bond __far*)0;
+    CurGroup = (Group __far*)0;
     Info.chaincount++;
 
     Cache = (Group __far*)0;
@@ -298,13 +298,16 @@ void CreateGroup( int pool )
     }
     CurGroup = ptr;
 
-    CurAtom = (void __far*)0;
-    ptr->alist = (void __far*)0;
+    CurAtom = (Atom __far*)0;
+    ptr->alist = (Atom __far*)0;
     ptr->insert = ' ';
     ptr->struc = 0;
     ptr->flag = 0;
     ptr->col1 = 0;
     ptr->col2 = 0;
+
+    /* Reset Group Cache! */
+    Cache = (Group __far*)0;
 }
 
 
@@ -419,7 +422,7 @@ int FindResNo( char *ptr )
                    {   if( ch3 == 'D' )
                            return( 47 );
                    } else if( ch2 == '2' )
-                   {   if( ch2 == 'O' )
+                   {   if( ch3 == 'O' )
                            return( 47 );    /* "D2O" -> "DOD" */
                    }
                    break;
@@ -792,7 +795,7 @@ int ComplexAtomType( char *ptr )
     static char name[4];
     register int i;
 
-    if( isdigit(ptr[1]) )
+    if( isdigit((int)ptr[1]) )
     {   /* IDATM PDB files! */
         name[0] = ' ';
         name[1] = ToUpper(ptr[0]);
@@ -1093,7 +1096,7 @@ static void CreateHydrogenBond( Atom __far *srcCA, Atom __far *dstCA,
     ptr->col = 0;
 
     *CurHBond = ptr;
-    ptr->hnext = (void __far*)0;
+    ptr->hnext = (HBond __far*)0;
     CurHBond = &ptr->hnext;
     Info.hbondcount++;
 }
@@ -1101,8 +1104,9 @@ static void CreateHydrogenBond( Atom __far *srcCA, Atom __far *dstCA,
 
 static Atom __far *LocateAtom( Long serno, int flag )
 {
-    register Chain __far *chain;
     register Group __far *group;
+    register Chain __far *chain;
+    register Chain __far *last;
     register Atom __far *aptr;
 
     if( Cache )
@@ -1129,18 +1133,24 @@ static Atom __far *LocateAtom( Long serno, int flag )
                 }
     }
 
-    if( CurChain )
-    {   for( group=CurChain->glist; group; group=group->gnext )
-            for( aptr=group->alist; aptr; aptr=aptr->anext )
-                if( aptr->serno == serno )
-                {   Cache = group;
-                    ACache = aptr;
-                    return( aptr );
-                }
-    }
+    if( !CurChain )
+    {   if( !Database || !Database->clist )
+            return (Atom __far*)0;
+        last = Database->clist;
+        while( last->cnext )
+            last = last->cnext;
+    } else last = CurChain;
+
+    for( group=last->glist; group; group=group->gnext )
+        for( aptr=group->alist; aptr; aptr=aptr->anext )
+            if( aptr->serno == serno )
+            {   Cache = group;
+                ACache = aptr;
+                return( aptr );
+            }
 
     for( chain=Database->clist; chain; chain=chain->cnext )
-        if( chain != CurChain )
+        if( chain != last )
             for( group=chain->glist; group; group=group->gnext )
                 for( aptr=group->alist; aptr; aptr=aptr->anext )
                     if( aptr->serno == serno )
@@ -1180,7 +1190,7 @@ void CreateBond( Long src, Long dst, int flag )
         {   CurHBond = &CurMolecule->hlist;
             Info.hbondcount = 0;
         }
-        CreateHydrogenBond( NULL, NULL, sptr, dptr, 0, 0 );
+        CreateHydrogenBond((Atom __far*)0,(Atom __far*)0,sptr,dptr,0,0);
     }
 }
 
@@ -1409,7 +1419,7 @@ void CreateMoleculeBonds( int info, int flag )
                 }
                 
                 x = (int)((VOXORDER*mx)/dx);
-        	y = (int)((VOXORDER*my)/dy);
+                y = (int)((VOXORDER*my)/dy);
                 z = (int)((VOXORDER*mz)/dz);
 
                 i = VOXORDER2*x + VOXORDER*y + z;
@@ -1517,9 +1527,11 @@ void FindDisulphideBridges( void )
                             TestDisulphideBridge(group1,group2,cys);
 
                     for(chn2=chn1->cnext;chn2;chn2=chn2->cnext)
-                        for(group2=chn2->glist;group2;group2=group2->gnext)
-                            if( IsCysteine(group2->refno) )
-                                TestDisulphideBridge(group1,group2,cys);
+                        if( chn2->model == chn1->model )
+                        {   for(group2=chn2->glist;group2;group2=group2->gnext)
+                                if( IsCysteine(group2->refno) )
+                                    TestDisulphideBridge(group1,group2,cys);
+                        }
                 }
             }
 
@@ -1627,7 +1639,8 @@ static void CalcProteinHBonds( Chain __far *chn1 )
     register Long dist;
 
     pos1 = 0;
-    pc1 = po1 = (void __far*)0;
+    pc1 = (Atom __far*)0;
+    po1 = (Atom __far*)0;
     for(group1=chn1->glist;group1;group1=group1->gnext)
     {   pos1++;
         if( pc1 && po1 )
@@ -1746,7 +1759,7 @@ static void CalcNucleicHBonds( Chain __far *chn1 )
         /* Maximum N1-N3 distance 5A */
         refno = NucleicCompl(group1->refno);
         max = (Long)1250*1250;
-        best = (void __far*)0;
+        best = (Group __far*)0;
 
         for(chn2=Database->clist;chn2;chn2=chn2->cnext)
         {   /* Only consider non-empty nucleic acid chains! */
@@ -1755,7 +1768,7 @@ static void CalcNucleicHBonds( Chain __far *chn1 )
                 continue;
 
             for(group2=chn2->glist;group2;group2=group2->gnext)
-                if( group2->refno == (Byte)refno )
+                if( group2->refno == (unsigned char)refno )
                 {   /* Find N3 of Pyramidine Group */
                     if( !(ca1=FindGroupAtom(group2,23)) )
                         continue;
@@ -1789,20 +1802,20 @@ static void CalcNucleicHBonds( Chain __far *chn1 )
                 ca1 = FindGroupAtom(group1,22);   /* G.N2 */
                 ca2 = FindGroupAtom(best,26);     /* C.O2 */
                 if( ca1 && ca2 )
-                    CreateHydrogenBond( (void __far*)0, (void __far*)0,
+                    CreateHydrogenBond( (Atom __far*)0, (Atom __far*)0,
                                         ca1, ca2, 0, 0 );
 
                 ca1 = FindGroupAtom(group1,28);   /* G.O6 */
                 ca2 = FindGroupAtom(best,24);     /* C.N4 */
                 if( ca1 && ca2 )
-                    CreateHydrogenBond( (void __far*)0, (void __far*)0,
+                    CreateHydrogenBond( (Atom __far*)0, (Atom __far*)0,
                                         ca1, ca2, 0, 0 );
 
             } else /* Adenine-Thymine */
             {   ca1 = FindGroupAtom(group1,25);  /* A.N6 */
                 ca2 = FindGroupAtom(best,27);    /* T.O4 */
                 if( ca1 && ca2 )
-                    CreateHydrogenBond( (void __far*)0, (void __far*)0,
+                    CreateHydrogenBond( (Atom __far*)0, (Atom __far*)0,
                                         ca1, ca2, 0, 0 );
             }
         }
@@ -1817,7 +1830,7 @@ void CalcHydrogenBonds( void )
 
     if( !Database ) return;
     ReclaimHBonds( CurMolecule->hlist );
-    CurMolecule->hlist = (void __far*)0;
+    CurMolecule->hlist = (HBond __far*)0;
     CurHBond = &CurMolecule->hlist;
     Info.hbondcount = 0;
 
@@ -1926,7 +1939,10 @@ static void TestLadder( Chain __far *chain )
     register int count, result, found;
 
     /* Avoid Compiler Warnings! */
+    hcurrj = (HBond __far*)0;
+    cprevj = (Atom __far*)0;
     ccurrj = (Atom __far*)0;
+    currj = (Group __far*)0;
 
     /* Already part of atleast one ladder */
     found = curri->flag & SheetFlag;
@@ -1938,7 +1954,7 @@ static void TestLadder( Chain __far *chain )
 
     while( chain )
     {   if( nextj )
-            if( IsProtein(chain->glist->refno) )
+        {   if( IsProtein(chain->glist->refno) )
             {   count = 1;
                 do {
                     cnextj = FindGroupAtom(nextj,1);
@@ -1965,21 +1981,22 @@ static void TestLadder( Chain __far *chain )
                         }
                     } else count++;
 
-		    cprevj = ccurrj; ccurrj = cnextj; 
-		    currj = nextj;   hcurrj = hnextj;
+                    cprevj = ccurrj; ccurrj = cnextj; 
+                    currj = nextj;   hcurrj = hnextj;
 
-		    while( hnextj && hnextj->srcCA==cnextj )
-			hnextj = hnextj->hnext;
-	            nextj = nextj->gnext;
-		} while( nextj );
+                    while( hnextj && hnextj->srcCA==cnextj )
+                        hnextj = hnextj->hnext;
+                    nextj = nextj->gnext;
+                } while( nextj );
 
-	    } else if( IsNucleo(chain->glist->refno) )
-		while( hnextj && !IsAminoBackbone(hnextj->src->refno) )
-		    hnextj = hnextj->hnext;
+            } else if( IsNucleo(chain->glist->refno) )
+                while( hnextj && !IsAminoBackbone(hnextj->src->refno) )
+                    hnextj = hnextj->hnext;
+        }
 
         chain = chain->cnext;
-	if( chain )
-	    nextj = chain->glist;
+        if( chain )
+            nextj = chain->glist;
     }
 }
 
@@ -1993,33 +2010,33 @@ static void FindBetaSheets( void )
     hnexti = Database->hlist;
     for( chain=Database->clist; chain; chain=chain->cnext )
     {   nexti = chain->glist;
-	if( nexti )
-	{   if( IsProtein(nexti->refno) )
-	    {   count = 1;
-		ladder = False;
-		do {
-		    cnexti = FindGroupAtom(nexti,1);
+        if( nexti )
+        {   if( IsProtein(nexti->refno) )
+            {   count = 1;
+                ladder = False;
+                do {
+                    cnexti = FindGroupAtom(nexti,1);
 
-		    if( count == 3 )
-		    {   TestLadder( chain );
-			if( curri->struc & SheetFlag )
-			{   if( !ladder )
-			    {   Info.laddercount++;
-				ladder = True;
-			    }
-			} else ladder = False;
-		    } else count++;
+                    if( count == 3 )
+                    {   TestLadder( chain );
+                        if( curri->struc & SheetFlag )
+                        {   if( !ladder )
+                            {   Info.laddercount++;
+                                ladder = True;
+                            }
+                        } else ladder = False;
+                    } else count++;
 
-		    cprevi = ccurri; ccurri = cnexti; 
-		    curri = nexti;   hcurri = hnexti;
-		    while( hnexti && hnexti->srcCA==cnexti )
-			hnexti = hnexti->hnext;
-	            nexti = nexti->gnext;
-		} while( nexti );
+                    cprevi = ccurri; ccurri = cnexti; 
+                    curri = nexti;   hcurri = hnexti;
+                    while( hnexti && hnexti->srcCA==cnexti )
+                        hnexti = hnexti->hnext;
+                    nexti = nexti->gnext;
+                } while( nexti );
 
-	    } else if( IsNucleo(nexti->refno) )
-		while( hnexti && !IsAminoBackbone(hnexti->src->refno) )
-		    hnexti = hnexti->hnext;
+            } else if( IsNucleo(nexti->refno) )
+                while( hnexti && !IsAminoBackbone(hnexti->src->refno) )
+                    hnexti = hnexti->hnext;
         }
     }
 }
@@ -2038,49 +2055,52 @@ static void FindTurnStructure( void )
     register Real CosKappa;
 
     for( chain=Database->clist; chain; chain=chain->cnext )
-	if( chain->glist && IsProtein(chain->glist->refno) )
-	{   len = 0;  found = False;
-	    for( group=chain->glist; group; group=group->gnext )
-	    {    ptr = FindGroupAtom(group,1);
-		 if( ptr && (ptr->flag&BreakFlag) )
-		 {   found = False;
-		     len = 0;
-		 } else if( len==5 )
-		 {   for( i=0; i<4; i++ )
-			 aptr[i] = aptr[i+1];
-		     len = 4;
-		 } else if( len==2 )
-		     prev = group;
+        if( chain->glist && IsProtein(chain->glist->refno) )
+        {   prev = (Group __far*)0;
+            found = False;
+            len = 0;
 
-		 aptr[len++] = ptr;
-		 if( len==5 ) 
-		 {   if( !(prev->struc&(HelixFlag|SheetFlag)) &&
-			 aptr[0] && aptr[2] && aptr[4] )
-		     {   ux = aptr[2]->xorg - aptr[0]->xorg;
-			 uy = aptr[2]->yorg - aptr[0]->yorg;
-			 uz = aptr[2]->zorg - aptr[0]->zorg;
+            for( group=chain->glist; group; group=group->gnext )
+            {    ptr = FindGroupAtom(group,1);
+                 if( ptr && (ptr->flag&BreakFlag) )
+                 {   found = False;
+                     len = 0;
+                 } else if( len==5 )
+                 {   for( i=0; i<4; i++ )
+                         aptr[i] = aptr[i+1];
+                     len = 4;
+                 } else if( len==2 )
+                     prev = group;
 
-			 vx = aptr[4]->xorg - aptr[2]->xorg;
-			 vy = aptr[4]->yorg - aptr[2]->yorg;
-			 vz = aptr[4]->zorg - aptr[2]->zorg;
+                 aptr[len++] = ptr;
+                 if( len==5 ) 
+                 {   if( !(prev->struc&(HelixFlag|SheetFlag)) &&
+                         aptr[0] && aptr[2] && aptr[4] )
+                     {   ux = aptr[2]->xorg - aptr[0]->xorg;
+                         uy = aptr[2]->yorg - aptr[0]->yorg;
+                         uz = aptr[2]->zorg - aptr[0]->zorg;
 
-			 mu = ux*ux + uy*uy + uz*uz;
-			 mv = vx*vx + vz*vz + vy*vy;
-			 if( mu && mv )
-			 {   CosKappa = (Real)(ux*vx + uy*vy + uz*vz);
-			     CosKappa /= sqrt( (Real)mu*mv );
-			     if( CosKappa<Cos70Deg )
-			     {   if( !found )
-				     Info.turncount++;
-				 prev->struc |= TurnFlag;
-			     }
-			 }
-		     }
-		     found = prev->struc&TurnFlag;
-		     prev = prev->gnext;
-		 } /* len==5 */
-	    }
-	}
+                         vx = aptr[4]->xorg - aptr[2]->xorg;
+                         vy = aptr[4]->yorg - aptr[2]->yorg;
+                         vz = aptr[4]->zorg - aptr[2]->zorg;
+
+                         mu = ux*ux + uy*uy + uz*uz;
+                         mv = vx*vx + vz*vz + vy*vy;
+                         if( mu && mv )
+                         {   CosKappa = (Real)(ux*vx + uy*vy + uz*vz);
+                             CosKappa /= sqrt( (Real)mu*mv );
+                             if( CosKappa<Cos70Deg )
+                             {   if( !found )
+                                     Info.turncount++;
+                                 prev->struc |= TurnFlag;
+                             }
+                         }
+                     }
+                     found = prev->struc&TurnFlag;
+                     prev = prev->gnext;
+                 } /* len==5 */
+            }
+        }
 }
 
 
@@ -2147,15 +2167,15 @@ void DetermineStructure( int flag )
     char buffer[40];
 
     if( !Database )
-	return;
+        return;
 
     if( Info.hbondcount < 0 )
-	CalcHydrogenBonds();
+        CalcHydrogenBonds();
 
     if( Info.helixcount >= 0 )
-	for( chain=Database->clist; chain; chain=chain->cnext )
-	    for( group=chain->glist; group; group=group->gnext )
-		group->struc = 0;
+        for( chain=Database->clist; chain; chain=chain->cnext )
+            for( group=chain->glist; group; group=group->gnext )
+                group->struc = 0;
 
     Info.structsource = SourceCalc;
     Info.laddercount = 0;
@@ -2164,12 +2184,12 @@ void DetermineStructure( int flag )
 
     if( Info.hbondcount )
     {   FindAlphaHelix(4,Helix4Flag);
-	FindBetaSheets();
-	FindAlphaHelix(3,Helix3Flag);
-	FindAlphaHelix(5,Helix5Flag);
+        FindBetaSheets();
+        FindAlphaHelix(3,Helix3Flag);
+        FindAlphaHelix(5,Helix5Flag);
 
         if( !flag )
-	{   FindTurnStructure();
+        {   FindTurnStructure();
         } else FindBetaTurns();
     }
 
@@ -2186,7 +2206,7 @@ void DetermineStructure( int flag )
 }
 
 
-void RenumberMolecule( int start )
+void RenumberAtoms( int start )
 {
     register Chain __far *chain;
     register Group __far *group;
@@ -2194,34 +2214,47 @@ void RenumberMolecule( int start )
     register int resno;
 
     if( !Database )
-	return;
+        return;
 
     hinit = minit = False;
     for( chain=Database->clist; chain; chain=chain->cnext )
     {   resno = start;
-	for( group=chain->glist; group; group=group->gnext )
-	{   if( group->alist->flag & HeteroFlag )
-	    {   if( hinit )
-		{   if( resno > MaxHetaRes )
-		    {   MaxHetaRes = resno;
-		    } else if( resno < MinHetaRes )
-			MinHetaRes = resno;
-		} else MinHetaRes = MaxHetaRes = resno;
-		hinit = True;
-	    } else
-	    {   if( minit )
-		{   if( resno > MaxMainRes )
-		    {   MaxMainRes = resno;
-		    } else if( resno < MinMainRes )
-			MinMainRes = resno;
-		} else MinMainRes = MaxMainRes = resno;
-		minit = True;
-	    }
-	    group->serno = resno++;
-	}
+        for( group=chain->glist; group; group=group->gnext )
+        {   if( group->alist->flag & HeteroFlag )
+            {   if( hinit )
+                {   if( resno > MaxHetaRes )
+                    {   MaxHetaRes = resno;
+                    } else if( resno < MinHetaRes )
+                        MinHetaRes = resno;
+                } else MinHetaRes = MaxHetaRes = resno;
+                hinit = True;
+            } else
+            {   if( minit )
+                {   if( resno > MaxMainRes )
+                    {   MaxMainRes = resno;
+                    } else if( resno < MinMainRes )
+                        MinMainRes = resno;
+                } else MinMainRes = MaxMainRes = resno;
+                minit = True;
+            }
+            group->serno = resno++;
+        }
     }
 }
 
+
+void RenumberChains( void )
+{
+    register Chain __far *chain;
+    register int ch;
+
+    if( !Database )
+        return;
+
+    ch = 'A';
+    for( chain=Database->clist; chain; chain=chain->cnext )
+        chain->ident = ch++;
+}
 
 
 /*===============================*/
@@ -2235,9 +2268,9 @@ static void ReclaimAtoms( Atom __far *ptr )
     if( ptr )
     {   temp = ptr;
         while( temp->anext )
-	    temp=temp->anext;
-	temp->anext = FreeAtom;
-	FreeAtom = ptr;
+            temp=temp->anext;
+        temp->anext = FreeAtom;
+        FreeAtom = ptr;
     }
 }
 
@@ -2246,7 +2279,8 @@ static void ResetDatabase( void )
 {
     Cache = (Group __far*)0;
 
-    Database = CurMolecule = (void __far*)0;
+    Database = (Molecule __far*)0;
+    CurMolecule = (Molecule __far*)0;
     MainGroupCount = HetaGroupCount = 0;
     Info.chaincount = 0;
     Info.bondcount = 0;
@@ -2262,9 +2296,9 @@ static void ResetDatabase( void )
     Info.helixcount = -1;
     Info.turncount = -1;
 
-    CurGroup = (void __far*)0;
-    CurChain = (void __far*)0;
-    CurAtom = (void __far*)0;
+    CurGroup = (Group __far*)0;
+    CurChain = (Chain __far*)0;
+    CurAtom = (Atom __far*)0;
 
     MinX = MinY = MinZ = 0;
     MaxX = MaxY = MaxZ = 0;
@@ -2293,34 +2327,34 @@ static void ResetDatabase( void )
 
 void DestroyDatabase( void )
 {
-    register void __far *temp;
+    register Chain __far *temp;
     register Group __far *gptr;
 
     if( Database )
     {   ReclaimHBonds( Database->slist );
-	ReclaimHBonds( Database->hlist );
-	ReclaimBonds( Database->blist );
+        ReclaimHBonds( Database->hlist );
+        ReclaimBonds( Database->blist );
 
-	while( Database->clist )
-	{   ReclaimBonds(Database->clist->blist);
-	    gptr = Database->clist->glist;
-	    if( gptr )
-	    {   ReclaimAtoms(gptr->alist);
-		while( gptr->gnext )
-		{   gptr = gptr->gnext;
-		    ReclaimAtoms(gptr->alist);
-		}
-		gptr->gnext = FreeGroup;
-		FreeGroup = Database->clist->glist;
-	    }
-	    temp = Database->clist->cnext;
-	    Database->clist->cnext = FreeChain;
-	    FreeChain = Database->clist;
-	    Database->clist = temp;
-	}
+        while( Database->clist )
+        {   ReclaimBonds(Database->clist->blist);
+            gptr = Database->clist->glist;
+            if( gptr )
+            {   ReclaimAtoms(gptr->alist);
+                while( gptr->gnext )
+                {   gptr = gptr->gnext;
+                    ReclaimAtoms(gptr->alist);
+                }
+                gptr->gnext = FreeGroup;
+                FreeGroup = Database->clist->glist;
+            }
+            temp = Database->clist->cnext;
+            Database->clist->cnext = FreeChain;
+            FreeChain = Database->clist;
+            Database->clist = temp;
+        }
 
-	FreeMolecule = Database;
-	Database = (void __far*)0;
+        FreeMolecule = Database;
+        Database = (Molecule __far*)0;
     }
     ResetDatabase();
 }
@@ -2336,9 +2370,9 @@ void PurgeDatabase( void )
     /* Avoid Memory Leaks */
     for( ptr=AllocList; ptr; ptr=tmp )
     {   for( i=0; i<ptr->count; i++ )
-	    _ffree( ptr->data[i] );
-	tmp = ptr->next;
-	_ffree( ptr );
+            _ffree( ptr->data[i] );
+        tmp = ptr->next;
+        _ffree( ptr );
     }
 #endif
 }
@@ -2346,15 +2380,15 @@ void PurgeDatabase( void )
 
 void InitialiseDatabase( void )
 {
-    FreeMolecule = (void __far*)0;
-    FreeHBond = (void __far*)0;
-    FreeChain = (void __far*)0;
-    FreeGroup = (void __far*)0;
-    FreeAtom = (void __far*)0;
-    FreeBond = (void __far*)0;
+    FreeMolecule = (Molecule __far*)0;
+    FreeHBond = (HBond __far*)0;
+    FreeChain = (Chain __far*)0;
+    FreeGroup = (Group __far*)0;
+    FreeAtom = (Atom __far*)0;
+    FreeBond = (Bond __far*)0;
 
 #ifdef APPLEMAC
-    AllocList = (void*)0;
+    AllocList = (AllocRef*)0;
 #endif
 
     HBondChainsFlag = False;

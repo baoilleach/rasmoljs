@@ -27,6 +27,7 @@
 #include "repres.h"
 #include "pixutils.h"
 #include "outfile.h"
+#include "tmesh.h"
 
 
 #ifdef IBMPC
@@ -88,7 +89,7 @@ static int InitTerminal( void )
     register int fd;
 #endif
 
-    setbuf(stdin,(char*)NULL);
+    setbuf(stdin,(char*)0);
 
 #ifdef SIGTTIN
     signal(SIGTTIN,SIG_IGN);
@@ -331,6 +332,14 @@ void CloseDisplay( void )
 }
 
 
+int FetchEvent( int wait )
+{
+    /* Avoid compiler warning! */
+    UnusedArgument(wait);
+    return 0;
+}
+
+
 void BeginWait( void )
 {
 }
@@ -400,7 +409,7 @@ static void ProfileExecution( void )
 
     printf("Profiling Execution!\n");
 
-    start = time((time_t *)NULL);
+    start = time((time_t *)0);
     for( i=0; i<ProfCount; i++ )
     {   DrawFrame();
         ReDrawFlag |= RFRotateY;
@@ -409,7 +418,7 @@ static void ProfileExecution( void )
         ApplyTransform();
     }
 
-    stop = time((time_t *)NULL);
+    stop = time((time_t *)0);
     fprintf(stderr,"Execution of %d frames\n",ProfCount);
     fprintf(stderr,"Duration = %ld seconds\n",stop-start);
 }
@@ -419,8 +428,8 @@ static void InitDefaultValues( void )
 {
     Interactive = False;
 
-    FileNamePtr = NULL;
-    ScriptNamePtr = NULL;
+    FileNamePtr = (char*)0;
+    ScriptNamePtr = (char*)0;
     InitialWide = DefaultWide;
     InitialHigh = DefaultHigh;
     ProfCount = 0;
@@ -535,7 +544,7 @@ int main( int argc, char *argv[] )
     ProcessOptions(argc,argv);
     ReDrawFlag = 0;
     
-    setbuf(OutFp,(char *)NULL);
+    setbuf(OutFp,(char *)0);
     OpenDisplay(InitialWide,InitialHigh);
     InitTerminal();
 
@@ -567,6 +576,7 @@ int main( int argc, char *argv[] )
     InitialiseAbstree();
     InitialiseOutFile();
     InitialiseRepres();
+    InitialiseTMesh();
 
     if( ProfCount )
     {   if( FileNamePtr )

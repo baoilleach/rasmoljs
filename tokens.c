@@ -266,6 +266,11 @@ int LookUpKeyword( char *ptr )
                     }
                     break;
 
+                case('X'):
+                    if( (*ptr=='F') && !ptr[1] ) {
+                        return( DXFTok );
+                    }
+                    break;
             }
             break;
 
@@ -336,7 +341,9 @@ int LookUpKeyword( char *ptr )
                     break;
 
                 case('R'):
-                    if( !strcmp(ptr,"EEN") ) {
+                    if( !strcmp(ptr,"ASP") ) {
+                        return( GraspTok );
+                    } else if( !strcmp(ptr,"EEN") ) {
                         return( GreenTok );
                     } else if( !strcmp(ptr,"EENBLUE") ) {
                         return( GreenBlueTok );
@@ -375,6 +382,12 @@ int LookUpKeyword( char *ptr )
                         return( HelpTok );
                     } else if( !strcmp(ptr,"TERO") ) {
                         return( HeteroTok );
+                    }
+                    break;
+
+                case('I'):
+                    if( !strcmp(ptr,"GH") ) {
+                        return( HighTok );
                     }
                     break;
 
@@ -465,12 +478,18 @@ int LookUpKeyword( char *ptr )
                         return( LigandTok );
                     } else if( !strcmp(ptr,"GANDS") ) {
                         return( LigandTok );
+                    } else if( !strcmp(ptr,"NE") ) {
+                        return( LineTok );
+                    } else if( !strcmp(ptr,"NES") ) {
+                        return( LineTok );
                     }
                     break;
 
                 case('O'):
                     if( !strcmp(ptr,"AD") ) {
                         return( LoadTok );
+                    } else if( (*ptr=='W') && !ptr[1] ) {
+                        return( LowTok );
                     }
                     break;
 
@@ -619,6 +638,12 @@ int LookUpKeyword( char *ptr )
                         return( PickingTok );
                     } else if( !strcmp(ptr,"CT") ) {
                         return( PICTTok );
+                    }
+                    break;
+
+                case('L'):
+                    if( (*ptr=='Y') && !ptr[1] ) {
+                        return( PLYTok );
                     }
                     break;
 
@@ -865,6 +890,8 @@ int LookUpKeyword( char *ptr )
                 case('T'):
                     if( !strcmp(ptr,"EREO") ) {
                         return( StereoTok );
+                    } else if( (*ptr=='L') && !ptr[1] ) {
+                        return( STLTok );
                     } else if( !strcmp(ptr,"RANDS") ) {
                         return( StrandsTok );
                     } else if( !strcmp(ptr,"RUCTURE") ) {
@@ -920,6 +947,8 @@ int LookUpKeyword( char *ptr )
                         return( TraceTok );
                     } else if( !strcmp(ptr,"ANSLATE") ) {
                         return( TranslateTok );
+                    } else if( !strcmp(ptr,"ANSLUCENT") ) {
+                        return( TranslucentTok );
                     } else if( !strcmp(ptr,"ANSPARENT") ) {
                         return( TransparentTok );
                     } else if( !strcmp(ptr,"UE") ) {
@@ -972,6 +1001,10 @@ int LookUpKeyword( char *ptr )
                 case('E'):
                     if( !strcmp(ptr,"CTPS") ) {
                         return( VectPSTok );
+                    } else if( !strcmp(ptr,"CTOR")) {
+                        return( VectorTok );
+                    } else if( !strcmp(ptr,"CTORS")) {
+                        return( VectorTok );
                     }
                     break;
 

@@ -220,8 +220,8 @@ Expr *AllocateNode( void )
     {   ptr = FreeExpr;
         FreeExpr = ptr->rgt.ptr;
     }
-    ptr->rgt.ptr = NULL;
-    ptr->lft.ptr = NULL;
+    ptr->rgt.ptr = (Expr*)0;
+    ptr->lft.ptr = (Expr*)0;
     return ptr;
 }
 
@@ -737,9 +737,9 @@ int DefineSetExpr( char *ident, Expr *expr )
 
         *prev = ptr;
         ptr->ident = ident;
-        ptr->defn = (void __far*)0;
-        ptr->lft = (void __far*)0;
-        ptr->rgt = (void __far*)0;
+        ptr->defn = (AtomSet __far*)0;
+        ptr->lft = (SymEntry __far*)0;
+        ptr->rgt = (SymEntry __far*)0;
     } else free(ident);
 
     if( expr )
@@ -748,7 +748,7 @@ int DefineSetExpr( char *ident, Expr *expr )
             DeleteAtomSet(ptr->defn);
         DeAllocateExpr(expr);
         ptr->defn = set;
-    } else ptr->defn = (void __far*)0;
+    } else ptr->defn = (AtomSet __far*)0;
     return True;
 }
 
@@ -919,7 +919,7 @@ int ParsePrimitiveExpr( char **orig )
 
             if( isdigit(ch) )
             {   i = ch-'0';
-                while( isdigit(*ptr) )
+                while( isdigit((int)*ptr) )
                     i = 10*i + (*ptr++)-'0';
 
                 tmp1 = AllocateNode();
@@ -966,7 +966,7 @@ int ParsePrimitiveExpr( char **orig )
     {   ch = *ptr++;
         if( isdigit(ch) )
         {   i = ch-'0';
-            while( isdigit(*ptr) )
+            while( isdigit((int)*ptr) )
                 i = 10*i + (*ptr++)-'0';
 
             tmp1 = AllocateNode();
@@ -988,14 +988,22 @@ int ParsePrimitiveExpr( char **orig )
     if( ch == '.' )
     {   ch = *ptr++;
         if( ch!='*' )
-        {   for( i=0; i<4; i++ )
-                if( isalnum(ch) || ch=='\'' || ch=='*' )
-                {   NameBuf[i] = ToUpper(ch);
-                    ch = *ptr++;
-                } else if( (ch=='?') || (ch=='%') || (ch=='#') )
-                {   NameBuf[i] = '?';
-                    ch = *ptr++;
-                } else break;
+        {   if( ch == '[' )
+            {   i = 0;
+                while( (ch = *ptr++) != ']' )
+                    if( ch && (i<4) )
+                    {   NameBuf[i++] = ToUpper(ch);
+                    } else return( False );
+                ch = *ptr++;
+            } else
+                for( i=0; i<4; i++ )
+                    if( isalnum(ch) || ch=='\'' || ch=='*' )
+                    {   NameBuf[i] = ToUpper(ch);
+                        ch = *ptr++;
+                    } else if( (ch=='?') || (ch=='%') || (ch=='#') )
+                    {   NameBuf[i] = '?';
+                        ch = *ptr++;
+                    } else break;
             if( !i ) return( False );
 
 
@@ -1067,7 +1075,7 @@ void FormatLabel( Chain __far *chain, Group __far *group, Atom __far *aptr,
     {  ch = *label++;
        if( ch=='%' )
        {   ch = *label++;
-           if( isupper(ch) )
+           if( isupper((int)ch) )
              ch = tolower(ch);
 
            switch( ch )
@@ -1144,7 +1152,7 @@ void ResetSymbolTable( void )
 {
     if( SymbolTable )
     {   DeleteSymEntry(SymbolTable);
-        SymbolTable = (void __far*)0;
+        SymbolTable = (SymEntry __far*)0;
     }
 }
 
@@ -1245,7 +1253,7 @@ double CalcTorsion( Atom __far *atm1, Atom __far *atm2,
         return 180.0;
 
     om = Rad2Deg*acos(cosom);
-    sgn =  ax*qx + qy*qy + az*qz;
+    sgn =  ax*qx + ay*qy + az*qz;
     return( (sgn<0)? -om : om );
 }
 
@@ -1301,14 +1309,14 @@ void InitialiseAbstree( void )
     TrueExpr.type = OpConst | OpLftVal | OpRgtVal;
     TrueExpr.rgt.val = TrueExpr.lft.val = 1;
 
-    QChain = (void __far*)0;
-    QGroup = (void __far*)0;
-    QAtom = (void __far*)0;
+    QChain = (Chain __far*)0;
+    QGroup = (Group __far*)0;
+    QAtom = (Atom __far*)0;
 
-    SymbolTable = (void __far*)0;
+    SymbolTable = (SymEntry __far*)0;
 
-    FreeEntry = (void __far*)0;
-    FreeSet = (void __far*)0;
-    FreeExpr = NULL;
+    FreeEntry = (SymEntry __far*)0;
+    FreeSet = (AtomSet __far*)0;
+    FreeExpr = (Expr*)0;
 }
 

@@ -136,8 +136,10 @@
 #define CIFTok         374
 #define CEXTok         375
 
+#define GraspTok       376
+
 /* Raster Tokens */
-#define IsImageToken(x) (((x)>=380) && ((x)<=395))
+#define IsImageToken(x) (((x)>=380) && ((x)<=398))
 #define GIFTok         380
 #define PPMTok         381
 #define SUNTok         382
@@ -155,6 +157,9 @@
 #define MolScriptTok   393
 #define POVRayTok      394
 #define VRMLTok        395
+#define STLTok         396
+#define DXFTok         397
+#define PLYTok         398
 
 /* Feature Tokens */
 #define AtomTok        400
@@ -274,9 +279,18 @@
 #define TorsionTok     508
 #define OriginTok      509
 
+/* Resolution Tokens */
+#define HighTok        510
+#define LowTok         511
+
+/* Surface Tokens */
+#define LineTok        512
+#define VectorTok      513
+#define TranslucentTok 514
+
 /* Misc Tokens */
-#define InLineTok      510
-#define VDWTok         511
+#define InLineTok      515
+#define VDWTok         516
 
 int LookUpKeyword( char *ptr );
 

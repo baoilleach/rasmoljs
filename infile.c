@@ -80,11 +80,11 @@ typedef struct {
 
 #define MAXALCATOM   5
 static ConvTable AlcAtomTable[MAXALCATOM] = {
-    { { 'S', 'O', '2', ' ' }, { ' ', 'S', '2', ' ' } },  /*  1 */
-    { { 'C', 'A', 'R', ' ' }, { ' ', 'C', ' ', ' ' } },  /*  2 */
-    { { 'N', 'A', 'R', ' ' }, { ' ', 'N', ' ', ' ' } },  /*  3 */
-    { { 'N', 'A', 'M', ' ' }, { ' ', 'N', ' ', ' ' } },  /*  4 */
-    { { 'N', 'P', 'L', '3' }, { ' ', 'N', '3', ' ' } },  /*  5 */
+    { { 'S', 'O', '2', ' ' }, { ' ', 'S', 'O', '2' } },  /*  1 */
+    { { 'C', 'A', 'R', ' ' }, { ' ', 'C', 'A', 'R' } },  /*  2 */
+    { { 'N', 'A', 'R', ' ' }, { ' ', 'N', 'A', 'R' } },  /*  3 */
+    { { 'N', 'A', 'M', ' ' }, { ' ', 'N', 'A', 'M' } },  /*  4 */
+    { { 'N', 'P', 'L', '3' }, { ' ', 'N', 'P', 'L' } },  /*  5 */
         };
 
 static char PDBInsert;
@@ -191,7 +191,7 @@ static Long ReadValue( int pos, int len )
     ptr = Record+pos;
     while( len-- )
     {   ch = *ptr++;
-        if( isdigit(ch) )
+        if( isdigit((int)ch) )
         {   result = (10*result)+(ch-'0');
         } else if( ch=='-' )
             neg = True;
@@ -225,12 +225,12 @@ static Long ReadValue2( int pos, int len, int prec )
     result = 0;
     while( (ptr<end) && *ptr )
     {   ch = *ptr++;
-        if( isdigit(ch) )
+        if( isdigit((int)ch) )
         {   result = (10*result) + (ch-'0');
         } else if( ch=='.' )
         {   while( (ptr<end) && *ptr )
             {   ch = *ptr++;
-                if( isdigit(ch) )
+                if( isdigit((int)ch) )
                 {   result = (10*result) + (ch-'0');
                     if( prec == 1 )
                     {   return( neg? -result : result );
@@ -314,8 +314,8 @@ static void ProcessFeatures( void )
  
     for( ptr=FeatList; ptr; ptr=next )
     {    if( Database )
-             for( i=0; i<ptr->count; i++ )
-                 if( ptr->data[i].type==FeatHelix )
+         {   for( i=0; i<ptr->count; i++ )
+             {   if( ptr->data[i].type==FeatHelix )
                  {   UpdateFeature( &ptr->data[i], HelixFlag );
                      Info.helixcount++;
                  } else if( ptr->data[i].type==FeatSheet )
@@ -325,7 +325,9 @@ static void ProcessFeatures( void )
                  {   UpdateFeature( &ptr->data[i], TurnFlag );
                      Info.turncount++;
                  }
- 
+             }
+         }
+
          /* Deallocate Memory */
          next = ptr->fnext;
          _ffree( ptr );
@@ -427,7 +429,7 @@ static void ProcessPDBAtom( int heta )
     }
 
     /* Ignore PDB Alternate Locations */
-    if( (Record[16]!=' ') && (Record[16]!='A') )
+    if( (Record[16]!=' ') && (Record[16]!='A') && (Record[16]!='1') )
         return;
 
     /* Ignore XPLOR Pseudo Atoms!! */
@@ -460,7 +462,7 @@ static void ProcessPDBAtom( int heta )
     ptr->altl = Record[16];
  
     /* Handle CONCORD PDB Files */
-    if( (Record[12]==' ') && islower(Record[14])
+    if( (Record[12]==' ') && islower((int)Record[14])
         && !strncmp(Record+15,"       ",7) ) 
         ptr->refno = SimpleAtomType(Record+13);
 
@@ -601,7 +603,7 @@ int LoadPDBMolecule( FILE *fp, int flag )
     register int ignore;
  
     ignore = False;
-    FeatList = (void __far*)0;
+    FeatList = (Feature __far*)0;
     DataFile = fp;
     NMRModel = 0;
  
@@ -634,17 +636,18 @@ int LoadPDBMolecule( FILE *fp, int flag )
             case('E'):    if( !strncmp("ENDM",Record,4) )
                           {   /* break after single model??? */
                               if( flag )
-                              {   ConnectAtom = (void __far*)0;
-                                  CurGroup = (void __far*)0;
-                                  CurChain = (void __far*)0;
+                              {   ConnectAtom = (Atom __far*)0;
+                                  CurGroup = (Group __far*)0;
+                                  CurChain = (Chain __far*)0;
                               } else ignore = True;
  
                           } else if( !strncmp("END",Record,3) )
                               if( !Record[3] || (Record[3]==' ') )
-                              {   /* Treat END same as TER! */
-                                  ConnectAtom = (void __far*)0;
-                                  CurGroup = (void __far*)0;
-                                  CurChain = (void __far*)0;
+                              {   /* Treat END same as TER? */
+                                  ConnectAtom = (Atom __far*)0;
+                                  CurGroup = (Group __far*)0;
+                                  CurChain = (Chain __far*)0;
+                                  NMRModel++;
                               }
                           break;
 
@@ -695,9 +698,9 @@ int LoadPDBMolecule( FILE *fp, int flag )
                               ptr->term = (int)ReadValue(31,4);
                           } else if( !strncmp("TER",Record,3) )
                           {   if( !Record[3] || (Record[3]==' ') )
-                              {   ConnectAtom = (void __far*)0;
-                                  CurGroup = (void __far*)0;
-                                  CurChain = (void __far*)0;
+                              {   ConnectAtom = (Atom __far*)0;
+                                  CurGroup = (Group __far*)0;
+                                  CurChain = (Chain __far*)0;
                               }
                           }
                           break;
@@ -782,7 +785,8 @@ int LoadMDLMolecule( FILE *fp )
         } else                        /* SINGLE */
             CreateBond(srcatm,dstatm,NormBondFlag);
     }
- 
+
+    scale = 250.0;  /* Assume Angstrom Coordinates! */
     for( bptr=Database->blist; bptr; bptr=bptr->bnext )
         if( bptr->flag & NormBondFlag )
         {   src = bptr->srcatom;
@@ -793,7 +797,7 @@ int LoadMDLMolecule( FILE *fp )
                 dz = dst->zorg - src->zorg;
                 if( dx || dy || dz )
                 {   dist2 = dx*dx + dy*dy + dz*dz;
-                    scale = 385.0/sqrt(dist2);
+                    scale = 385.0/sqrt((double)dist2);
                     break;
                 }
             }
@@ -873,7 +877,7 @@ int LoadXYZMolecule( FILE *fp )
 }
  
 
-static int FindSybylRefNo( char *ptr )
+static int FindMol2RefNo( char *ptr )
 {
     register char *src,*dst;
     auto char name[4];
@@ -915,9 +919,11 @@ static int FindSybylRefNo( char *ptr )
 int LoadMol2Molecule( FILE *fp )
 {
     double xpos, ypos, zpos;
+    double alpha, beta, gamma;
     long features, sets, serno;
     long atoms, bonds, structs;
     long srcatm, dstatm;
+    double charge;
  
     char name[20];
     char type[8];
@@ -926,6 +932,7 @@ int LoadMol2Molecule( FILE *fp )
     register char *src;
     register Long i;
  
+    NMRModel = 0;
     DataFile = fp;
     while( FetchRecord(DataFile,Record) )
     {   if( !*Record || *Record=='#' )
@@ -945,19 +952,20 @@ int LoadMol2Molecule( FILE *fp )
  
             FetchRecord(DataFile,Record);  /* Molecule Type  */
             FetchRecord(DataFile,Record);  /* Charge Type    */
+
+            NMRModel++;
+            CreateMolGroup();
  
         } else if( !strncmp("@<TRIPOS>ATOM",Record,13) ||
                    !strncmp("@ATOM",Record,5) )
-        {   if( !atoms ) continue;
- 
-            CreateMolGroup();
-            for( i=0; i<atoms; i++ )
+        {   for( i=0; i<atoms; i++ )
             {    FetchRecord(DataFile,Record);
-                 sscanf(Record,"%ld %s %lf %lf %lf %s", &serno, name,
-                                &xpos, &ypos, &zpos, type );
+                 sscanf(Record,"%ld %s %lf %lf %lf %s %*s %*s %lf",
+                        &serno,name,&xpos,&ypos,&zpos,type,&charge);
  
                  ptr = CreateAtom();
-                 ptr->refno = FindSybylRefNo( type );
+                 ptr->refno = FindMol2RefNo( type );
+                 ptr->temp = (int)(100.0*charge);
                  ptr->serno = serno;
                  /* ptr->serno = i; */
  
@@ -969,7 +977,7 @@ int LoadMol2Molecule( FILE *fp )
  
         } else if( !strncmp("@<TRIPOS>BOND",Record,13) ||
                    !strncmp("@BOND",Record,5) )
-            for( i=0; i<bonds; i++ )
+        {   for( i=0; i<bonds; i++ )
             {   FetchRecord(DataFile,Record);
                 sscanf(Record,"%ld %ld %ld %s",
                               &serno,&srcatm,&dstatm,type);
@@ -977,9 +985,33 @@ int LoadMol2Molecule( FILE *fp )
                 {   CreateBond(srcatm,dstatm,AromBondFlag);
                 } else if( *type == '2' )
                 {   CreateBond(srcatm,dstatm,DoubBondFlag);
+                } else if( *type == '3' )
+                {   CreateBond(srcatm,dstatm,TripBondFlag);
                 } else /* *type == '1' */
                     CreateBond(srcatm,dstatm,NormBondFlag);
             }
+        } else if( !strncmp("@<TRIPOS>CRYSIN",Record,15) ||
+                   !strncmp("@CRYSIN",Record,7) )
+        {   FetchRecord(DataFile,Record);
+            *Info.spacegroup = 0;
+            i = sscanf(Record,"%lf %lf %lf %lf %lf %lf %s",
+                          &xpos,&ypos,&zpos,
+                          &alpha,&beta,&gamma,
+                          Info.spacegroup);
+
+            if( i >= 6 ) {
+                Info.cella = xpos;
+                Info.cellb = ypos;
+                Info.cellc = zpos;
+
+                Info.cellalpha = Deg2Rad*alpha;
+                Info.cellbeta  = Deg2Rad*beta;
+                Info.cellgamma = Deg2Rad*gamma;
+
+                if( i == 6 )
+                    strcpy(Info.spacegroup,"???");
+            }
+        }
     }
     return True;
 }
@@ -992,7 +1024,7 @@ static int FindAlchemyRefNo( void )
     char name[4];
  
     ptr = Record+6;
-    if( !isalpha(ptr[1]) )
+    if( !isalpha((int)ptr[1]) )
     {   name[0] = ' ';
         for( i=0; i<3; i++ )
             name[i+1] = ToUpper(ptr[i]);
@@ -1049,7 +1081,7 @@ int LoadAlchemyMolecule( FILE *fp )
         sscanf(Record,"%ld %ld %ld",&serno,&srcatm,&dstatm);
  
         chptr = Record;
-        while( *chptr && !isalpha(*chptr) )
+        while( *chptr && !isalpha((int)*chptr) )
             chptr++;
  
         if( *chptr =='A' )             /* AROMATIC */
@@ -1088,7 +1120,7 @@ int LoadCharmmMolecule( FILE *fp )
     MainGroupCount = 0;
  
     chain = 0;
-    CurChain = NULL;
+    CurChain = (Chain __far*)0;
     for( serno=0; serno<atoms; serno++ )
     {   FetchRecord(DataFile,Record);
  
@@ -1136,9 +1168,9 @@ static int MOPACAtomType( char *type )
         type++;
  
     name[2] = name[3] = ' ';
-    if( isdigit(type[0]) )
+    if( isdigit((int)type[0]) )
     {   i = *type++ - '0';
-        while( isdigit(*type) )
+        while( isdigit((int)*type) )
             i = (10*i) + (*type++ - '0');
  
         /* Last Atom in File! */
@@ -1166,7 +1198,7 @@ static int MOPACAtomType( char *type )
         } else if( (ch1=='T') && (ch2=='V') )
             return( 1 );
  
-        if( ch2 && (ch2!=' ') && (ch2!='(') && !isdigit(ch2) )
+        if( ch2 && (ch2!=' ') && (ch2!='(') && !isdigit((int)ch2) )
         {   name[0] = ch1;
             name[1] = ch2;
         } else
@@ -1199,13 +1231,12 @@ static int ReadMOPACOutputFile( void )
                 MMinMaxFlag = False;
                 HasHydrogen = False;
                 MainAtomCount = 0;
-            }
+            } else atm = (Atom __far*)0;
  
             while( FetchRecord(DataFile,Record) && 
-                   *Record && isdigit(Record[5]) )
+                   *Record && isdigit((int)Record[5]) )
             {   if( !Database )
-                {   atm = (Atom __far*)0;
-                    CreateMolGroup();
+                {   CreateMolGroup();
                     init = True;
                 }
  
@@ -1215,13 +1246,13 @@ static int ReadMOPACOutputFile( void )
                     atm->refno = MOPACAtomType(Record+14);
                     atm->temp = 0;
  
-                    atm->xorg = ReadValue(20,10)/40;
-                    atm->yorg = ReadValue(30,10)/40;
-                    atm->zorg = ReadValue(40,10)/40;
+                    atm->xorg =  ReadValue(20,10)/40;
+                    atm->yorg =  ReadValue(30,10)/40;
+                    atm->zorg = -ReadValue(40,10)/40;
                 } else
-                {   atm->xorg = ReadValue(30,10)/40;
-                    atm->yorg = ReadValue(40,10)/40;
-                    atm->zorg = ReadValue(50,10)/40;
+                {   atm->xorg =  ReadValue(30,10)/40;
+                    atm->yorg =  ReadValue(40,10)/40;
+                    atm->zorg = -ReadValue(50,10)/40;
                 }
                 ProcessAtom(atm);
                 atm = atm->anext;
@@ -1236,14 +1267,12 @@ static int ReadMOPACOutputFile( void )
                 MMinMaxFlag = False;
                 HasHydrogen = False;
                 MainAtomCount = 0;
-            }
+            } else atm = (Atom __far*)0;
  
             while( FetchRecord(DataFile,Record) && 
                    strncmp(Record," DIPOLE",7) )
             {   if( !Database )
-                {   atm = (Atom __far*)0;
                     CreateMolGroup();
-                }
  
                 if( !atm )
                 {   atm = CreateAtom();
@@ -1259,11 +1288,11 @@ static int ReadMOPACOutputFile( void )
         }
     }
  
-    if( !init )
-    {   if( Database )
-            DestroyDatabase();
-        return( False );
-    } else return( True );
+    if( init )
+        return( True );
+    if( Database )
+        DestroyDatabase();
+    return( False );
 }
  
  
@@ -1382,7 +1411,7 @@ int LoadMOPACMolecule( FILE *fp )
                 CreateMolGroup();
  
             aptr = CreateAtom();
-            aptr->refno = (Byte)coord->refno;
+            aptr->refno = (unsigned char)coord->refno;
             aptr->serno = ++count;
             aptr->temp = 0;
  
@@ -1487,7 +1516,7 @@ int SavePDBMolecule( char *filename )
     if( *Info.moleculename )
         fprintf(DataFile,"COMPND    %.60s\n",Info.moleculename);
  
-    prev = (void __far*)0;
+    prev = (Group __far*)0;
     count = 1;
     model = 0;
     ch = ' ';
@@ -1511,9 +1540,9 @@ int SavePDBMolecule( char *filename )
                      count++, ElemDesc[aptr->refno], Residue[group->refno],
                      chain->ident, group->serno );
  
-            x = (double)aptr->xorg/250.0;
-            y = (double)aptr->yorg/250.0;
-            z = (double)aptr->zorg/250.0;
+            x = (double)(aptr->xorg+OrigCX)/250.0;
+            y = (double)(aptr->yorg+OrigCY)/250.0;
+            z = (double)(aptr->zorg+OrigCZ)/250.0;
  
 #ifdef INVERT
             fprintf(DataFile,"%8.3f%8.3f%8.3f",x,-y,-z);
@@ -1612,8 +1641,8 @@ int SaveMDLMolecule( char *filename )
 #endif
 #endif
 
-            fputc(Element[aptr->elemno].symbol[0],DataFile);
-            fputc(Element[aptr->elemno].symbol[1],DataFile);
+            putc(Element[aptr->elemno].symbol[0],DataFile);
+            putc(Element[aptr->elemno].symbol[1],DataFile);
             fputs("  0  ",DataFile);
 
             ch = '0';
@@ -1634,7 +1663,7 @@ int SaveMDLMolecule( char *filename )
                     } else ch = '5';
                 } else ch = '0';
             } 
-            fputc(ch,DataFile);
+            putc(ch,DataFile);
 
             fputs("  0  0  0  0  0  0  0  0  0  0\n",DataFile);
             aptr->mbox = atomno++;
@@ -1645,12 +1674,12 @@ int SaveMDLMolecule( char *filename )
         {   fprintf(DataFile,"%3d%3d  ",bptr->srcatom->mbox,
                                         bptr->dstatom->mbox);
             if( bptr->flag & AromBondFlag )
-            {      fputc('4',DataFile);
+            {      putc('4',DataFile);
             } else if( bptr->flag & TripBondFlag )
-            {      fputc('3',DataFile);
+            {      putc('3',DataFile);
             } else if( bptr->flag & DoubBondFlag )
-            {      fputc('2',DataFile);
-            } else fputc('1',DataFile);
+            {      putc('2',DataFile);
+            } else putc('1',DataFile);
             fputs("  0\n",DataFile);
         }
 
@@ -1666,7 +1695,7 @@ int SaveMDLMolecule( char *filename )
 int SaveAlchemyMolecule( char *filename )
 {
     register Real x, y, z;
-    register float xpos, ypos, zpos;
+    register double xpos, ypos, zpos;
     register Chain __far *chain;
     register Group __far *group;
     register Atom __far *aptr;
@@ -1674,7 +1703,6 @@ int SaveAlchemyMolecule( char *filename )
     register char *ptr;
     register int atomno;
     register int bondno;
-    register int num;
  
     if( !Database )
         return False;
@@ -1691,19 +1719,19 @@ int SaveAlchemyMolecule( char *filename )
         if( aptr->flag & SelectFlag )
             aptr->mbox = 0;
  
-    ForEachBond
-        if( ((bptr->srcatom->flag&bptr->dstatom->flag)&SelectFlag) &&
-           !((bptr->srcatom->flag|bptr->dstatom->flag)&HydrogenFlag) )
-        {   if( bptr->flag&AromBondFlag )
-            {   bptr->srcatom->mbox = -1;
-                bptr->dstatom->mbox = -1;
-            } else
-            {   num = (bptr->flag&DoubBondFlag)? 2 : 1;
-                if( bptr->srcatom->mbox>0 )
-                    bptr->srcatom->mbox += num;
-                if( bptr->dstatom->mbox>0 )
-                    bptr->dstatom->mbox += num;
-            }
+    ForEachBond 
+        if( bptr->flag & AromBondFlag )
+        {    if( bptr->srcatom->flag & SelectFlag )
+                 bptr->srcatom->mbox = -1;
+             if( bptr->dstatom->flag & SelectFlag )
+                 bptr->dstatom->mbox = -1;
+        } else /* Non-aromatic */
+        {    if( (bptr->srcatom->flag&SelectFlag) &&
+                 (bptr->srcatom->mbox>=0) )
+                 bptr->srcatom->mbox++;
+             if( (bptr->dstatom->flag&SelectFlag) &&
+                 (bptr->dstatom->mbox>=0) )
+                 bptr->dstatom->mbox++;
         }
  
     fprintf(DataFile,"%5ld ATOMS, ",(long)(MainAtomCount+HetaAtomCount));
@@ -1713,25 +1741,32 @@ int SaveAlchemyMolecule( char *filename )
     atomno = 1;
     ForEachAtom
         if( aptr->flag & SelectFlag )
-        {   aptr->mbox = atomno;
-            fprintf(DataFile,"%5d ",atomno++);
+        {   fprintf(DataFile,"%5d ",atomno);
  
             switch( aptr->elemno )
             {   case( 6 ):  if( aptr->mbox == -1 )
                             {   ptr = "CAR ";
-                            } else if( aptr->mbox == 1 )
-                            {   ptr = "C3  ";
-                            } else ptr = "C2  ";
+                            } else if( aptr->mbox == 2 )
+                            {   ptr = "C1  ";
+                            } else if( aptr->mbox == 3 )
+                            {   ptr = "C2  ";
+                            } else ptr = "C3  ";
                             fputs( ptr, DataFile );
                             break;
  
                 case( 7 ):  if( aptr->mbox == -1 )
                             {   ptr = "NAR ";
-                            } else ptr = "N2  ";
+                            } else if( aptr->mbox == 1 )
+                            {   ptr = "N1  ";
+                            } else if( aptr->mbox == 2 )
+                            {   ptr = "N2  ";
+                            } else if( aptr->mbox >= 4 )
+                            {   ptr = "N4  ";
+                            } else ptr = "N3  ";
                             fputs( ptr, DataFile );
                             break;
  
-                case( 8 ):  if( aptr->mbox == 2 )
+                case( 8 ):  if( aptr->mbox == 1 )
                             {   ptr = "O2  ";
                             } else ptr = "O3  ";
                             fputs( ptr, DataFile );
@@ -1745,14 +1780,16 @@ int SaveAlchemyMolecule( char *filename )
                             } else fprintf(DataFile,"%.4s",ptr);
             }
  
+            aptr->mbox = atomno++;
+
             x = aptr->xorg/250.0;
             y = aptr->yorg/250.0;
             z = aptr->zorg/250.0;
  
             /* Apply Current Viewpoint Rotation Matrix */
-            xpos = (float)(x*RotX[0] + y*RotX[1] + z*RotX[2]);
-            ypos = (float)(x*RotY[0] + y*RotY[1] + z*RotY[2]);
-            zpos = (float)(x*RotZ[0] + y*RotZ[1] + z*RotZ[2]);
+            xpos = x*RotX[0] + y*RotX[1] + z*RotX[2];
+            ypos = x*RotY[0] + y*RotY[1] + z*RotY[2];
+            zpos = x*RotZ[0] + y*RotZ[1] + z*RotZ[2];
  
 #ifdef INVERT
             fprintf(DataFile,"  %8.4f %8.4f %8.4f",xpos,-ypos,-zpos);
@@ -1778,8 +1815,9 @@ int SaveAlchemyMolecule( char *filename )
         }
  
     ForEachAtom
-            if( aptr->flag & SelectFlag )
-                aptr->mbox = 0;
+        if( aptr->flag & SelectFlag )
+            aptr->mbox = 0;
+
     fclose( DataFile );
 #ifdef APPLEMAC
     SetFileInfo(filename,'RSML','TEXT',131);
@@ -1817,8 +1855,8 @@ int SaveXYZMolecule( char *filename )
 
     ForEachAtom
         if( aptr->flag & SelectFlag )
-        {   fputc(Element[aptr->elemno].symbol[0],DataFile);
-            fputc(Element[aptr->elemno].symbol[1],DataFile);
+        {   putc(Element[aptr->elemno].symbol[0],DataFile);
+            putc(Element[aptr->elemno].symbol[1],DataFile);
 
             x = (double)aptr->xorg/250.0;
             y = (double)aptr->yorg/250.0;
@@ -1839,8 +1877,172 @@ int SaveXYZMolecule( char *filename )
 #endif
     return True;
 }
+
+
+int SaveMol2Molecule( char *filename )
+{
+    register double x, y, z;
+    register Chain __far *chain;
+    register Group __far *group;
+    register Atom __far *aptr;
+    register Bond __far *bptr;
+    register char *ptr;
+    register int atomno;
+    register int bondno;
  
+    if( !Database )
+        return False;
+
+    DataFile = fopen( filename, "w" );
+    if( !DataFile )
+    {   InvalidateCmndLine();
+        WriteString("Error: Unable to create file!\n\n");
+        return False;
+    }
+
+    atomno = 0;
+    ForEachAtom
+        if( aptr->flag & SelectFlag )
+        {   aptr->mbox = 0;
+            atomno++;
+        }
+
+    bondno = 0;
+    ForEachBond 
+    {   if( bptr->flag & AromBondFlag )
+        {    if( bptr->srcatom->flag & SelectFlag )
+                 bptr->srcatom->mbox = -1;
+             if( bptr->dstatom->flag & SelectFlag )
+                 bptr->dstatom->mbox = -1;
+        } else /* Non-aromatic */
+        {    if( (bptr->srcatom->flag&SelectFlag) &&
+                 (bptr->srcatom->mbox>=0) )
+                 bptr->srcatom->mbox++;
+             if( (bptr->dstatom->flag&SelectFlag) &&
+                 (bptr->dstatom->mbox>=0) )
+                 bptr->dstatom->mbox++;
+        }
+
+        if( bptr->srcatom->flag&bptr->dstatom->flag&SelectFlag )
+            bondno++;
+    }
+
+    fputs("@<TRIPOS>MOLECULE\n",DataFile);
+    if( Info.moleculename[0] ) {
+        fprintf(DataFile,"%s\n",Info.moleculename);
+    } else fputs("*****\n",DataFile);
+    fprintf(DataFile,"%5ld %5ld",(long)atomno,(long)bondno);
+    fputs("     0     0     0\nSMALL\n",DataFile);
+
+    if( (MinMainTemp<0) || (MinHetaTemp<0) ) {
+        fputs("USER_CHARGES\n\n",DataFile);
+    } else fputs("NO_CHARGES\n\n",DataFile);
+
+    atomno = 1;
+    fputs("@<TRIPOS>ATOM\n",DataFile);
+    ForEachAtom
+        if( aptr->flag & SelectFlag )
+        {   fprintf(DataFile,"  %5d ",atomno);
+            ptr = Element[aptr->elemno].symbol;
+            if( ptr[0] == ' ' ) {
+                fprintf(DataFile,"Du%-7d",atomno);
+            } else if( ptr[1] == ' ' ) {
+                fprintf(DataFile,"%c%-7d",ptr[0],atomno);
+            } else
+                fprintf(DataFile,"%c%c%-6d",ptr[0],ptr[1],atomno);
+
+            x = (double)aptr->xorg/250.0;
+            y = (double)aptr->yorg/250.0;
+            z = (double)aptr->zorg/250.0;
+
+#ifdef INVERT
+            fprintf(DataFile,"%10.4f%10.4f%10.4f ",x,-y,-z);
+#else
+            fprintf(DataFile,"%10.4f%10.4f%10.4f ",x,y,-z);
+#endif
+
+            switch( aptr->elemno )
+            {   case( 6 ):  if( aptr->mbox == -1 )
+                            {   ptr = "C.ar ";
+                            } else if( aptr->mbox == 2 )
+                            {   ptr = "C.1  ";
+                            } else if( aptr->mbox == 3 )
+                            {   ptr = "C.2  ";
+                            } else ptr = "C.3  ";
+                            fputs( ptr, DataFile );
+                            break;
  
+                case( 7 ):  if( aptr->mbox == -1 )
+                            {   ptr = "N.ar ";
+                            } else if( aptr->mbox == 1 )
+                            {   ptr = "N.1  ";
+                            } else if( aptr->mbox == 2 )
+                            {   ptr = "N.2  ";
+                            } else if( aptr->mbox >= 4 )
+                            {   ptr = "N.4  ";
+                            } else ptr = "N.3  ";
+                            fputs( ptr, DataFile );
+                            break;
+ 
+                case( 8 ):  if( aptr->mbox == 1 )
+                            {   ptr = "O.2  ";
+                            } else ptr = "O.3  ";
+                            fputs( ptr, DataFile );
+                            break;
+ 
+                default:    if( ptr[0] == ' ' ) {
+                                fputs("Du   ",DataFile);
+                            } else if( ptr[1] == ' ' ) {
+                                fprintf(DataFile,"%c    ",ptr[0]);
+                            } else
+                                fprintf(DataFile,"%c%c   ",ptr[0],ptr[1]);
+            }
+
+            fprintf(DataFile,"     1 <1>     %10.4f\n",aptr->temp/100.0);
+            aptr->mbox = atomno++;
+        }
+    fputc('\n',DataFile);
+
+    bondno = 1;
+    fputs("@<TRIPOS>BOND\n",DataFile);
+    ForEachBond
+        if( bptr->srcatom->flag&bptr->dstatom->flag&SelectFlag )
+        {   fprintf(DataFile,"%5d %5d %5d ", bondno++,
+                    bptr->srcatom->mbox, bptr->dstatom->mbox );
+            if( bptr->flag & AromBondFlag )
+            {   ptr = "ar\n";
+            } else if( bptr->flag & TripBondFlag )
+            {   ptr = "3\n";
+            } else if( bptr->flag & DoubBondFlag )
+            {   ptr = "2\n";
+            } else ptr = "1\n";
+            fputs( ptr, DataFile );
+        }
+    fputc('\n',DataFile);
+
+    if( *Info.spacegroup )
+    {   fputs("@<TRIPOS>CRYSIN\n",DataFile);
+        fprintf(DataFile,"%10.4f%10.4f%10.4f",Info.cella,
+                                              Info.cellb,
+                                              Info.cellc);
+        fprintf(DataFile,"%10.4f%10.4f%10.4f",Rad2Deg*Info.cellalpha,
+                                              Rad2Deg*Info.cellbeta,
+                                              Rad2Deg*Info.cellgamma);
+        fputs("\n\n",DataFile);
+    }
+
+    ForEachAtom
+        if( aptr->flag & SelectFlag )
+            aptr->mbox = 0;
+
+    fclose( DataFile );
+#ifdef APPLEMAC
+    SetFileInfo(filename,'RSML','TEXT',131);
+#endif
+    return True;
+}
+
+
 int SaveCIFMolecule( char *filename )
 {
     UnusedArgument(filename);

@@ -107,9 +107,9 @@ typedef struct _Atom {
         short  col;                       /* Atom Colour           */
         Long   serno;                     /* Atom Serial Number    */
         void   *label;                    /* Atom Label Structure  */
-        Byte   elemno;                    /* Atomic Number         */
-        Byte   refno;                     /* ElemDesc index number */
-        Byte   flag;                      /* Database flags        */
+        unsigned char elemno;             /* Atomic Number         */
+        unsigned char refno;              /* ElemDesc index number */
+        unsigned char flag;               /* Database flags        */
         char   altl;                      /* Alternate Location    */
         short  irad;                      /* Image Radius          */
         short  mbox;                      /* Shadow Casting NOnce  */
@@ -123,7 +123,7 @@ typedef struct _Bond {
         short radius;                    /* World Radius          */
         short irad;                      /* Image Radius          */
         short col;                       /* Bond Colour           */
-        Byte  flag;                      /* Database flags        */
+        unsigned char flag;              /* Database flags        */
     } Bond;
 
 typedef struct _Group {
@@ -134,9 +134,9 @@ typedef struct _Group {
         short col1;                       /* Ribbon Colour #1      */
         short col2;                       /* Ribbon Colour #2      */
         char  insert;                     /* PDB insertion code    */
-        Byte  refno;                      /* Residue index number  */
-        Byte  struc;                      /* Secondary Structure   */
-        Byte  flag;                       /* Database flags        */
+        unsigned char refno;              /* Residue index number  */
+        unsigned char struc;              /* Secondary Structure   */
+        unsigned char flag;               /* Database flags        */
     } Group;
  
 #ifdef APPLEMAC
@@ -148,8 +148,8 @@ typedef struct _ChainSeg {
         struct _ChainSeg __far *cnext;    /* Linked list of chains     */
         Group __far *glist;               /* Linked list of groups     */
         Bond __far *blist;                /* Linked list of back bonds */
+        short model;                      /* NMR Model / Symmetry      */
         char ident;                       /* Chain identifier          */
-        Byte model;                       /* NMR Model / Symmetry      */
     } Chain;
 
 typedef struct _AtomRef {
@@ -168,8 +168,8 @@ typedef struct _HBond {
         short radius;                     /* World Radius             */
         short irad;                       /* Image Radius             */
         Char offset;                      /* Signed Offset            */
-        Byte flag;                        /* Database flags           */
-        Byte col;                         /* Hydrogen bond colour     */
+        unsigned char flag;               /* Database flags           */
+        unsigned char col;                /* Hydrogen bond colour     */
     } HBond;
 
 typedef struct _Molecule {
@@ -195,11 +195,11 @@ typedef struct _Molecule {
 typedef struct {
         short radius;
         char  mask[19];
-        Byte  flags;
-        Byte  r;
-        Byte  g;
-        Byte  b;
-        } MaskDesc;
+        unsigned char flags;
+        unsigned char r;
+        unsigned char g;
+        unsigned char b;
+    } MaskDesc;
 
 typedef struct _IntCoord {
         struct _IntCoord __far *inext;
@@ -409,7 +409,8 @@ int ConvertInternal2Cartesian( void );
 void FreeInternalCoords( void );
 
 void DetermineStructure( int );
-void RenumberMolecule( int );
+void RenumberChains( void );
+void RenumberAtoms( int );
 
 void InitialiseDatabase( void );
 void DescribeMolecule( void );

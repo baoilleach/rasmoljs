@@ -3,9 +3,9 @@
 # Roger Sayle, December 1998
 # Version 2.6.4
 
-DEPTHDEF = -DTHIRTYTWOBIT
+# DEPTHDEF = -DTHIRTYTWOBIT
 # DEPTHDEF = -DSIXTEENBIT
-# DEPTHDEF = -DEIGHTBIT
+DEPTHDEF = -DEIGHTBIT
 
 # RasMol's on-line help direcory
 #   e.g. /usr/local/lib/rasmol/rasmol.hlp

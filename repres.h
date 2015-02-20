@@ -40,6 +40,7 @@ Label *LabelList;
 int CartoonHeight;
 int SolventDots;
 int ProbeRadius;
+int MonitRadius;
 
 int SurfaceChainsFlag;
 int DrawMonitDistance;
@@ -51,8 +52,9 @@ extern Monitor *MonitList;
 extern Label *LabelList;
 
 extern int CartoonHeight;
-extern int ProbeRadius;
 extern int SolventDots;
+extern int ProbeRadius;
+extern int MonitRadius;
 
 extern int SurfaceChainsFlag;
 extern int DrawMonitDistance;
@@ -62,6 +64,7 @@ extern int DrawBetaArrows;
 
 int DeleteLabels( void );
 void DeleteLabel( Label* );
+void RestrictLabels( void );
 Label *CreateLabel( char*, int );
 void LabelTerminii( int );
 void DefaultLabels( int );
@@ -69,13 +72,14 @@ void DefineLabels( char* );
 void DisplayLabels( void );
 
 void DeleteMonitors( void );
+void RestrictMonitors( void );
 void AddMonitors( Atom __far*, Atom __far* );
 void CreateMonitor( Long, Long );
 void DisplayMonitors( void );
 
-void DeleteSurface( void );
-void CalculateSurface( int );
-void DisplaySurface( void );
+void DeleteDots( void );
+void CalculateDots( int );
+void DisplayDots( void );
 void LoadDotsFile( FILE*, int );
 
 void DisplayRibbon( Chain __far* );

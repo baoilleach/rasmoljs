@@ -28,6 +28,7 @@
 #define FormatCEX       16
 
 #define FormatDots      20
+#define FormatGrasp     21
 
 
 #define IPC_Ok      0

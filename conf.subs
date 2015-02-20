@@ -1,0 +1,101 @@
+s%@CC@%/usr/bin/cc%g
+s%@CXX@%/usr/bin/c++%g
+s%@ABI@%%g
+s%@CFLAGS@%-W -Wall -Wno-long-double%g
+s%@COPTS1@%-O2 -fomit-frame-pointer -ffast-math %g
+s%@COPTS2@%-O2 -fomit-frame-pointer -ffast-math -funroll-loops %g
+s%@CMPFLAGS@%%g
+s%@CXXFLAGS@%%g
+s%@COMPILER@%native%g
+s%@LD@%/usr/bin/ld%g
+s%@LOPTS@%%g
+s%@LFLAGS@%-Wl,-x%g
+s%@HASSHARED@%yes%g
+s%@CSOFLAGS@%-dynamic -fPIC -fno-common%g
+s%@LSOFLAGS@%-dynamiclib -undefined dynamic_lookup -single_module -headerpad_max_install_names%g
+s%@DSOLIBS@%%g
+s%@SYSMPLIBS@%%g
+s%@SYSSOCKLIBS@%%g
+s%@SYSKMEMLIB@%%g
+s%@SYSMATHLIB@%-lm%g
+s%@SYSSQRTLIB@%-lm%g
+s%@LOCALINCS@%-I/sw/include%g
+s%@LOCALLIBS@%-L/usr/local/lib -L/sw/lib%g
+s%@X11INCS@%-I/usr/X11R6/include%g
+s%@X11LIBS@%-L/usr/X11R6/lib%g
+s%@PVMINCS@%%g
+s%@PVMLIBS@%%g
+s%@ISMAC@%yes%g
+s%@HASPVM@%no%g
+s%@QTINCS@%%g
+s%@QTLIBS@%%g
+s%@HASQT@%no%g
+s%@QWTINCS@%%g
+s%@QWTLIBS@%%g
+s%@HASQWT@%no%g
+s%@FLTKINCS@%%g
+s%@FLTKLIBS@%%g
+s%@GLDLIBS@%-framework AGL -framework OpenGL -framework Carbon -framework ApplicationServices%g
+s%@MWINDOWS@%%g
+s%@GLINCS@%-I/System/Library/Frameworks/OpenGL.framework/Headers -I/System/Library/Frameworks/AGL.framework/Headers%g
+s%@HASFLTK@%no%g
+s%@CP@%/bin/cp%g
+s%@RM@%/bin/rm%g
+s%@AR@%/usr/bin/ar%g
+s%@CAT@%/bin/cat%g
+s%@MKDIR@%/bin/mkdir%g
+s%@CHMOD@%/bin/chmod%g
+s%@SED@%/usr/bin/sed%g
+s%@AWK@%/usr/bin/awk%g
+s%@TAR@%/usr/bin/tar%g
+s%@UNCOMPRESS@%/usr/bin/uncompress%g
+s%@GZIP@%/usr/bin/gzip%g
+s%@MAKE@%/usr/bin/make --no-print-directory%g
+s%@STRIP@%/usr/bin/strip%g
+s%@INSTALL@%/usr/bin/install%g
+s%@EXE@%%g
+s%@OBJ@%.o%g
+s%@SOBJ@%.o%g
+s%@LIB@%.a%g
+s%@DLL@%.dylib%g
+s%@LIBPREFIX@%lib%g
+s%@LN@%ln -s%g
+s%@WINDRES@%%g
+s%@RANLIB@%/usr/bin/ranlib%g
+s%@CXXAR@%/usr/bin/ar rc%g
+s%@REZ@%/Developer/Tools/Rez%g
+s%@MOC@%%g
+s%@UIC@%%g
+s%@LRELEASE@%%g
+s%@VPATH@%.%g
+s%@DIST@%darwin-9.8-native-G3%g
+s%@APPDIST@%darwin-9.8-G3%g
+s%@GCCMAJ@%%g
+s%@GCCMIN@%%g
+s%@HASPYTHON@%%g
+s%@HASPYTHONDEV@%%g
+s%@HASGL@%no%g
+s%@PYTHON@%%g
+s%@PYVERSION@%%g
+s%@PYPACKAGE@%%g
+s%@PYINCLUDE@%%g
+s%@PYLIB@%%g
+s%@PYLSO@%%g
+s%@PYTHON_DLINK@%%g
+s%@PYTHON_SLINK@%%g
+s%@PYTHON_LLINK@%%g
+s%@JAVAC@%%g
+s%@JAVA@%%g
+s%@JAR@%jar%g
+s%@JAVAINC@%%g
+s%@JAVALIBPREFIX@%lib%g
+s%@JAVA_DLINK@%%g
+s%@JAVASO@%%g
+s%@JAVADYNAMICLINKING@%%g
+s%@HASJAVA@%no%g
+s%@SWIG@%%g
+s%@HASSWIG@%no%g
+s%@LSOEXTRAS@%%g
+s%@LINKAGE@%static shared%g
+s%@MODULEFLAGS@%%g
+s%@MODULE@%%g

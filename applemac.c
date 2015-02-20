@@ -21,6 +21,10 @@
 #include <Types.h>
 #include <Scrap.h>
 
+/* Required by CodeWarrior 6 */
+#include <ControlDefinitions.h>
+
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -525,10 +529,18 @@ int OpenDisplay( int x, int y )
         ULut[i] = False;
     AllocateColourMap();
     
-    PrintHand = (THPrint)NULL;
+    PrintHand = (THPrint)0;
     BackHand = NewPixPat();
     DefineMenus();
     return False;
+}
+
+
+int FetchEvent( int wait )
+{
+    /* Avoid Compiler Warning! */
+    UnusedArgument(wait);
+    return 0;
 }
 
 
@@ -600,6 +612,6 @@ void SetCanvasTitle( char *ptr )
     {   buffer[0] = '\0';
         buffer[1] = '\0';
     }
-    SetWTitle(CanvWin,(Byte*)buffer);
+    SetWTitle(CanvWin,(unsigned char*)buffer);
 }
 

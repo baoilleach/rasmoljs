@@ -9,17 +9,18 @@
 /*  User Definable Options!  */
 /*===========================*/
 
-/* #define IBMPC        */
-/* #define MSWIN        */
-/* #define APPLEMAC     */
+/* #define UNIX      */
+/* #define APPLEMAC  */
+/* #define IBMPC     */
 
-#define UNIX
+#define MSWIN
 
 #define DIALBOX
 #define SOCKETS
 #define TERMIOS
 #define PROFILE
 #define MITSHM
+#define DDEIPC
 
 /* #define HAVEZLIB     */
 /* #define HAVELIBJPEG  */
@@ -39,13 +40,51 @@
 /*  Default User Options! */
 /*========================*/
 
-#ifdef IBMPC
-#undef THIRTYTWOBIT
-#undef SIXTEENBIT
+#if defined(__MINGW32__) && !defined(_WIN32)
+#define _WIN32
 #endif
 
-#if !defined(EIGHTBIT) && !defined(THIRTYTWOBIT) && !defined(SIXTEENBIT)
-#define EIGHTBIT
+#if defined(__unix) || defined(__CYGWIN__)
+#ifndef UNIX
+#define UNIX
+#endif
+#undef APPLEMAC
+#undef IBMPC
+#endif
+
+#ifdef VMS
+#undef APPLEMAC
+#undef IBMPC
+#undef UNIX
+#endif
+
+#ifdef macintosh
+#ifndef APPLEMAC
+#define APPLEMAC
+#endif
+#undef  IBMPC
+#undef  UNIX
+#endif
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#ifndef IBMPC
+#define IBMPC
+#endif
+#undef APPLEMAC
+#undef UNIX
+#endif
+
+#ifdef __MINGW32__
+#ifndef IBMPC
+#define IBMPC
+#endif
+#undef APPLEMAC
+#undef DDEIPC
+#undef UNIX
+#endif
+
+#ifndef IBMPC
+#undef MSWIN
 #endif
 
 #ifndef RASMOLDIR
@@ -55,6 +94,14 @@
 
 #if !defined(IBMPC) && !defined(APPLEMAC) && !defined(VMS)
 #define RASMOLDIR "/usr/local/lib/rasmol/"
+#endif
+#endif
+
+#if !defined(EIGHTBIT) && !defined(THIRTYTWOBIT) && !defined(SIXTEENBIT)
+#ifdef __linux
+#define SIXTEENBIT
+#else
+#define EIGHTBIT
 #endif
 #endif
 
@@ -82,9 +129,6 @@
 
 
 typedef double Real;
-#ifndef APPLEMAC
-typedef unsigned char Byte;
-#endif
 
 #ifdef __STDC__
 typedef signed char Char;
@@ -92,7 +136,7 @@ typedef signed char Char;
 typedef char Char;
 #endif
 
-#if defined(_LONGLONG) || defined(LP64) || defined(_LP64)
+#ifdef _LONGLONG
 typedef unsigned int Card;
 typedef int Long;
 #else
@@ -111,7 +155,7 @@ typedef short Pixel;
 #endif
 
 
-#if defined(__sgi)
+#if defined(__sgi) || defined(__GNUC__)
 #define UnusedArgument(x)  ((x)=(x))
 #else
 #define UnusedArgument(x)
@@ -133,6 +177,7 @@ typedef short Pixel;
 
 #if !defined(IBMPC) || defined(_WIN32)
 #ifdef APPLEMAC
+#include <MacMemory.h>
 #define _fmalloc   NewPtrSys
 #define _ffree(x)  DisposePtr((Ptr)(x))
 #else
@@ -146,8 +191,8 @@ typedef short Pixel;
 #define __far
 #endif
 
+#define AdvItemCount    8
 
-#define ItemCount       8
 #define AdvPickAtom     0
 #define AdvPickNumber   1
 #define AdvSelectCount  2
@@ -157,6 +202,11 @@ typedef short Pixel;
 #define AdvImage        6
 #define AdvPickCoord    7
 
+
+#ifdef APPLEMAC
+#include <MacTypes.h>
+void SetFileInfo( char *ptr, OSType appl, OSType type, short icon );
+#endif
 
 void WriteChar( int );
 void WriteString( char* );
