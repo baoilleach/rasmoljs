@@ -117,6 +117,11 @@ void WriteString( char *ptr )
       *dst++ = 'n';
       src++;
     }
+    else if (*src == '"') {
+      *dst++ = '\\';
+      *dst++ = '"';
+      src++;
+    }
     else
       *dst++ = *src++;
   }
