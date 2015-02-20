@@ -7,7 +7,6 @@
 
 #ifdef IBMPC
 #include <windows.h>
-#include <shellapi.h>
 #include <malloc.h>
 #endif
 #ifdef APPLEMAC
@@ -45,6 +44,7 @@
 #include "pixutils.h"
 #include "outfile.h"
 #include "scripts.h"
+#include "tmesh.h"
 
 
 #if defined(__sun) && !defined(_XOPEN_SOURCE)
@@ -59,7 +59,7 @@ extern FILE *popen( const char*, const char* );
 #define ForEachBond  for(bptr=Database->blist;bptr;bptr=bptr->bnext)
 
 
-#define IsIdentChar(x)  ((isalnum(x))||((x)=='_')||((x)=='$'))
+#define IsIdentChar(x)  ((isalnum((int)(x)))||((x)=='_')||((x)=='$'))
 
 
 #ifndef VMS
@@ -120,9 +120,9 @@ static char *ErrorMsg[] = {
 
 
 typedef struct {
-        Byte red;
-        Byte grn;
-        Byte blu;
+        unsigned char red;
+        unsigned char grn;
+        unsigned char blu;
     } RGBStruct;
 
 static RGBStruct ColourTable[34] = {
@@ -259,9 +259,7 @@ static char *ProcessFileName( char *name )
 
     ptr = DataFileName;
     while( *name )
-    {   *ptr++ = ToUpper(*name);
-        name++;
-    }
+        *ptr++ = *name++;
 
     /* Strip trailing spaces! */
     while( (ptr!=DataFileName) && (ptr[-1]==' ') )
@@ -318,6 +316,7 @@ static int IsSecure( int ch )
         case('<'):  case('>'):  case('('):  case(')'):
         case('{'):  case('}'):  case('['):  case(']'):
         case('\''): case(';'):  case('|'):  case('&'):
+        case('"'):  case(' '):  case('\t'): case('\n'):
             return False;
     }
     return True;
@@ -397,6 +396,9 @@ static FILE *OpenDataFile( char *begin, char *end )
 {
     register FILE *fp;
 
+    /* Avoid compiler warning! */
+    UnusedArgument(end);
+
     fp = fopen(begin,"rb");
     return fp;
 }
@@ -438,10 +440,8 @@ int ProcessFile( int format, int info, FILE *fp )
     AdviseUpdate(AdvClass);
     AdviseUpdate(AdvIdent);
 
-#ifdef X11WIN
     if( Interactive )
-       FetchEvent(False);
-#endif
+        FetchEvent(False);
 
     ReDrawFlag |= RFInitial;
     if( CalcBondsFlag )
@@ -490,7 +490,7 @@ int FetchFile( int format, int info, char *name )
         while( *src && (*src!=DirChar) )
             src++;
         done = !(*src);
-    }
+    } else done = False;
 #else
     done = True;
 #endif
@@ -505,7 +505,7 @@ int FetchFile( int format, int info, char *name )
             case(FormatAlchemy): src = (char*)getenv("RASMOLMOLPATH");  break;
             case(FormatMDL):     src = (char*)getenv("RASMOLMDLPATH");  break;
             case(FormatXYZ):     src = (char*)getenv("RASMOLXYZPATH");  break;
-            default:             src = NULL;
+            default:             src = (char*)0;
         }
 
         if( src && *src )
@@ -657,12 +657,12 @@ void LoadScriptFile( FILE *fp, char *name )
                     return;
 
             } else CommandError("Script command line too long");
-        } while( ch!=EOF );
+        } while( ch != EOF );
         free(NameStack[FileDepth]);
         fclose( fp );
         FileDepth--;
     } else 
-    {   CommandError( (char*)NULL );
+    {   CommandError( (char*)0 );
         WriteString("Cannot open script file '");
         WriteString(name);  WriteString("'\n");
     }
@@ -691,7 +691,7 @@ static HlpEntry __far *EnterHelpInfo( char *text )
     register char ch;
     char keyword[32];
 
-    ptr = (void __far*)0;
+    ptr = (HlpEntry __far*)0;
     while( *text && (*text!='\n') )
     {   while( *text && (*text!='\n') && (*text==' ') )
             text++;
@@ -706,7 +706,7 @@ static HlpEntry __far *EnterHelpInfo( char *text )
 
         if( ptr )
         {   tmp = &ptr->info;
-            ptr = (void __far*)0;
+            ptr = (HlpEntry __far*)0;
         } else tmp = &HelpInfo;
 
         while( *tmp )
@@ -737,7 +737,7 @@ static HlpEntry __far *EnterHelpInfo( char *text )
             for( i=0; i<=len; i++ )
                 ptr->keyword[i] = keyword[i];
 
-            ptr->info = (void __far*)0;
+            ptr->info = (HlpEntry __far*)0;
             ptr->next = *tmp;
             ptr->fpos = 0;
             *tmp = ptr;
@@ -795,14 +795,14 @@ static void InitHelpFile( void )
     if( !fp )
     {   InvalidateCmndLine();
         WriteString("Unable to find RasMol help file!\n");
-        HelpFileName = NULL;
+        HelpFileName = (char*)0;
         return;
     }
 
     pos = 0;
     fgets(buffer,80,fp);
     while( !feof(fp) )
-    {    fix = (void __far*)0;
+    {    fix = (HlpEntry __far*)0;
          while( *buffer=='?' )
          {   ptr = EnterHelpInfo(buffer+1);
              if( ptr )
@@ -817,7 +817,7 @@ static void InitHelpFile( void )
 
          while( fix )
          {   ptr = fix->info;
-             fix->info = (void __far*)0;
+             fix->info = (HlpEntry __far*)0;
              fix->fpos = pos;
              fix = ptr;
          }
@@ -845,7 +845,7 @@ static void FindHelpInfo( void )
         TokenPtr++;
 
     if( *TokenPtr )
-    {   ptr = NULL;
+    {   ptr = (HlpEntry __far*)0;
         do {
             len = 0;
             while( *TokenPtr && (*TokenPtr!=' ') )
@@ -857,7 +857,7 @@ static void FindHelpInfo( void )
 
             if( ptr )
             {   tmp = &ptr->info;
-                ptr = (void __far*)0;
+                ptr = (HlpEntry __far*)0;
             } else tmp = &HelpInfo;
 
             while( *tmp )
@@ -917,13 +917,13 @@ static int FetchToken( void )
     CurToken = 0;
     ch = *TokenPtr++;
     while( ch && (ch!='#') )
-    {   if( isspace(ch) )
+    {   if( isspace((int)ch) )
         {   ch = *TokenPtr++;
             continue;
         }
 
         TokenStart = TokenPtr-1;
-        if( isalpha(ch) )
+        if( isalpha((int)ch) )
         {   TokenLength = 1;
             *TokenIdent = ToUpper(ch);
             while( IsIdentChar(*TokenPtr) && (TokenLength<32) )
@@ -936,9 +936,9 @@ static int FetchToken( void )
             } else TokenIdent[TokenLength] = '\0';
             return( CurToken = LookUpKeyword(TokenIdent) );
 
-        } else if( isdigit(ch) )
+        } else if( isdigit((int)ch) )
         {   TokenValue = ch-'0';
-            while( isdigit(*TokenPtr) )
+            while( isdigit((int)*TokenPtr) )
                 TokenValue = 10*TokenValue + (*TokenPtr++)-'0';
             return( CurToken = NumberTok );
 
@@ -956,7 +956,7 @@ static int FetchToken( void )
 
             TokenIdent[TokenLength]='\0';
             return( CurToken = StringTok );
-        } else if( ispunct(ch) )
+        } else if( ispunct((int)ch) )
             return( CurToken = ch );
 
         ch = *TokenPtr++;
@@ -980,7 +980,7 @@ static void FetchFloat( Long value, int scale )
     register int count;
     register int mant;
 
-    if( !value && !isdigit(*TokenPtr) )
+    if( !value && !isdigit((int)*TokenPtr) )
     {   CommandError("Invalid floating point number");
         TokenValue = 0;
         return;
@@ -988,7 +988,7 @@ static void FetchFloat( Long value, int scale )
 
     mant = 0;
     count = 1;
-    while( isdigit(*TokenPtr) )
+    while( isdigit((int)*TokenPtr) )
     {   if( count < scale )
         {   mant = 10*mant + (*TokenPtr-'0');
             count *= 10;
@@ -1076,7 +1076,7 @@ static Expr *ParseRange( int neg )
         if( CurToken != NumberTok )
         {   CommandError(ErrorMsg[ErrNotNum]);
             DeAllocateExpr( tmp1 );
-            return( (Expr*)NULL );
+            return( (Expr*)0 );
         }
 
         tmp1->type |= OpMoreEq;
@@ -1096,7 +1096,7 @@ static Expr *ParseRange( int neg )
         TokenPtr++;
 
     ch = *TokenPtr;
-    if( isalnum(ch) )
+    if( isalnum((int)ch) )
     {   ch = ToUpper(ch);
         TokenPtr++;
 
@@ -1138,7 +1138,7 @@ static Expr *ParseExpression( int level )
                       tmp2 = AllocateNode();
                       tmp2->type = OpOr;
                       tmp2->lft.ptr = tmp1;
-                      tmp2->rgt.ptr = NULL;
+                      tmp2->rgt.ptr = (Expr*)0;
                       if( !(tmp1=ParseExpression(1)) )
                       {   DeAllocateExpr(tmp2);
                           return( tmp1 );
@@ -1159,7 +1159,7 @@ static Expr *ParseExpression( int level )
                       tmp2 = AllocateNode();
                       tmp2->type = OpAnd;
                       tmp2->lft.ptr = tmp1;
-                      tmp2->rgt.ptr = NULL;
+                      tmp2->rgt.ptr = (Expr*)0;
                       if( !(tmp1=ParseExpression(2)) )
                       {   DeAllocateExpr(tmp2);
                           return( tmp1 );
@@ -1171,7 +1171,9 @@ static Expr *ParseExpression( int level )
 
          case(2): /* Primitives */
                   if( IsPredTok(CurToken) || (CurToken==BackboneTok) )
-                  {   switch( CurToken )
+                  {   /* Avoid compiler warning! */
+                      pred = 0;
+                      switch( CurToken )
                       {   case(HelixTok):    if( Info.helixcount < 0 )
                                                  DetermineStructure(False);
                                              pred = PredHelix;
@@ -1200,7 +1202,10 @@ static Expr *ParseExpression( int level )
                       return( tmp1 );
 
                   } else if( IsPropTok(CurToken) )
-                  {   tmp1 = AllocateNode();
+                  {   /* Avoid compiler warning! */
+                      pred = 0;
+
+                      tmp1 = AllocateNode();
                       tmp1->type = OpLftProp|OpRgtVal;
                       switch( CurToken )
                       {   case(TemperatureTok): pred = PropTemp;    break;
@@ -1234,13 +1239,13 @@ static Expr *ParseExpression( int level )
                       } else if( (CurToken=='!') || (CurToken=='/') )
                       {   if( NextIf('=',ErrBadExpr) )
                           {   DeAllocateExpr( tmp1 );
-                              return( (Expr*)NULL );
+                              return( (Expr*)0 );
                           } else tmp1->type |= OpNotEq;
                           FetchToken();
                       } else
                       {   CommandError(ErrorMsg[ErrBadExpr]);
                           DeAllocateExpr( tmp1 );
-                          return( (Expr*)NULL );
+                          return( (Expr*)0 );
                       }
 
 
@@ -1252,7 +1257,7 @@ static Expr *ParseExpression( int level )
                       if( CurToken!=NumberTok )
                       {   CommandError(ErrorMsg[ErrNotNum]);
                           DeAllocateExpr( tmp1 );
-                          return( (Expr*)NULL );
+                          return( (Expr*)0 );
                       } 
 
                       if( neg )
@@ -1264,12 +1269,12 @@ static Expr *ParseExpression( int level )
                   } else switch( CurToken )
                   {   case('('):    FetchToken();
                                     if( !(tmp1=ParseExpression(0)) )
-                                        return( (Expr*)NULL );
+                                        return( (Expr*)0 );
 
                                     if( CurToken!=')' )
                                     {   CommandError(ErrorMsg[ErrParen]);
                                         DeAllocateExpr( tmp1 );
-                                        return( (Expr*)NULL );
+                                        return( (Expr*)0 );
                                     }
                                     FetchToken();
                                     return(tmp1);
@@ -1277,7 +1282,7 @@ static Expr *ParseExpression( int level )
                       case('!'): case('~'):
                       case(NotTok): FetchToken();
                                     if( !(tmp1=ParseExpression(2)) )
-                                        return( (Expr*)NULL );
+                                        return( (Expr*)0 );
 
                                     tmp2 = AllocateNode();
                                     tmp2->type = OpNot | OpRgtVal;
@@ -1285,7 +1290,7 @@ static Expr *ParseExpression( int level )
                                     return( tmp2 );
 
                       case('-'):    if( NextIf(NumberTok,ErrNotNum) )
-                                        return( (Expr*)NULL );
+                                        return( (Expr*)0 );
                                     return( ParseRange(True) );
 
                       case(NumberTok):
@@ -1293,7 +1298,7 @@ static Expr *ParseExpression( int level )
 
                       case(WithinTok):
                                     if( NextIf('(',ErrFunc) )
-                                        return( (Expr*)NULL );
+                                        return( (Expr*)0 );
 
                                     FetchToken();
                                     if( CurToken==NumberTok )
@@ -1303,24 +1308,25 @@ static Expr *ParseExpression( int level )
                                         }
                                     } else if( CurToken!='.' )
                                     {   CommandError(ErrorMsg[ErrNotNum]);
-                                        return( (Expr*)NULL );
+                                        return( (Expr*)0 );
                                     } else FetchFloat(0,250);
 
                                     if( TokenValue>10000 )
                                     {   CommandError(ErrorMsg[ErrBigNum]);
-                                        return( (Expr*)NULL );
-                                    } else pred = (int)TokenValue;
+                                        return( (Expr*)0 );
+                                    }
+                                    pred = (int)TokenValue;
                                     if( NextIf(',',ErrNotSep) )
-                                        return( (Expr*)NULL );
+                                        return( (Expr*)0 );
 
                                     FetchToken();
                                     if( !(tmp1=ParseExpression(0)) )
-                                        return( (Expr*)NULL );
+                                        return( (Expr*)0 );
 
                                     if( CurToken!=')' )
                                     {   CommandError(ErrorMsg[ErrParen]);
                                         DeAllocateExpr( tmp1 );
-                                        return( (Expr*)NULL );
+                                        return( (Expr*)0 );
                                     }
 
                                     FetchToken();
@@ -1352,11 +1358,11 @@ static Expr *ParseExpression( int level )
                                     if( !done )
                                     {   CommandError(ErrorMsg[ErrBadExpr]);
                                         DeAllocateExpr( QueryExpr );
-                                        return( (Expr*)NULL );
+                                        return( (Expr*)0 );
                                     } else return( QueryExpr );
                   }
     }
-    return (Expr*)NULL;
+    return (Expr*)0;
 }
 
 
@@ -1464,6 +1470,9 @@ static void ExecuteLoadCommand( void )
         } else if( CurToken == DotsTok )
         {   format = FormatDots;
             FetchToken();
+        } else if( CurToken == GraspTok )
+        {   format = FormatGrasp;
+            FetchToken();
         }
     }
 
@@ -1494,7 +1503,7 @@ static void ExecuteLoadCommand( void )
         {      FetchFile(format,info,TokenIdent);
         } else FetchFile(format,info,TokenStart);
         DefaultRepresentation();
-    } else /* format == FormatDots */
+    } else if( format == FormatDots )
     {   if( !Database )
         {   CommandError(ErrorMsg[ErrBadMolDB]);
             return;
@@ -1505,13 +1514,33 @@ static void ExecuteLoadCommand( void )
         } else ProcessFileName(TokenStart);
 
         if( !(fp=fopen(DataFileName,"rb")) )
-        {   CommandError( (char*)NULL );
+        {   CommandError( (char*)0 );
             WriteString("Cannot open dots file '");
             WriteString(DataFileName);
             WriteString("'\n");
             return;
         } else
         {   LoadDotsFile(fp,info);
+            fclose(fp);
+        }
+    } else if( format == FormatGrasp )
+    {   if( !Database )
+        {   CommandError(ErrorMsg[ErrBadMolDB]);
+            return;
+        }
+
+        if( CurToken==StringTok )
+        {      ProcessFileName(TokenIdent);
+        } else ProcessFileName(TokenStart);
+
+        if( !(fp=fopen(DataFileName,"rb")) )
+        {   CommandError( (char*)0 );
+            WriteString("Cannot open grasp file '");
+            WriteString(DataFileName);
+            WriteString("'\n");
+            return;
+        } else
+        {   LoadGraspSurface(fp,info);
             fclose(fp);
         }
     }
@@ -1940,12 +1969,32 @@ static void ExecuteSetCommand( void )
 
         case(MonitorTok):
             FetchToken();
-            if( !CurToken || (CurToken==TrueTok) )
+            if( !CurToken )
+            {   ReDrawFlag |= RFRefresh;
+                DrawMonitDistance = True;
+                MonitRadius = 0;
+            } else if( CurToken == TrueTok )
             {   ReDrawFlag |= RFRefresh;
                 DrawMonitDistance = True;
             } else if( CurToken == FalseTok )
             {   ReDrawFlag |= RFRefresh;
                 DrawMonitDistance = False;
+            } else if( CurToken==NumberTok )
+            {   if( *TokenPtr=='.' )
+                {   TokenPtr++;
+                    FetchFloat(TokenValue,250);
+                }
+
+                if( TokenValue <= 750 )
+                {   MonitRadius = (int)TokenValue;
+                    ReDrawFlag |= RFRefresh;
+                } else CommandError(ErrorMsg[ErrBigNum]);
+            } else if( CurToken=='.' )
+            {   FetchFloat(0,250);
+                if( TokenValue <= 750 )
+                {   MonitRadius = (int)TokenValue;
+                    ReDrawFlag |= RFRefresh;
+                } else CommandError(ErrorMsg[ErrBigNum]);
             } else CommandError(ErrorMsg[ErrBadOpt]);
             break;
 
@@ -2037,6 +2086,7 @@ static void ExecuteSetCommand( void )
         case(UnitCellTok): ExecuteUnitCellCommand(); break;
 
         case(DotsTok):
+            FetchToken();
             if( !CurToken )
             {   SurfaceChainsFlag = False;
                 SolventDots = False;
@@ -2057,6 +2107,55 @@ static void ExecuteSetCommand( void )
                 } else if( CurToken == FalseTok )
                 {   SurfaceChainsFlag = False;
                 } else CommandError(ErrorMsg[ErrBadOpt]);
+            } else CommandError(ErrorMsg[ErrBadOpt]);
+            break;
+
+        case(STLTok):
+        case(DXFTok):
+        case(PLYTok):
+            FetchToken();
+            if( !CurToken )
+            {   ResolutionFlag = ResDefault;
+                BinaryFlag = True;
+            } else if( CurToken == TrueTok )
+            {   BinaryFlag = True;
+            } else if( CurToken == FalseTok )
+            {   BinaryFlag = False;
+            } else if( CurToken == HighTok )
+            {   ResolutionFlag = ResHigh;
+            } else if( CurToken == MediumTok )
+            {   ResolutionFlag = ResMedium;
+            } else if( CurToken == LowTok )
+            {   ResolutionFlag = ResLow;
+            } else CommandError(ErrorMsg[ErrBadOpt]);
+            break;
+
+        case(SurfaceTok):
+            FetchToken();
+            if( CurToken == NoneTok ) {
+                ReDrawFlag |= RFRefresh;
+                SurfaceMode = SurfNone;
+            } else if( CurToken == DotsTok ) {
+                ReDrawFlag |= RFRefresh;
+                SurfaceMode = SurfDots;
+            } else if( CurToken == LineTok ) {
+                ReDrawFlag |= RFRefresh;
+                SurfaceMode = SurfLines;
+            } else if( CurToken == VectorTok ) {
+                ReDrawFlag |= RFRefresh;
+                SurfaceMode = SurfVectors;
+            } else if( CurToken == NormalTok ) {
+                ReDrawFlag |= RFRefresh;
+                SurfaceMode = SurfNormal;
+            } else if( CurToken == SolidTok ) {
+                ReDrawFlag |= RFRefresh;
+                SurfaceMode = SurfSolid;
+            } else if( CurToken == TransparentTok ) {
+                ReDrawFlag |= RFRefresh;
+                SurfaceMode = SurfTransparent;
+            } else if( CurToken == TranslucentTok ) {
+                ReDrawFlag |= RFRefresh;
+                SurfaceMode = SurfTranslucent;
             } else CommandError(ErrorMsg[ErrBadOpt]);
             break;
 
@@ -2176,6 +2275,19 @@ static void ExecuteColourCommand( void )
             } else if( ParseColour() )
             {   ReDrawFlag |= RFColour;
                 ColourDotsAttrib(RVal,GVal,BVal);
+            } else if( CurToken )
+            {      CommandError(ErrorMsg[ErrColour]);
+            } else CommandError(ErrorMsg[ErrNoCol]);
+            break;
+
+        case(SurfaceTok):
+            FetchToken();
+            if( CurToken == PotentialTok )
+            {   ReDrawFlag |= RFColour;
+                ColourSurfacePotential();
+            } else if( ParseColour() )
+            {   ReDrawFlag |= RFColour;
+                ColourSurfaceAttrib(RVal,GVal,BVal);
             } else if( CurToken )
             {      CommandError(ErrorMsg[ErrColour]);
             } else CommandError(ErrorMsg[ErrNoCol]);
@@ -2406,7 +2518,11 @@ static void WriteImageFile( char *name, int type )
         case(KinemageTok):   WriteKinemageFile(name);   break;
         case(MolScriptTok):  WriteMolScriptFile(name);  break;
         case(POVRayTok):     WritePOVRayFile(name);     break;
+        case(GraspTok):      WriteGraspFile(name);      break;
         case(VRMLTok):       WriteVRMLFile(name);       break;
+        case(STLTok):        WriteSTLFile(name);        break;
+        case(DXFTok):        WriteDXFFile(name);        break;
+        case(PLYTok):        WritePLYFile(name);        break;
     }
 }
 
@@ -2430,10 +2546,16 @@ void ResumePauseCommand( void )
         do {
             len = 0;
             ch = getc(fp);
-            while( (ch!='\n') && (ch!=EOF) )
+            while( (ch!='\n') && (ch!='\r') && (ch!=EOF) )
             {   if( len<MAXBUFFLEN )
                     CurLine[len++] = ch;
                 ch = getc(fp);
+            }
+
+            if( ch == '\r' )
+            {   ch = getc(fp);
+                if( ch != '\n' )
+                    ungetc(ch,fp);
             }
 
             LineStack[FileDepth]++;
@@ -2453,7 +2575,7 @@ void ResumePauseCommand( void )
                 } else if( IsPaused )
                     return;
             } else CommandError("Script command line too long");
-        } while( ch!=EOF );
+        } while( ch != EOF );
         free(NameStack[FileDepth]);
         fclose( fp );
         FileDepth--;
@@ -2519,7 +2641,7 @@ int ExecuteCommand( void )
 
     TokenPtr = CurLine;
     if( !FetchToken() )
-    {   TokenPtr = NULL;
+    {   TokenPtr = (char*)0;
         return( False );
     }
 
@@ -2875,19 +2997,29 @@ int ExecuteCommand( void )
                           break;
 
         case(DotsTok):    FetchToken();
-                          if( CurToken==NumberTok )
+                          if( CurToken == NumberTok )
                           {   if( TokenValue<=1000 )
                               {   if( TokenValue )
-                                  {   CalculateSurface((int)TokenValue);
-                                  } else CalculateSurface(1);
+                                  {   CalculateDots((int)TokenValue);
+                                  } else CalculateDots(1);
                                   ReDrawFlag |= RFRefresh;
                               } else CommandError(ErrorMsg[ErrBigNum]);
-                          } else if( CurToken==FalseTok )
+                          } else if( CurToken == FalseTok )
                           {   ReDrawFlag |= RFRefresh;
-                              DeleteSurface();
+                              DeleteDots();
                           } else if( (CurToken==TrueTok) || !CurToken )
                           {   ReDrawFlag |= RFRefresh;
-                              CalculateSurface(100);
+                              CalculateDots(100);
+                          } else CommandError(ErrorMsg[ErrBadArg]);
+                          break;
+
+        case(SurfaceTok): FetchToken();
+                          if( CurToken == FalseTok )
+                          {   ReDrawFlag |= RFRefresh;
+                              DeleteSurface();
+                          } else if( CurToken == RibbonTok )
+                          {   ReDrawFlag |= RFRefresh;
+                              CreateRibbons();
                           } else CommandError(ErrorMsg[ErrBadArg]);
                           break;
 
@@ -3136,7 +3268,7 @@ int ExecuteCommand( void )
                                   if( QueryExpr )
                                   {   done = DefineSetExpr(param,QueryExpr);
                                   } else done = True;
-                              } else done = DefineSetExpr(param,(Expr*)NULL);
+                              } else done = DefineSetExpr(param,(Expr*)0);
                           } else done = False;
 
                           if( !done )
@@ -3171,7 +3303,9 @@ int ExecuteCommand( void )
                               }
 
                           option = FetchToken();
-                          if( (option==RasMolTok) || (option==ScriptTok)
+                          if( (option==RasMolTok)
+                              || (option==ScriptTok)
+                              || (option==GraspTok)
                               || IsMoleculeToken(option)
                               || IsImageToken(option) )
                           {   if( !*TokenPtr || *TokenPtr==' ' )
@@ -3195,15 +3329,16 @@ int ExecuteCommand( void )
 
                           } else switch(option)
                           {   case(NMRPDBTok):
-                              case(PDBTok):  SavePDBMolecule(param); break;
-                              case(MDLTok):  SaveMDLMolecule(param); break;
-                              case(XYZTok):  SaveXYZMolecule(param); break;
-                              case(CIFTok):  SaveCIFMolecule(param); break;
+                              case(PDBTok):  SavePDBMolecule(param);  break;
+                              case(MDLTok):  SaveMDLMolecule(param);  break;
+                              case(XYZTok):  SaveXYZMolecule(param);  break;
+                              case(CIFTok):  SaveCIFMolecule(param);  break;
+                              case(Mol2Tok): SaveMol2Molecule(param); break;
+                              case(AlchemyTok): SaveAlchemyMolecule(param);
+                                                break;
 #ifdef CEXIOLIB
                               case(CEXTok):  SaveCEXMolecule(param); break;
 #endif
-                              case(AlchemyTok): SaveAlchemyMolecule(param);
-                                                break;
                           } break;
 
         case(SourceTok):
@@ -3223,7 +3358,9 @@ int ExecuteCommand( void )
                           break;
 
         case(RenumTok):   FetchToken();
-                          if( CurToken )
+                          if( CurToken == ChainTok ) {
+                              RenumberChains();
+                          } else if( CurToken )
                           {   if( CurToken == '-' )
                               {   FetchToken();
                                   done = True;
@@ -3231,10 +3368,10 @@ int ExecuteCommand( void )
 
                               if( CurToken == NumberTok )
                               {   if( done )
-                                  {     RenumberMolecule(-(int)TokenValue);
-                                  } else RenumberMolecule((int)TokenValue); 
+                                  {     RenumberAtoms(-(int)TokenValue);
+                                  } else RenumberAtoms((int)TokenValue); 
                               } else CommandError(ErrorMsg[ErrNotNum]);
-                          } else RenumberMolecule(1);
+                          } else RenumberAtoms(1);
                           break;
 
         case(StructureTok):
@@ -3255,7 +3392,7 @@ int ExecuteCommand( void )
     if( CurToken )
         if( FetchToken() )
             CommandError("Warning: Ignoring rest of command");
-    TokenPtr = NULL;
+    TokenPtr = (char*)0;
     return False;
 }
 
@@ -3351,12 +3488,12 @@ int ExecuteIPCCommand( char __huge *ptr )
 
 void InitialiseCommand( void )
 {
-    HelpFileName = NULL;
-    FreeInfo = (void __far*)0;
-    HelpInfo = (void __far*)0;
+    HelpFileName = (char*)0;
+    FreeInfo = (HlpEntry __far*)0;
+    HelpInfo = (HlpEntry __far*)0;
 
+    TokenPtr = (char*)0;
     SelectCount = 0;
-    TokenPtr = NULL;
     FileDepth = -1;
 
     SeqFormat = False;

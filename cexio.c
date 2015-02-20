@@ -9,9 +9,20 @@
 #include "rasmol.h"
 #include "molecule.h"
 #include "command.h"
+#include "graphics.h"
 
 #include "cx.h"
 #include "cx_molecule.h"
+
+
+#define CEXMODELS
+#define CEXTITLES
+
+
+#ifdef CEXTITLES
+#include "cx_message.h"
+#endif
+
 
 #define PROP_ATSYM   "atomic symbol"
 #define PROP_BONDO   "bond order"
@@ -34,6 +45,8 @@ static cx_String prop_resno;
 static cx_String prop_coord;
 static cx_String prop_tempr;
 
+static Atom __far *CEXConnectAtom;
+static int CEXSerialNumber;
 
 
 static cx_String get_atom_tuple( cx_Object mol, cx_String prop )
@@ -42,12 +55,12 @@ static cx_String get_atom_tuple( cx_Object mol, cx_String prop )
 
     if( (tupleseq = cx_prefix2atuples(mol,prop)) )
     {   tuple = cx_next(tupleseq);
-    } else tuple = (cx_Object)NULL;
+    } else tuple = (cx_Object)0;
  
     if( !tuple )
     {   /* No such property! */
         cx_destroy( tupleseq );
-        return (cx_String)NULL;
+        return (cx_String)0;
     }
  
     /* Ambiguous atom property prefix! */
@@ -75,32 +88,41 @@ static int process_cx_atom( cx_Object atom, int serno )
 {
     auto char buffer[5];
     register Group __far *group;
+    register Bond __far *bptr;
     register Atom __far *ptr;
     register int refno,resno;
+    register Long dx,dy,dz;
     register int chain;
-    cx_String prop;
-    float x,y,z,t;
+    register char *prop;
+    auto double x,y,z,t;
 
     /* Test for valid 3D co-ordinates */
     prop = cx_sprop(atom,prop_coord);
     if( !prop ) return False;
-    if( sscanf(prop,"%g,%g,%g",&x,&y,&z) != 3 )
+    if( sscanf(prop,"%lg,%lg,%lg",&x,&y,&z) != 3 )
         return False;
 
     /* Determine Chain */
     prop = cx_sprop(atom,prop_chain);
-    if( prop && *prop ) 
+    if( prop && *prop && (*prop!=',') ) 
     {   chain = *prop;
     } else chain = ' ';
 
-    if( CurChain && (CurChain->ident!=chain) )
-    {   CurChain = CurMolecule->clist;
-        while( CurChain )
-            if( CurChain->ident != chain )
-            {   CurChain = CurChain->cnext;
-            } else break;
+    if( CurChain )  
+    {   if( (CurChain->ident!=chain) || (CurChain->model!=NMRModel) )
+        {   CEXConnectAtom = (Atom __far*)0;
+            CurChain = CurMolecule->clist;
+            while( CurChain )
+                if( (CurChain->ident!=chain) || (CurChain->model!=NMRModel) )
+                {   CurChain = CurChain->cnext;
+                } else break;
+        }
     }
-    if( !CurChain ) CreateChain( chain );
+
+    if( !CurChain ) {
+        CEXConnectAtom = (Atom __far*)0;
+        CreateChain( chain );
+    }
 
     /* Determine Residue */
     resno = cx_iprop(atom,prop_resno);
@@ -130,6 +152,8 @@ static int process_cx_atom( cx_Object atom, int serno )
 
     /* Process Atom */
     ptr = CreateAtom();
+    if( !IsProtein(refno) && !IsNucleo(refno) )
+        ptr->flag |= HeteroFlag;
     ptr->serno = serno;
 
     prop = cx_sprop(atom,prop_alabs);
@@ -144,13 +168,37 @@ static int process_cx_atom( cx_Object atom, int serno )
         } else ptr->refno = SimpleAtomType("Du  ");
     }
 
-    t = (float)cx_rprop(atom,prop_tempr);
+    t = cx_rprop(atom,prop_tempr);
     ptr->temp = (short)(t*100.0);
 
     ptr->xorg =  (Long)(x*250.0);
     ptr->yorg =  (Long)(y*250.0);
     ptr->zorg = -(Long)(z*250.0);
     ProcessAtom( ptr );
+
+    /* Create biopolymer Backbone */
+    if( IsAlphaCarbon(ptr->refno) && IsProtein(CurGroup->refno) )
+    {   if( CEXConnectAtom )
+        {   dx = CEXConnectAtom->xorg - ptr->xorg;
+            dy = CEXConnectAtom->yorg - ptr->yorg;
+            dz = CEXConnectAtom->zorg - ptr->zorg;
+
+            /* Break backbone if CA-CA > 4.20A */
+            if( dx*dx+dy*dy+dz*dz < (Long)1050*1050 )
+            {   bptr = ProcessBond(ptr,CEXConnectAtom,NormBondFlag);
+                bptr->bnext = CurChain->blist;
+                CurChain->blist = bptr;
+            } else ptr->flag |= BreakFlag;
+        }
+        CEXConnectAtom = ptr;
+    } else if( IsSugarPhosphate(ptr->refno) && IsNucleo(CurGroup->refno) )
+    {   if( CEXConnectAtom )
+        {   bptr = ProcessBond(CEXConnectAtom,ptr,NormBondFlag);
+            bptr->bnext = CurChain->blist;
+            CurChain->blist = bptr;
+        }
+        CEXConnectAtom = ptr;
+    }
     return True;
 }
 
@@ -169,10 +217,10 @@ static void process_cx_bond( cx_Object bond )
     } else flag = NormBondFlag;
 
     atoms = cx_stream(bond,CX_OB_ATOM);
-    if( atom = cx_next(atoms) )
-        if( src = cx_iprop(atom,"_serno") )
-            if( atom = cx_next(atoms) )
-                if( dst = cx_iprop(atom,"_serno") )
+    if( (atom=cx_next(atoms)) != (cx_Object)0 )
+        if( (src=cx_iprop(atom,"_serno")) != 0 )
+            if( (atom=cx_next(atoms)) != (cx_Object)0 )
+                if( (dst=cx_iprop(atom,"_serno")) != 0 )
                     CreateBond(src,dst,flag);
     cx_destroy(atoms);
 }
@@ -183,14 +231,15 @@ static void load_cx_molecule( cx_Object mol )
     cx_String molname;
     cx_Object atoms,atom;
     cx_Object bonds,bond;
-    register int serno;
     register int i;
 
-    if( (molname = cx_sprop(mol,PROP_MNAME)) )
-    {   for( i=0; molname[i] && (i<62); i++ )
-            Info.moleculename[i] = molname[i];
-        while( i && molname[i-1]==' ' ) i--;
-        Info.moleculename[i] = '\0';
+    if( !Database )
+    {   if( (molname = cx_sprop(mol,PROP_MNAME)) )
+        {   for( i=0; molname[i] && (i<62); i++ )
+                Info.moleculename[i] = molname[i];
+            while( i && molname[i-1]==' ' ) i--;
+            Info.moleculename[i] = '\0';
+        }
     }
 
     /* Molecule must have 3d co-ordinates */
@@ -207,19 +256,67 @@ static void load_cx_molecule( cx_Object mol )
     prop_chain = get_atom_tuple(mol,PROP_CHAIN);
     prop_resno = get_atom_tuple(mol,PROP_RESNO);
 
-    serno = 1;
+    CEXConnectAtom = (Atom __far*)0;
     atoms = cx_stream(mol,CX_OB_ATOM);
-    while( atom = cx_next(atoms) )
-    {   if( process_cx_atom(atom,serno) )
-        {   cx_set_iprop(atom,"_serno",serno++);
+    while( (atom=cx_next(atoms)) != (cx_Object)0 )
+    {   if( process_cx_atom(atom,CEXSerialNumber) )
+        {   cx_set_iprop(atom,"_serno",CEXSerialNumber++);
         } else cx_set_iprop(atom,"_serno",0);
     }
     cx_destroy(atoms);
 
     bonds = cx_stream(mol,CX_OB_BOND);
-    while( bond = cx_next(bonds) )
+    while( (bond=cx_next(bonds)) != (cx_Object)0 )
         process_cx_bond(bond);
     cx_destroy(bonds);
+}
+
+
+static void InitCEXMolecule( void )
+{
+    CEXSerialNumber = 1;
+    NMRModel = 0;
+
+    cx_molecule_pkg();
+#ifdef CEXTITLES
+    cx_message_pkg();
+#endif
+}
+
+
+static void ProcessCEXObject( cx_Object obj )
+{
+#ifdef CEXTITLES
+    register cx_Object sos;
+    register cx_Object str;
+    register char *ptr;
+#endif
+
+    if( cx_type(obj) == CX_OB_MOLECULE )
+    {   
+#ifdef CEXMODELS
+        if( Database )
+            NMRModel++;
+        load_cx_molecule(obj);
+#else
+        if( !Database )
+            load_cx_molecule(obj);
+#endif
+#ifdef CEXTITLES
+    } else if( cx_type(obj) == CX_OB_MESSAGE )
+    {   if( Interactive )
+        {   ptr = cx_sprop(obj,"name");
+            if( ptr && !strcmp(ptr,"title") )
+            {   sos = cx_stream(obj,CX_OB_STRING);
+                str = cx_next(sos);
+                ptr = cx_stringvalue(str);
+                if( ptr && *ptr )
+                    SetCanvasTitle(ptr);
+                cx_destroy(sos);
+            }
+        }
+#endif
+    }
 }
 
 
@@ -231,14 +328,11 @@ int LoadCEXMolecule( FILE *fp )
 
     UnusedArgument(fp);
 
-    cx_molecule_pkg();
+    InitCEXMolecule();
     ins = cx_create_iostream(DataFileName,CX_IO_READ);
     while( (obj = cx_next(ins)) ) 
-    {   if( cx_type(obj) == CX_OB_MOLECULE )
-        {   load_cx_molecule(obj);
-            cx_destroy(obj);
-            break;
-        } else cx_destroy(obj);
+    {   ProcessCEXObject(obj);
+        cx_destroy(obj);
     }
     cx_destroy(ins);
     /* cx_cleanup(); */
@@ -249,13 +343,10 @@ int LoadCEXMolecule( FILE *fp )
 
     if( !fp ) return False;
 
-    cx_molecule_pkg();
-    while( (obj = cx_receive(NULL,fp,NULL)) ) 
-    {   if( cx_type(obj) == CX_OB_MOLECULE )
-        {   load_cx_molecule(obj);
-            cx_destroy(obj);
-            break;
-        } else cx_destroy(obj);
+    InitCEXMolecule();
+    while( (obj = cx_receive((cx_Object)0,fp,(cx_Object)0)) ) 
+    {   ProcessCEXObject(obj);
+        cx_destroy(obj);
     }
     /* cx_cleanup(); */
     return True;

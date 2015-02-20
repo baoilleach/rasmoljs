@@ -113,9 +113,10 @@ UNIX X11:
     directory /usr/openwin/include/X11, hence the compiler directive 
     -I/usr/openwin/include must be added to CFLAGS.
 
-    A common problem on IBM RS6000s running AIX is that the MIT shared
-    memory extensions to X windows are in the library -lXextSam, hence
-    this must be added to the LIBS lines in either the Makefile or Imakefile.
+    A common problem on IBM RS6000s running older versions of AIX (prior to
+    v4.x) is that the MIT shared memory extensions to X windows are in the
+    library -lXextSam, hence this must be added to the LIBS lines in either
+    the Makefile or Imakefile.
 
 [2] Modify the #defines in the file rasmol.h (see below)
         Note: IBMPC should not be defined.

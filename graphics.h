@@ -62,16 +62,18 @@ int MouseUpdateStatus;
 Pixel __huge *FBuffer;
 short __huge *DBuffer;
 
+unsigned char RLut[LutSize];
+unsigned char GLut[LutSize];
+unsigned char BLut[LutSize];
+unsigned char ULut[LutSize];
 Pixel Lut[LutSize];
-Byte RLut[LutSize];
-Byte GLut[LutSize];
-Byte BLut[LutSize];
-Byte ULut[LutSize];
 
 
 #ifdef MSWIN
+#ifdef EIGHTBIT
 LOGPALETTE __far *Palette;
 HPALETTE ColourMap;
+#endif
 HGLOBAL FBufHandle;
 HGLOBAL DBufHandle;
 HBITMAP PixMap;
@@ -106,16 +108,18 @@ extern int MouseUpdateStatus;
 extern Pixel __huge *FBuffer;
 extern short __huge *DBuffer;
 
+extern unsigned char RLut[LutSize];
+extern unsigned char GLut[LutSize];
+extern unsigned char BLut[LutSize];
+extern unsigned char ULut[LutSize];
 extern Pixel Lut[LutSize];
-extern Byte RLut[LutSize];
-extern Byte GLut[LutSize];
-extern Byte BLut[LutSize];
-extern Byte ULut[LutSize];
 
 
 #ifdef MSWIN
+#ifdef EIGHTBIT
 extern LOGPALETTE __far *Palette;
 extern HPALETTE ColourMap;
+#endif
 extern HGLOBAL FBufHandle;
 extern HGLOBAL DBufHandle;
 extern HBITMAP PixMap;
@@ -151,16 +155,13 @@ void SetMouseCaptureStatus( int );
 void SetCanvasTitle( char* );
 void EnableMenus( int );
 void CloseDisplay( void );
+int FetchEvent( int );
 void BeginWait( void );
 void EndWait( void );
 
 #ifdef MSWIN
-int OpenDisplay( HANDLE, int );
+int OpenDisplay( HINSTANCE, int );
 #else
 int OpenDisplay( int, int );
-#endif
-
-#if !defined(IBMPC) && !defined(APPLEMAC)
-int FetchEvent( int );
 #endif
 

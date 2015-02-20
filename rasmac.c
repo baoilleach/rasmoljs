@@ -49,6 +49,10 @@
 #include <Menus.h>
 #include <Fonts.h>
 
+/* Required by CodeWarrior 6 */
+#include <ControlDefinitions.h>
+#include <Sound.h>
+
 #include "molecule.h"
 #include "abstree.h"
 #include "graphics.h"
@@ -59,6 +63,8 @@
 #include "render.h"
 #include "repres.h"
 #include "outfile.h"
+#include "infile.h"
+#include "tmesh.h"
 
 
 /* Forwardly Compatable Definitions */
@@ -110,9 +116,9 @@ static int LabelOptFlag;
 
 
 #ifdef __CONDITIONALMACROS__
-#define ArrowCursor   SetCursor(&qd.arrow)
+#define ArrowCursor()   SetCursor(&qd.arrow)
 #else
-#define ArrowCursor   SetCursor(&arrow)
+#define ArrowCursor()   SetCursor(&arrow)
 #endif
 
 
@@ -145,7 +151,8 @@ void RasMolExit( void )
     /* Free System Memory Resources */
     if( FBuffer ) _ffree( FBuffer );
     if( DBuffer ) _ffree( DBuffer );
-    if( DotPtr ) DeleteSurface();
+    if( TriCount ) DeleteSurface();
+    if( DotPtr ) DeleteDots();
     PurgeDatabase();
     CloseDisplay();
     ExitToShell();
@@ -202,7 +209,8 @@ void RasMolFatalExit( char *msg )
     /* Free System Memory Resources */
     if( FBuffer ) _ffree( FBuffer );
     if( DBuffer ) _ffree( DBuffer );
-    if( DotPtr ) DeleteSurface();
+    if( TriCount ) DeleteSurface();
+    if( DotPtr ) DeleteDots();
     PurgeDatabase();
     CloseDisplay();
     ExitToShell();
@@ -805,6 +813,7 @@ static void HandleAboutDialog( void )
             case(0x0107):   src = "PPC603ev"; break;
             case(0x0108):   src = "G3";       break;
             case(0x0109):   src = "PPC604e";  break;
+            case(0x010A):   src = "PPC604ev"; break;
             default:   sprintf((char*)temp,"Unkown processor (0x%04x)",reply);
                        src = (char*)temp;
         }
@@ -889,7 +898,7 @@ static void PasteCommandText( void )
 }
 
 
-pascal short OpenDlgHook( short item, DialogPtr dialog, void *data )
+static pascal short OpenDlgHook( short item, DialogPtr dialog, void *data )
 {
     Handle hand;
     short type;
@@ -921,7 +930,7 @@ pascal short OpenDlgHook( short item, DialogPtr dialog, void *data )
 }
 
 
-pascal short SaveDlgHook( short item, DialogPtr dialog, void *data )
+static pascal short SaveDlgHook( short item, DialogPtr dialog, void *data )
 {
     Handle hand;
     short type;
@@ -1564,7 +1573,7 @@ static void WrapDial( int dial, Real value )
 }
 
 
-pascal void CanvScrollProc( ControlHandle cntrl, short code )
+static pascal void CanvScrollProc( ControlHandle cntrl, short code )
 {   
     register int pos;
 
@@ -1658,7 +1667,7 @@ static void ClickCanvWin( EventRecord *ptr )
 }
 
 
-pascal void CmndScrollProc( ControlHandle cntrl, short code )
+static pascal void CmndScrollProc( ControlHandle cntrl, short code )
 {
     switch( code )
     {
@@ -1860,7 +1869,7 @@ static void HandleMoveEvent( int mask )
               (pos.v<CanvWin->portRect.bottom-15) &&
               (pos.h<CanvWin->portRect.right-15)) )
         {   SetCursor(*CanvCursor);
-        } else ArrowCursor;
+        } else ArrowCursor();
         SetPort(savePort);
     } else if( win == CmndWin )
     {   GetPort(&savePort);
@@ -1871,7 +1880,7 @@ static void HandleMoveEvent( int mask )
             (pos.v<CmndWin->portRect.bottom) &&
             (pos.h<CmndWin->portRect.right-15) )
         {   SetCursor(*CmndCursor);
-        } else ArrowCursor;
+        } else ArrowCursor();
         SetPort(savePort);
     }
 }
@@ -2219,6 +2228,7 @@ int main( void )
     InitialiseAbstree();
     InitialiseOutFile();
     InitialiseRepres();
+    InitialiseTMesh();
 
     /* LoadInitFile(); */
     

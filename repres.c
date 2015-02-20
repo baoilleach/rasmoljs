@@ -38,6 +38,7 @@
 #include "transfor.h"
 #include "pixutils.h"
 #include "infile.h"
+#include "tmesh.h"
 
 
 #define RootSix          2.44948974278
@@ -120,7 +121,7 @@ void DeleteLabel( Label *label )
     if( label->refcount == 1 )
     {   ptr = &LabelList;
         while( *ptr != label )
-        ptr = &(*ptr)->next;
+            ptr = &(*ptr)->next;
  
         *ptr = label->next;
         label->next = FreeLabel;
@@ -151,6 +152,23 @@ int DeleteLabels( void )
             result = False;
         }
     return( result );
+}
+
+
+void RestrictLabels( void )
+{
+    register Chain __far *chain;
+    register Group __far *group;
+    register Atom __far *aptr;
+ 
+    if( !Database )
+        return;
+ 
+    ForEachAtom
+        if( !(aptr->flag&SelectFlag) && aptr->label )
+        {   DeleteLabel( (Label*)aptr->label );
+            aptr->label = (void*)0;
+        }
 }
 
 
@@ -241,7 +259,7 @@ void DefaultLabels( int enable )
 
                     if( enable )
                     {   if( Info.chaincount > 1 )
-                        {   if( isdigit(chain->ident) )
+                        {   if( isdigit((int)chain->ident) )
                             {   if( !label1 )
                                     label1 = CreateLabel("%n%r:%c",7);
                                 aptr->label = label1;
@@ -424,7 +442,46 @@ void DeleteMonitors( void )
         FreeMonit = ptr;
     }
 }
+
+
+#ifdef UNUSED
+void DeleteMonitor( Monitor *mon )
+{
+    register Monitor **ptr;
  
+    if( mon->col )
+        Shade[Colour2Shade(mon->col)].refcount--;
+
+    ptr = &MonitList;
+    while( *ptr != mon )
+        ptr = &(*ptr)->next;
+ 
+    *ptr = mon->next;
+    mon->next = FreeMonit;
+    FreeMonit = mon;
+}
+#endif
+
+
+void RestrictMonitors( void )
+{
+    register Monitor **prev;
+    register Monitor *next;
+    register Monitor *ptr;
+ 
+    prev = &MonitList;
+    for( ptr=MonitList; ptr; ptr=next ) {
+        next = ptr->next;
+        if( !(ptr->src->flag&ptr->dst->flag&SelectFlag) ) {
+            if( ptr->col )
+                Shade[Colour2Shade(ptr->col)].refcount--;
+            *prev = next;
+            ptr->next = FreeMonit;
+            FreeMonit = ptr;
+        } else prev = &ptr->next;
+    }
+}
+
 
 void AddMonitors( Atom __far *src, Atom __far *dst )
 {
@@ -513,10 +570,10 @@ void CreateMonitor( Long src, Long dst )
     {   InvalidateCmndLine();
         WriteString("Error: Atom serial number");
         if( sptr )
-        {   sprintf(buffer," %d",dst);
+        {   sprintf(buffer," %ld",(long)dst);
         } else if( dptr )
-        {   sprintf(buffer," %d",src);
-        } else sprintf(buffer,"s %d and %d",src,dst);
+        {   sprintf(buffer," %ld",(long)src);
+        } else sprintf(buffer,"s %ld and %ld",(long)src,(long)dst);
         WriteString(buffer); WriteString(" not found!\n");
  
     } else AddMonitors( sptr, dptr );
@@ -534,6 +591,7 @@ void DisplayMonitors( void )
  
     register char *cptr;
     register int dist;
+    register int rad;
     char buffer[10];
  
     if( !Database )
@@ -545,6 +603,7 @@ void DisplayMonitors( void )
     buffer[9] = '\0';
     buffer[6] = '.';
  
+    rad = (int)(Scale*MonitRadius);
     for( ptr=MonitList; ptr; ptr=ptr->next )
     {   s = ptr->src;
         d = ptr->dst;
@@ -553,8 +612,13 @@ void DisplayMonitors( void )
         {   sc = s->col;
             dc = d->col;
         } else sc = dc = ptr->col;
- 
-        ClipDashVector(s->x,s->y,s->z,d->x,d->y,d->z,sc,dc);
+
+        if( !MonitRadius ) {
+            ClipDashVector(s->x,s->y,s->z,d->x,d->y,d->z,sc,dc);
+        } else if( rad > 0 ) {
+            ClipCylinder(s->x,s->y,s->z,d->x,d->y,d->z,sc,dc,rad);
+        } else ClipTwinLine(s->x,s->y,s->z,d->x,d->y,d->z,
+                            sc+ColourMask,dc+ColourMask);
  
         if( DrawMonitDistance )
             if( ZValid( (s->z+d->z)/2 ) )
@@ -589,7 +653,7 @@ void DisplayMonitors( void )
 /*  Dot Surface Functions  */
 /*=========================*/
 
-void DeleteSurface( void )
+void DeleteDots( void )
 {
     register DotStruct __far *ptr;
     register int shade;
@@ -648,7 +712,7 @@ static void CheckVDWDot( Long x, Long y, Long z, int col )
     iz = (int)((z+Offset)*IVoxRatio);
  
     i = VOXORDER2*ix + VOXORDER*iy + iz;
-    for( item=HashTable[i]; item; item=item->list )
+    for( item=(Item*)HashTable[i]; item; item=item->list )
         if( item->data != Exclude )
         {   aptr = item->data;
             if( !ProbeRadius )
@@ -707,7 +771,7 @@ static int TestSolventDot( Long x, Long y, Long z )
        for( iy=ly; iy<=uy; iy++ )
           for( iz=lz; iz<=uz; iz++ )
           {   i = VOXORDER2*ix + VOXORDER*iy + iz;
-              for( item=HashTable[i]; item; item=item->list )
+              for( item=(Item*)HashTable[i]; item; item=item->list )
                   if( item->data != Exclude )
                   {   aptr = item->data;
                       rad = ElemVDWRadius(aptr->elemno);
@@ -751,7 +815,9 @@ static void AddElemDots( int elem, int density )
     register int rad,count;
     register int i,j,k;
     register int temp;
- 
+
+    /* Avoid compiler warning! */
+    temp = 0;
  
     if( SolventDots || !ProbeRadius )
     {   rad = ElemVDWRadius(elem);
@@ -765,7 +831,7 @@ static void AddElemDots( int elem, int density )
     {   probe = (DotVector __far*)_fmalloc(count*sizeof(DotVector));
         if( !probe ) FatalRepresError("probe vectors");
         temp = rad + ProbeRadius;
-    } else probe = NULL;
+    } else probe = (DotVector __far*)0;
  
     equat = (int)sqrt(PI*count);
     if( !(vert=equat>>1) )
@@ -811,7 +877,7 @@ static void FreeElemDots( void )
 }
  
  
-void CalculateSurface( int density )
+void CalculateDots( int density )
 {
     register DotVector __far *probe;
     register DotVector __far *ptr;
@@ -824,7 +890,7 @@ void CalculateSurface( int density )
     if( !Database )
         return;
  
-    DeleteSurface();
+    DeleteDots();
     ResetVoxelData();
  
     InitElemDots();
@@ -872,7 +938,7 @@ static Long ReadValue( char *ptr, int len )
     neg = False;
     while( len-- )
     {   ch = *ptr++;
-        if( isdigit(ch) )
+        if( isdigit((int)ch) )
         {   result = (10*result)+(ch-'0');
         } else if( ch=='-' )
             neg = True;
@@ -889,7 +955,7 @@ void LoadDotsFile( FILE *fp, int info )
     register int col;
     char buffer[256];
 
-    DeleteSurface();
+    DeleteDots();
     shade = DefineShade(255,255,255);
     col = Shade2Colour(shade);
 
@@ -905,7 +971,6 @@ void LoadDotsFile( FILE *fp, int info )
         AddDot(x,y,z,col);
         count++;
     }
-    fclose(fp);
 
     if( count )
         ReDrawFlag |= RFRefresh;
@@ -914,7 +979,7 @@ void LoadDotsFile( FILE *fp, int info )
     {   InvalidateCmndLine();
 
         if( count > 1 )
-        {   sprintf(buffer,"%ld dots read from file\n",count);
+        {   sprintf(buffer,"%ld dots read from file\n",(long)count);
             WriteString(buffer);
         } else if( count == 1 )
         {      WriteString("1 dot read from file\n");
@@ -923,7 +988,7 @@ void LoadDotsFile( FILE *fp, int info )
 }
 
 
-void DisplaySurface( void )
+void DisplayDots( void )
 {
     register DotStruct __far *ptr;
     register int xi,yi,zi;
@@ -1015,16 +1080,21 @@ void DisplayRibbon( Chain __far *chain )
     register Atom __far *o2ptr;
     register Atom __far *next;
  
+    register int cartcol;
     register int prev,wide;
     register int col1,col2;
     register int bx,by,bz;
     register int dx,dy,dz;
+    register int flipped;
     register int arrow;
     register int size;
  
     static Knot mid1, mid2, mid3;
     static Knot knot1, knot2;
  
+    flipped = 0;
+    cartcol = 0;
+
     prev = False;
     group = chain->glist;
     if( IsProtein(group->refno) )
@@ -1043,12 +1113,18 @@ void DisplayRibbon( Chain __far *chain )
         /* When not to have a control point! */
         if( !next || !captr || !o1ptr || (next->flag&BreakFlag) ||
             !((group->flag|group->gnext->flag)&DrawKnotFlag) )
-        {   group = group->gnext;
+        {   if (cartcol)
+               RectRibbon( 0, &knot1, cartcol, False, True );
+            group = group->gnext;
             captr = next;
             prev = False;
+            cartcol = 0;
             continue;
         }
  
+        if (cartcol && !(group->flag&CartoonFlag))
+          RectRibbon ( 0, &knot1, cartcol, False, True );
+
         knot2.tx = next->x - captr->x;
         knot2.ty = next->y - captr->y;
         knot2.tz = next->z - captr->z;
@@ -1121,10 +1197,12 @@ void DisplayRibbon( Chain __far *chain )
             {   knot2.hnx = -dx;   knot2.vnx = -knot2.vnx;
                 knot2.hny = -dy;   knot2.vny = -knot2.vny;
                 knot2.hnz = -dz;   knot2.vnz = -knot2.vnz;
+                flipped = True;
             } else
             {   knot2.hnx = dx;
                 knot2.hny = dy;
                 knot2.hnz = dz;
+                flipped = False;
             }
  
             arrow = False;
@@ -1133,6 +1211,7 @@ void DisplayRibbon( Chain __far *chain )
                     !(group->gnext->struc&SheetFlag) )
                 {   wide = (3*group->width)>>1;
                     arrow = True;
+                    cartcol = 0;
                 } else wide = group->width;
             } else if( group->flag & WideKnotFlag )
             {   /* Average Ribbon Width */
@@ -1178,7 +1257,7 @@ void DisplayRibbon( Chain __far *chain )
                 knot2.dz = (int)(((Long)wide*knot2.vnz)/size);
             } else if( (group->flag|group->gnext->flag)&RibbonFlag )
                 CalculateVInten( &knot2 );
-        }
+        } else arrow = 0;
  
         if( !(col1 = group->col1) )
             col1 = captr->col;
@@ -1223,10 +1302,12 @@ void DisplayRibbon( Chain __far *chain )
                 ClipCylinder( mid3.px, mid3.py, mid3.pz,
                               knot2.px, knot2.py, knot2.pz,
                               col1, col1, wide );
+                cartcol = 0;
             } else if( group->flag & DotsFlag )
             {   wide = (int)(group->width*Scale);
                 ClipSphere(knot1.px,knot1.py,knot1.pz,wide,col1);
                 ClipSphere(mid2.px, mid2.py, mid2.pz, wide,col1);
+                cartcol = 0;
             } else
             {   /* Calculate Hermite Spline Widths */
                 mid1.wx = (27*knot1.wx + 5*knot2.wx)/32;
@@ -1256,6 +1337,7 @@ void DisplayRibbon( Chain __far *chain )
                         DashRibbon( &mid2,  &mid3,  col1, col2 );
                         DashRibbon( &mid3,  &knot2, col1, col2 );
                     }
+                    cartcol = 0;
                 } else /* Ribbon or Cartoon! */
                 {   mid1.vsize = 0;
                     mid1.vnx = (int)(((Long)27*knot1.vnx +
@@ -1283,7 +1365,12 @@ void DisplayRibbon( Chain __far *chain )
  
                     if( group->flag & RibbonFlag )
                     {   if( group->struc & HelixFlag )
-                        {   if( !(col2 = group->col2) )
+                        {   if (flipped) {
+                                col2 = col1;
+                                if( !(col1 = group->col2) )
+                                    col1 = captr->col;                          
+                            }
+                            else if( !(col2 = group->col2) )
                                 col2 = captr->col;                          
                         } else col2 = col1;
                         
@@ -1298,6 +1385,7 @@ void DisplayRibbon( Chain __far *chain )
                             SolidRibbon( &mid2,  &mid3,  col1 );
                             SolidRibbon( &mid3,  &knot2, col1 );
                         }
+                        cartcol = 0;
                     } else /* Cartoon! */
                     {   /* Calculate Spline Heights */
                         wide = (int)(CartoonHeight*Scale);
@@ -1342,10 +1430,11 @@ void DisplayRibbon( Chain __far *chain )
                                           (Long)27*knot2.hnz)/32);
                         CalculateHInten( &mid3 );
  
-                        RectRibbon( &knot1, &mid1,  col1 );
-                        RectRibbon( &mid1,  &mid2,  col1 );
-                        RectRibbon( &mid2,  &mid3,  col1 );
-                        RectRibbon( &mid3,  &knot2, col1 );
+                        RectRibbon( &knot1, &mid1,  col1, !cartcol, False );
+                        RectRibbon( &mid1,  &mid2,  col1, False, False );
+                        RectRibbon( &mid2,  &mid3,  col1, False, False );
+                        RectRibbon( &mid3,  &knot2, col1, False, False );
+                        cartcol = arrow ? 0 : col1;
                     }
                 }
             }
@@ -1356,27 +1445,38 @@ void DisplayRibbon( Chain __far *chain )
             knot1.pz = captr->z;
  
             if( group->flag & RibbonFlag )
-            {   SolidRibbon( &knot1, &knot2, col1 );    
-            } else if( group->flag & RibbonFlag )
-            {   RectRibbon( &knot1, &knot2, col1 );
+            {   
+                SolidRibbon( &knot1, &knot2, col1 );
+                cartcol = 0;
+            } else if( group->flag & CartoonFlag )
+            {   RectRibbon( &knot1, &knot2, col1, cartcol == 0, False );
+                cartcol = col1;
             } else if( group->flag & StrandFlag )
             {   if( !(col2 = group->col2) )
                     col2 = captr->col;
                 StrandRibbon( &knot1,  &knot2, col1, col2 );
+                cartcol = 0;
             } else if( group->flag & DashStrandFlag )
             {   if( !(col2 = group->col2) )
                     col2 = captr->col;
                 DashRibbon( &knot1,  &knot2, col1, col2 );
+                cartcol = 0;
             } else if( group->flag & TraceFlag )
             {   ClipCylinder( knot1.px, knot1.py, knot1.pz,
                               knot2.px, knot2.py, knot2.pz,
                               col1, col1, (int)(group->width*Scale) );
+                cartcol = 0;
             } else if( group->flag & DotsFlag )
             {   wide = (int)(group->width*Scale);
                 ClipSphere(knot1.px,knot1.py,knot1.pz,wide,col1);
-            }
+                cartcol = 0;
+            } else cartcol = 0;
             prev = True;
-        } else prev = True;
+        } else
+        {
+          cartcol = 0;
+          prev = True;
+        }
         group = group->gnext;
         captr = next;
  
@@ -1426,7 +1526,7 @@ void DisplayRibbon( Chain __far *chain )
                 knot2.wz = 0;
             }
  
-            RectRibbon( &knot1, &knot2, col1 );
+            RectRibbon( &knot1, &knot2, col1, !cartcol, !arrow );
         } else /* !Cartoon */
         {   knot2.px = captr->x;
             knot2.py = captr->y;
@@ -1458,10 +1558,12 @@ void DisplayRibbon( Chain __far *chain )
 
 void ResetRepres( void )
 {
+    DeleteDots();
     DeleteSurface();
     DeleteMonitors();
     SolventDots = False;
     ProbeRadius = 0;
+    MonitRadius = 0;
 
     ResetLabels();
 
@@ -1476,10 +1578,10 @@ void InitialiseRepres( void )
 {
     DotPtr = (DotStruct __far*)0;
     MonitList = (Monitor __far*)0;
-    LabelList = (void*)0;
+    LabelList = (Label*)0;
 
     FreeMonit = (Monitor __far*)0;
-    FreeLabel = (void*)0;
+    FreeLabel = (Label*)0;
 
     ResetRepres();
 }

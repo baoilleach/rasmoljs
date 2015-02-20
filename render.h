@@ -75,13 +75,13 @@ int FBClear;
 Card __far *ColConst;
 #if defined(IBMPC) || defined(APPLEMAC)
 void __far * __far *HashTable;
-Byte __far * __far *LookUp;
-Byte __far *Array;
+unsigned char __far * __far *LookUp;
+unsigned char __far *Array;
 
 #else /* UNIX or VMS */
 void *HashTable[VOXSIZE];
-Byte *LookUp[MAXRAD];
-Byte Array[MAXTABLE];
+unsigned char *LookUp[MAXRAD];
+unsigned char Array[MAXTABLE];
 #endif
 
 #else
@@ -110,18 +110,19 @@ extern int FBClear;
 extern Card __far *ColConst;
 #if defined(IBMPC) || defined(APPLEMAC)
 extern void __far * __far *HashTable;
-extern Byte __far * __far *LookUp;
-extern Byte __far *Array;
+extern unsigned char __far * __far *LookUp;
+extern unsigned char __far *Array;
 
 #else /* UNIX or VMS */
 extern void *HashTable[VOXSIZE];
-extern Byte *LookUp[MAXRAD];
-extern Byte Array[MAXTABLE];
+extern unsigned char *LookUp[MAXRAD];
+extern unsigned char Array[MAXTABLE];
 #endif
 #endif
 
 
 void ClearBuffers( void );
+void StencilBuffers( int );
 void ReSizeScreen( void );
 void ReAllocBuffers( void );
 void ShadowTransform( void );

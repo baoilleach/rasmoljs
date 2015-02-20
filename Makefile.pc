@@ -20,7 +20,7 @@ LFLAGS =
 LIBS   = LIBW MLIBCEW COMMDLG SHELL
 
 OBJS   = raswin.obj molecule.obj command.obj abstree.obj transfor.obj \
-         render.obj pixutils.obj mswin31.obj outfile.obj scripts.obj
+         render.obj pixutils.obj mswin.obj outfile.obj scripts.obj
 
 
 goal:		raswin.exe
@@ -64,8 +64,8 @@ render.obj:     render.c render.h rasmol.h molecule.h transfor.h \
 		command.h graphics.h pixutils.h
 		$(CC) /c $(CFLAGS) render.c
 
-mswin31.obj:	mswin31.c graphics.h rasmol.h render.h
-		$(CC) /c $(CFLAGS) mswin31.c
+mswin.obj:	mswin.c graphics.h rasmol.h render.h
+		$(CC) /c $(CFLAGS) mswin.c
 
 pixutils.obj:   pixutils.c pixutils.h rasmol.h render.h graphics.h font.h
 		$(CC) /c $(CFLAGS) pixutils.c

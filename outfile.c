@@ -89,6 +89,8 @@
 /* Compression Ratio   0<x<127 */
 #define EPSFCompRatio  32
 
+#define PSQuality     64
+
 #define PSBond      0x00
 #define PSHBond     0x01
 #define PSSSBond    0x02
@@ -109,23 +111,23 @@ typedef void __far* PSItemPtr;
 
 #ifdef EIGHTBIT
 #if defined(IBMPC) || defined(APPLEMAC)
+static unsigned char __far *Node;
 static short __far *ABranch;
 static short __far *DBranch;
 static short __far *Hash;
-static Byte __far *Node;
 #else
+static unsigned char Node[4096];
 static short ABranch[4096];
 static short DBranch[4096];
 static short Hash[256];
-static Byte Node[4096];
 #endif
 #endif
 
 
 #ifdef EIGHTBIT
 typedef struct {
-        Byte len;
-        Byte ch;
+        unsigned char len;
+        unsigned char ch;
     } BMPPacket;
         
 static BMPPacket BMPBuffer[10];
@@ -148,12 +150,12 @@ static int RLEPixel;
 static int RLEChar;
 
 
-static Byte Buffer[256];
+static unsigned char Buffer[256];
 static int LineLength;
 static FILE *OutFile;
 static int PacketLen;
 #ifdef EIGHTBIT
-static Byte LutInv[256];
+static unsigned char LutInv[256];
 static Card BitBuffer;
 static int BitBufLen;
 static int CodeSize;
@@ -401,7 +403,7 @@ static void WriteGIFCode( int code )
     while( BitBufLen > max )
     {    
 #ifdef IBMPC
-         Buffer[PacketLen++]=(Byte)(BitBuffer&0xff);
+         Buffer[PacketLen++]=(unsigned char)(BitBuffer&0xff);
 #else
          Buffer[PacketLen++]=BitBuffer;
 #endif
@@ -442,7 +444,11 @@ int WriteGIFFile( char *name )
     {    FatalOutputError(name);
          return( False );
     }
-    fputs("GIF87a",OutFile);
+
+    if( UseTransparent )
+    {      fputs("GIF89a",OutFile);
+    } else fputs("GIF87a",OutFile);
+
     WriteLSBShort(XRange);
     WriteLSBShort(YRange);
     WriteByte(0xf0|(isize-1)); 
@@ -454,6 +460,13 @@ int WriteGIFFile( char *name )
         WriteByte(RLut[i]);
         WriteByte(GLut[i]);
         WriteByte(BLut[i]);
+    }
+
+    if( UseTransparent )
+    {   WriteByte(0x21);  WriteByte(0xf9);
+        WriteByte(0x04);  WriteByte(0x01);
+        WriteByte(0x00);  WriteByte(0x00);
+        WriteByte(0x00);  WriteByte(0x00);
     }
 
     WriteByte(',');
@@ -517,7 +530,7 @@ int WriteGIFFile( char *name )
 
             i = LutInv[*ptr++];
 
-            while( *prev && (Node[*prev] != (Byte)i) )
+            while( *prev && (Node[*prev] != (unsigned char)i) )
                 prev = ABranch+*prev;
 
             if( *prev )
@@ -852,7 +865,7 @@ int WriteEPSFFile( char *name, int col, int compr )
         fputs("90 rotate\n",OutFile);
         fputs("-0.5 -0.5 translate\n",OutFile);
     }
-    fputc('\n',OutFile);
+    putc('\n',OutFile);
 
     if( compr )
     {   fputs("/rlecount 0 def\n",OutFile);
@@ -990,7 +1003,7 @@ int WriteEPSFFile( char *name, int col, int compr )
     }
 
     if( LineLength ) 
-        fputc('\n',OutFile);
+        putc('\n',OutFile);
     fputs("end\n",OutFile);
     fputs("grestore\n",OutFile);
     fputs("showpage\n",OutFile);
@@ -1386,6 +1399,7 @@ static int VectClipContain( SphereSect *x, SphereSect *y )
 static void WriteVectSphere( PSItemPtr __far *data, char __far *type, 
                              int index )
 {
+    register ShadeDesc *shade;
     register int ecount, count;
     register Atom __far *atm;
     register Atom __far *ptr;
@@ -1446,7 +1460,7 @@ static void WriteVectSphere( PSItemPtr __far *data, char __far *type,
 
         if( dx || dy )
         {   g = sqrt( (double)dist2 );
-            psi = Rad2Deg*atan2(dy,dx);
+            psi = Rad2Deg*atan2((double)dy,(double)dx);
             b = (f*(dz*dz))/(d*g);
 
             if( AbsFun(b)>x )
@@ -1480,9 +1494,7 @@ static void WriteVectSphere( PSItemPtr __far *data, char __far *type,
             sptr->sy = ptr->y;
 
         } else
-        {   x = sqrt( (radf-g)*(radf+g) );
-
-            sptr->srad = x;
+        {   sptr->srad = x;
             sptr->erad = 0.0;
             sptr->sx = ptr->x;
             sptr->sy = ptr->y;
@@ -1548,17 +1560,17 @@ static void WriteVectSphere( PSItemPtr __far *data, char __far *type,
             sptr++;
         }
 
-        i = ptr->col + ColourMask;
-        fprintf(OutFile,"%g ",(Real)RLut[i]/255.0);
-        fprintf(OutFile,"%g ",(Real)GLut[i]/255.0);
-        fprintf(OutFile,"%g ",(Real)BLut[i]/255.0);
+        shade = Shade + Colour2Shade(ptr->col);
+        fprintf(OutFile,"%g ",(Real)shade->r/255.0);
+        fprintf(OutFile,"%g ",(Real)shade->g/255.0);
+        fprintf(OutFile,"%g ",(Real)shade->b/255.0);
         fprintf(OutFile,"%g Shade\n",radf);
         fputs("grestore\n\n",OutFile);
     } else
-    {   i = ptr->col + ColourMask;
-        fprintf(OutFile,"%g ",(Real)RLut[i]/255.0);
-        fprintf(OutFile,"%g ",(Real)GLut[i]/255.0);
-        fprintf(OutFile,"%g ",(Real)BLut[i]/255.0);
+    {   shade = Shade + Colour2Shade(ptr->col);
+        fprintf(OutFile,"%g ",(Real)shade->r/255.0);
+        fprintf(OutFile,"%g ",(Real)shade->g/255.0);
+        fprintf(OutFile,"%g ",(Real)shade->b/255.0);
         fprintf(OutFile,"%g %d %d ",radf,ptr->x,ptr->y);
         fputs("Sphere\n\n",OutFile);
     }
@@ -1641,6 +1653,7 @@ static void WriteVectWire( Atom __far *src, Atom __far *dst,
 
     if( src->flag & SphereFlag )
     {   dz = dst->z - src->z;
+        radius = src->radius*Scale;
         dist = sqrt( (double)(dist2 + dz*dz) );
         endx = src->x + (radius*dx)/dist;
         endy = src->y + (radius*dy)/dist;
@@ -1778,7 +1791,10 @@ static void WriteVectStick( Atom __far *src, Atom __far *dst,
         {   fprintf(OutFile,"%d %d %g ",dst->x,dst->y,radius);
             fprintf(OutFile,"%g %g arc\n",angle-90,angle+90);
             if( (src->flag&SphereFlag) && (src->radius>rad) )
-            {   fprintf(OutFile,"%g %g %g ",radius,ratio,angle);
+            {   temp = (Scale*src->radius)/dist3;
+                endx = src->x + temp*dx;
+                endy = src->y + temp*dy;
+                fprintf(OutFile,"%g %g %g ",radius,ratio,angle);
                 fprintf(OutFile,"%g %g StickEnd\n",endx,endy);
             } else
             {   fprintf(OutFile,"%d %d %g ",src->x,src->y,radius);
@@ -2104,6 +2120,21 @@ static void WritePSItems( PSItemPtr __far *data, char __far *type, int count )
 }
 
 
+static Real Power( Real x, int y )
+{
+    register Real result;
+
+    result = x;
+    while( y > 1 )
+    {   if( y & 1 )
+            result *= x;
+        result *= result; 
+        y >>= 1;
+    }
+    return result;
+}
+
+
 int WriteVectPSFile( char *name )
 {
     register Real ambi;
@@ -2174,9 +2205,16 @@ int WriteVectPSFile( char *name )
     fputs("gsave\n",OutFile);
     fputs("14 dict begin\n\n",OutFile);
     fputs("/handleerror { showpage } def\n\n",OutFile);
-    fputs("/Inten {\n  dup 4 index mul exch\n",OutFile);
-    fputs("  dup 4 index mul exch\n",OutFile);
-    fputs("  3 index mul setrgbcolor\n} def\n\n",OutFile);
+
+    if( FakeSpecular ) {
+        fputs("/Inten {\n  2 copy 6 index mul add 3 1 roll\n",OutFile);
+        fputs("  2 copy 6 index mul add 3 1 roll\n",OutFile);
+        fputs("  4 index mul add setrgbcolor\n} def\n\n",OutFile);
+    } else {
+        fputs("/Inten {\n  dup 4 index mul exch\n",OutFile);
+        fputs("  dup 4 index mul exch\n",OutFile);
+        fputs("  3 index mul setrgbcolor\n} def\n\n",OutFile);
+    }
 
     fputs("/Dot {\n  moveto 0 0 rlineto stroke\n} def\n\n",OutFile);
     fputs("/Wire {\n  moveto lineto stroke\n} def\n\n",OutFile);
@@ -2204,17 +2242,24 @@ int WriteVectPSFile( char *name )
     if( Ambient < 0.99 )
     {   ambi = 0.5*Ambient;
         fputs("  45 rotate dup -0.81649658092 mul scale\n",OutFile);
-        fprintf(OutFile,"  %g Inten fill\n",ambi);
-        inten = (1.0-ambi)/31;
-        for( i=0; i<31; i++ )
-        {   temp = (Real)(i+1)/32;
-            fprintf(OutFile,"  0 %g ",(Real)i/32);
+        if( FakeSpecular ) {
+            fprintf(OutFile,"  0 %g Inten fill\n",ambi);
+        } else fprintf(OutFile,"  %g Inten fill\n",ambi);
+        inten = (1.0-ambi)/(PSQuality-1);
+        for( i=0; i<(PSQuality-1); i++ )
+        {   temp = (Real)(i+1)/PSQuality;
+            fprintf(OutFile,"  0 %g ",(Real)i/PSQuality);
             fprintf(OutFile,"%g 0 360 arc ",sqrt(1.0-temp*temp));
-            fprintf(OutFile,"%g Inten fill\n",i*inten+ambi);
+            if( FakeSpecular ) {
+                temp = Power(temp,SpecPower);
+                fprintf(OutFile,"%g ",temp);
+                temp = (1.0-temp)*(i*inten+ambi);
+            } else temp = i*inten+ambi;
+            fprintf(OutFile,"%g Inten fill\n",temp);
         }
         if( UseOutLine )
         {   fputs("  grestore 0 setgray stroke",OutFile);
-        } else fputc(' ',OutFile);
+        } else putc(' ',OutFile);
         fputs(" pop pop pop\n} def\n\n",OutFile);
 
     } else /* Saturated Colours! */
@@ -2235,12 +2280,7 @@ int WriteVectPSFile( char *name )
 
     fputs("/Sphere {\n  gsave\n",OutFile);
     fputs("  translate 0 0 2 index 0 360 arc\n",OutFile);
-    if( UseOutLine )
-    {   fputs("  gsave Shade grestore\n",OutFile);
-        fputs("  0 setgray stroke\n",OutFile);
-        fputs("  grestore\n} def\n\n",OutFile);
-    } else
-        fputs("  Shade grestore\n} def\n\n",OutFile);
+    fputs("  Shade grestore\n} def\n\n",OutFile);
 
 #ifdef INVERT
     fprintf(OutFile,"%d %d translate\n",xpos,ypos);
@@ -2597,6 +2637,17 @@ static void FlushIRISPacket( void )
 }
 
 
+static void FlushIRISLine( void )
+{
+    FlushIRISPacket();
+    FlushIRISBuffer();
+    if( RLEOutput )
+    {   WriteByte(0x00);
+    } else RLELineSize++;
+}
+
+
+
 static void WriteIRISCode( int val )
 {
     if( !RLELength )
@@ -2645,8 +2696,7 @@ static void DetermineIRISSizes( Long __far *rowstart,
             if( i>*max ) *max=i;
             WriteIRISCode(i);
         }
-        FlushIRISPacket();
-        FlushIRISBuffer();
+        FlushIRISLine();
 
         rowsize[y] = RLELineSize;
         rowstart[y] = RLEFileSize;
@@ -2661,8 +2711,7 @@ static void DetermineIRISSizes( Long __far *rowstart,
             if( i>*max ) *max=i;
             WriteIRISCode(i);
         }
-        FlushIRISPacket();
-        FlushIRISBuffer();
+        FlushIRISLine();
 
         i = y+YRange;
         rowsize[i] = RLELineSize;
@@ -2678,8 +2727,7 @@ static void DetermineIRISSizes( Long __far *rowstart,
             if( i>*max ) *max=i;
             WriteIRISCode(i);
         }
-        FlushIRISPacket();
-        FlushIRISBuffer();
+        FlushIRISLine();
 
         i = y+(YRange<<1);
         rowsize[i] = RLELineSize;
@@ -2743,8 +2791,7 @@ static void WriteIRISData( void )
         {   i = RComp(*ptr++);
             WriteIRISCode(i);
         }
-        FlushIRISPacket();
-        FlushIRISBuffer();
+        FlushIRISLine();
 
         ptr = tmp;
         /* Green Component */
@@ -2752,8 +2799,7 @@ static void WriteIRISData( void )
         {   i = GComp(*ptr++);
             WriteIRISCode(i);
         }
-        FlushIRISPacket();
-        FlushIRISBuffer();
+        FlushIRISLine();
 
         ptr = tmp;
         /* Blue Component */
@@ -2761,8 +2807,7 @@ static void WriteIRISData( void )
         {   i = BComp(*ptr++);
             WriteIRISCode(i);
         }
-        FlushIRISPacket();
-        FlushIRISBuffer();
+        FlushIRISLine();
     }
 }
 
@@ -2832,12 +2877,14 @@ void InitialiseOutFile( void )
     ABranch = (short __far*)_fmalloc(4096*sizeof(short));
     DBranch = (short __far*)_fmalloc(4096*sizeof(short));
     Hash = (short __far*)_fmalloc(256*sizeof(short));
-    Node = (Byte __far*)_fmalloc(4096*sizeof(Byte));
+    Node = (unsigned char __far*)_fmalloc(4096);
 #endif
 #endif
 
+    ResolutionFlag = ResDefault;
     UseTransparent = False;
     KinemageFlag = False;
     UseOutLine = False;
+    BinaryFlag = True;
 }
 

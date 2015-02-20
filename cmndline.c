@@ -55,9 +55,9 @@
 
 
 typedef struct {
-        Byte dxfunc, dxinvrt;
-        Byte dyfunc, dyinvrt;
-        Byte click;
+        unsigned char dxfunc, dxinvrt;
+        unsigned char dyfunc, dyinvrt;
+        unsigned char click;
     } MouseMapping;
 
 

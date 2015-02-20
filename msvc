@@ -1,0 +1,137 @@
+#!/bin/sh
+VSDIR=
+VSNAM=
+VSDRV=
+for dir in Micros~1 Micros~2 Micros~3 ; do
+    if test -d "/cygdrive/c/Progra~1/$dir/VC98" ; then
+        VSDIR="/cygdrive/c/Progra~1/$dir"
+        VSNAM="$dir"
+        VSDRV="C:"
+        break
+    fi
+done
+
+if test -z "$VSDRV" ; then
+    for dir in Micros~1 Micros~2 Micros~3 ; do
+        if test -d "/cygdrive/e/Progra~1/$dir/VC98" ; then
+            VSDIR="/cygdrive/e/Progra~1/$dir"
+            VSNAM="$dir"
+            VSDRV="E:"
+            break
+        fi
+    done
+fi
+
+if test -z "$VSDRV" ; then
+    echo "Error: Unable to locate Microsoft Visual C++"
+    exit 1
+fi
+
+PATH="$PATH:$VSDIR/VC98/Bin:$VSDIR/Common/MSDev98/Bin"
+export PATH
+INCLUDE1="$VSDRV\\Progra~1\\$VSNAM\\VC98\\ATL\\include"
+INCLUDE2="$VSDRV\\Progra~1\\$VSNAM\\VC98\\include"
+INCLUDE3="$VSDRV\\Progra~1\\$VSNAM\\VC98\\MFC\\include"
+INCLUDE="$INCLUDE1;$INCLUDE2;$INCLUDE3"
+export INCLUDE
+LIB1="$VSDRV\\Progra~1\\$VSNAM\\VC98\\Lib"
+LIB2="$VSDRV\\Progra~1\\$VSNAM\\VC98\\MFC\\Lib"
+LIB="$LIB1;$LIB2"
+export LIB
+
+CC="$VSDIR/VC98/Bin/CL"
+
+TARGET=""
+VERBOSE=0
+LINK=0
+
+CARGS="/nologo /GX"
+COPTS=""
+LARGS="/link /LIBPATH:$LIB1"
+while [ "$1" != "" ] ; do
+    case "$1" in
+        -o)        shift
+                   TARGET="$1"
+                   ;;
+
+        -c)        CARGS="$CARGS /c"
+                   ;;
+
+        -g)        COPTS="/Od /Zi"
+                   ;;
+
+        -E)        CARGS="$CARGS /E"
+                   ;;
+
+        -S)        CARGS="$CARGS /FA"
+                   ;;
+
+        -v)        VERBOSE=1
+                   ;;
+
+        -Os)       COPTS="/O1"
+                   ;;
+
+        -O|-O1)    COPTS="/O2"
+                   ;;
+
+        -O2)       COPTS="/O2 /Ob2"
+                   ;;
+
+        -O3)       COPTS="/O2 /Oab2"
+                   ;;
+
+        -Wall)     CARGS="$CARGS /W3"
+                   ;;
+
+        -mwindows) LARGS="$LARGS /SUBSYSTEM:WINDOWS"
+                   ;;
+
+        -mconsole) LARGS="$LARGS /SUBSYSTEM:CONSOLE"
+                   ;;
+
+        -fomit-frame-pointer)
+                   COPTS="$COPTS /Oy"
+                   ;;
+
+        -finline-functions)
+                   COPTS="$COPTS /Ob2"
+                   ;;
+
+        -lm)       LINK=1
+                   ;;
+
+        -l*)       LIB=`echo $1 | cut -c3-`
+                   LARGS="$LARGS $LIB.lib"
+                   LINK=1
+                   ;;
+
+        -*)        echo "msvc: Unrecognised compiler option $1"
+                   ;;
+
+        *.o)       CARGS="$CARGS $1bj"
+                   LINK=1
+                   ;;
+
+        *)         CARGS="$CARGS $1"
+                   ;;
+    esac
+    shift
+done
+
+if test "$LINK" = 1 ; then
+    if test -n "$TARGET" ; then
+        ARGS="$CARGS $COPTS $LARGS /OUT:$TARGET.exe"
+    else
+        ARGS="$CARGS $COPTS $LARGS"
+    fi
+else
+    ARGS="$CARGS $COPTS"
+fi
+
+
+if test "$VERBOSE" = 1 ; then
+    echo "$CC $ARGS"
+fi
+$CC $ARGS
+

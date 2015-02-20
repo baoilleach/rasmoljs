@@ -39,6 +39,7 @@
 #include "command.h"
 #include "cmndline.h"
 #include "pixutils.h"
+#include "tmesh.h"
 
 /* Avoid PowerPC Errors! */
 #ifdef INFINITY
@@ -59,10 +60,8 @@
 
 
 /* These define light source position */
-#define LightDot(x,y,z)  ((x)+(y)+(z)+(z))
+#define LightDot(x,y,z)  ((x)+InvertY(y)+(z)+(z))
 #define LightLength      RootSix
-#define LightXComp       1
-#define LightYComp       1
 #define LightZComp       2
 
 
@@ -120,7 +119,6 @@ static void SqrInterval( Interval __far* );
 static void VoxelInsert( Atom __far*, int );
 static int AtomInter( Atom __far* );
 static void TestAtomProximity( Atom __far *, int, int );
-static void DisplayHBonds( HBond __far *, int );
 
 
 
@@ -230,7 +228,7 @@ void ClearBuffers( void )
 
     if( !FBClear )
     {   FBClear = True;
-        ptr = (Pixel __huge*)GlobalLock(FBufHandle);
+        ptr = (char __huge*)GlobalLock(FBufHandle);
         ClearMemory(ptr,(Long)XRange*YRange*sizeof(Pixel));
         GlobalUnlock(FBufHandle);
     }
@@ -314,6 +312,43 @@ void ClearBuffers( void )
 #endif /* UNIX & VMS */
 
 
+void StencilBuffers( int flag )
+{
+    register Pixel __huge *fptr;
+    register short __huge *dptr;
+    register Pixel col;
+    register int x,y;
+
+    if (flag)
+    {
+        fptr = View.fbuf;
+        col = Lut[BackCol];
+        for( y=0; y<View.ymax; y++ ) {
+            for( x=0; x<View.xmax; x+=2 )
+                fptr[x] = col;
+            if( ++y == View.ymax )
+                break;
+            fptr += View.yskip;
+            for( x=1; x<View.xmax; x+=2 )
+                fptr[x] = col;
+            fptr += View.yskip;
+        }
+    }
+
+    dptr = View.dbuf;
+    for ( y=0; y<View.ymax; y++ ) {
+        for ( x=0; x<View.xmax; x+=2 )
+            dptr[x] = 0;
+        if ( ++y == View.ymax )
+          break;
+	dptr += View.yskip;
+        for ( x=1; x<View.xmax; x+=2 )
+            dptr[x] = 0;
+        dptr += View.yskip;
+    }
+}
+
+
 void ReAllocBuffers( void )
 {
     register Atom __far * __far *iptr;
@@ -334,7 +369,7 @@ void ReAllocBuffers( void )
 
     if( YBucket && (BuckY<YRange) )
     {   _ffree(YBucket); 
-        YBucket=(void __far*)0; 
+        YBucket=(Atom __far* __far*)0; 
     }
 
     if( !YBucket )
@@ -346,7 +381,7 @@ void ReAllocBuffers( void )
 
     if( IBuffer && (ItemX<XRange) )
     {   _ffree(IBuffer); 
-        IBuffer=(void __far*)0; 
+        IBuffer=(Atom __far* __far*)0; 
     }
 
     if( !IBuffer )
@@ -355,8 +390,8 @@ void ReAllocBuffers( void )
         if( !IBuffer ) FatalRenderError("item buffer");
         len = XRange>>2;  iptr = IBuffer;
         for( index=0; index<=len; index++ )
-        {   *iptr++ = (void __far*)0;  *iptr++ = (void __far*)0;
-            *iptr++ = (void __far*)0;  *iptr++ = (void __far*)0;
+        {   *iptr++ = (Atom __far*)0;  *iptr++ = (Atom __far*)0;
+            *iptr++ = (Atom __far*)0;  *iptr++ = (Atom __far*)0;
         }
         ItemX = XRange;
     }
@@ -371,7 +406,7 @@ void ReSizeScreen( void )
     {   orig = MaxZoom;
         /* Code should match InitialTransform() */
         /* MaxZoom*DScale*Range*750 == 252      */
-        MaxZoom = 0.336*WorldSize/Range;
+        MaxZoom = 0.324*WorldSize/Range;
         ZoomRange = Range;  MaxZoom -= 1.0;
 
         /* Handle Change in MaxZoom */
@@ -409,7 +444,7 @@ static void PrepareYBucket( void )
 
     temp = YBucket;
     for( scan=0; scan<BuckY; scan++ )
-        *temp++ = (void __far*)0;
+        *temp++ = (Atom __far*)0;
 
     if( UseClipping )
     {   ForEachAtom
@@ -577,9 +612,9 @@ void CreateVoxelData( int flag )
 
 void ShadowTransform( void )
 {
-    ShadowI = (LightXComp*LightDot(RotX[0],-RotY[0],RotZ[0]))/LightLength;
-    ShadowJ = (LightYComp*LightDot(RotX[0],-RotY[0],RotZ[0]))/LightLength;
-    ShadowK = (LightZComp*LightDot(RotX[0],-RotY[0],RotZ[0]))/LightLength;
+    ShadowI = LightDot(RotX[0],RotY[0],RotZ[0])/LightLength;
+    ShadowJ = LightDot(RotX[1],RotY[1],RotZ[1])/LightLength;
+    ShadowK = LightDot(RotX[2],RotY[2],RotZ[2])/LightLength;
 
     if( ShadowI>ApproxZero )
     {   deltax =  (int)(FUDGEFACTOR/ShadowI); xhash =  VOXORDER2; xflag =  1;
@@ -648,7 +683,7 @@ static int ShadowRay( void )
     if( SBuffer )
     {   if( (SBuffer!=Exclude) && AtomInter(SBuffer) )
             return True;
-        SBuffer = (void __far*)0;
+        SBuffer = (Atom __far*)0;
     }
 
     ex = IVoxRatio*(ShadowX+Offset);  xcord = (int)ex;
@@ -715,10 +750,10 @@ static void ScanLine( void )
     register Atom __far *ptr;
     register Atom __far * __far *iptr;
     register Atom __far * __far *prev;
+    register unsigned char __far *tptr;
     register short __huge *dbase;
     register short __huge *dptr;
     register Pixel __huge *fptr;
-    register Byte __far *tptr;
 
     register int pos,depth,inten;
     register int lastx,wide,scan;
@@ -726,12 +761,14 @@ static void ScanLine( void )
 
     fptr = FBuffer;
     dbase = DBuffer;
-    list = (void __far*)0;  
+    list = (Atom __far*)0;  
 
     wide = XRange>>2;  iptr = IBuffer;
     for( pos=0; pos<=wide; pos++ )
-    {   *iptr++ = (void __far*)0;  *iptr++ = (void __far*)0;
-        *iptr++ = (void __far*)0;  *iptr++ = (void __far*)0;
+    {   *iptr++ = (Atom __far*)0;
+        *iptr++ = (Atom __far*)0;
+        *iptr++ = (Atom __far*)0;
+        *iptr++ = (Atom __far*)0;
     }
 
     for( scan=0; scan<YRange; scan++ )
@@ -764,7 +801,7 @@ static void ScanLine( void )
 
         /* Process visible scanline */
         prev = (Atom __far* __far*)IBuffer;
-        SBuffer = (void __far*)0;
+        SBuffer = (Atom __far*)0;
         dptr = dbase; 
 
         for( pos=0; pos<XRange; pos++ )
@@ -774,9 +811,9 @@ static void ScanLine( void )
                 inten = LightDot(pos-ptr->x,InvertY(scan-ptr->y),dz);
                 if( inten>0 )
                 {   inten = (int)( (inten*ColConst[ptr->irad])>>ColBits);
+                    dx =   pos-XOffset;
+                    dy =  scan-YOffset;
                     dz = *dptr-ZOffset;
-                    dx = pos-XOffset;
-                    dy =   scan-YOffset;
 
                     ShadowX = (int)(dx*InvX[0]+dy*InvX[1]+dz*InvX[2]);
                     ShadowY = (int)(dx*InvY[0]+dy*InvY[1]+dz*InvY[2]);
@@ -787,7 +824,7 @@ static void ScanLine( void )
                     {   *fptr = Lut[ptr->col+(inten>>2)];
                     } else *fptr = Lut[ptr->col+inten];
                 } else *fptr = Lut[ptr->col];
-                *prev = (void __far*)0;
+                *prev = (Atom __far*)0;
             }
             dptr++; fptr++; prev++;
         }
@@ -1005,8 +1042,8 @@ static void DisplayHBonds( HBond __far *list, int mode )
             {   s = ptr->srcCA; d = ptr->dstCA;
                 if( !s || !d ) continue;
             } else
-            {   d = ptr->src;
-                s = ptr->dst;
+            {   s = ptr->src;
+                d = ptr->dst;
             }
 
             if( !ptr->col )
@@ -1238,7 +1275,13 @@ static void RenderFrame( void )
     register Chain __far *chain;
 
     if( !DisplayMode )
-    {   if( DrawAtoms ) 
+    {   if( TriCount )
+        {
+            if( !UseSlabPlane || (SlabMode != SlabSection) )
+                DisplaySurface();
+        }
+
+        if( DrawAtoms ) 
             DisplaySpaceFill();
 
         if( !UseSlabPlane || (SlabMode != SlabSection) )
@@ -1253,7 +1296,7 @@ static void RenderFrame( void )
                     if( chain->glist )
                         DisplayRibbon( chain );
 
-            if( DotPtr ) DisplaySurface();
+            if( DotPtr ) DisplayDots();
             if( LabelList ) DisplayLabels();
             if( MonitList ) DisplayMonitors();
             DisplayHBonds( Database->slist, SSBondMode );
@@ -1370,17 +1413,18 @@ static void TestAtomProximity( Atom __far *ptr, int xpos, int ypos )
 static void IdentifyAtom( int xpos, int ypos )
 {
     register int rad, wide, dpth;
-    register int new, dx, dy, dz;
     register Chain __far *chain;
     register Group __far *group;
     register HBond __far *hptr;
     register Atom  __far *aptr;
     register Bond __far *bptr;
+    register int dx, dy, dz;
+    register int found;
 
     /* Reset Search */
-    QChain = (void __far*)0;
-    QGroup = (void __far*)0;
-    QAtom = (void __far*)0;
+    QChain = (Chain __far*)0;
+    QGroup = (Group __far*)0;
+    QAtom = (Atom __far*)0;
     IdentFound = False;
 
     if( !DisplayMode )
@@ -1449,7 +1493,7 @@ static void IdentifyAtom( int xpos, int ypos )
                 dx = AbsFun(aptr->x-xpos);
                 if( dx>rad ) continue;
 
-                new = False;
+                found = False;
                 dpth = aptr->z+LookUp[rad][dx];
                 if( UseSlabPlane && (aptr->z+rad>=SlabValue) )
                 {   dz = SlabValue-aptr->z;
@@ -1458,25 +1502,25 @@ static void IdentifyAtom( int xpos, int ypos )
                         if( (dy<=wide) && (dx<=(int)(LookUp[wide][dy])) )
                         {   if( SlabMode == SlabFinal )
                             {   dpth = SliceValue;
-                                new = True;
+                                found = True;
                             } else if( SlabMode == SlabHollow )
                             {   dpth = aptr->z-LookUp[rad][dx];
-                                new = !IdentFound || (dpth>IdentDepth);
+                                found = !IdentFound || (dpth>IdentDepth);
                             } else if( SlabMode != SlabHalf )
                             {   /* SlabClose, SlabSection */
                                 dpth = dx*dx+dy*dy+dz*dz+SliceValue;
                                 if( IdentFound )
-                                {   new = (IdentDepth<SliceValue) 
+                                {   found = (IdentDepth<SliceValue) 
                                           || (dpth<IdentDepth);
-                                } else new=True;
+                                } else found = True;
                             }
                         } else if( (dz>0) && (SlabMode!=SlabSection) )
-                            new = !IdentFound || (dpth>IdentDepth);
+                            found = !IdentFound || (dpth>IdentDepth);
                     }
                 } else if( !UseSlabPlane || (SlabMode != SlabSection) )
-                    new = !IdentFound || IdentDist || (dpth>IdentDepth);
+                    found = !IdentFound || IdentDist || (dpth>IdentDepth);
 
-                if( new )
+                if( found )
                 {   IdentFound = True;
                     IdentDepth = dpth;
                     IdentDist = 0;
@@ -1501,9 +1545,9 @@ static void IdentifyAtom( int xpos, int ypos )
 
     if( !IdentFound || (IdentDist>=50) )
     {   /* Reset Pick Atom! */
-        QChain = (void __far*)0;
-        QGroup = (void __far*)0;
-        QAtom = (void __far*)0;
+        QChain = (Chain __far*)0;
+        QGroup = (Group __far*)0;
+        QAtom = (Atom __far*)0;
     }
 }
 
@@ -1547,7 +1591,7 @@ static void DescribeAtom( AtomRef *ptr, int flag )
              WriteChar(str[i]);
 
     if( flag )
-    {   sprintf(buffer," (%d)",ptr->atm->serno);
+    {   sprintf(buffer," (%ld)",(long)ptr->atm->serno);
         WriteString(buffer);
     }
 }
@@ -1557,7 +1601,7 @@ int PickAtom( int shift, int xpos, int ypos )
 {
     register AtomRef *ptr;
     register Label *label;
-    register float temp;
+    register double temp;
     register char *str;
     register int len;
 
@@ -1581,7 +1625,7 @@ int PickAtom( int shift, int xpos, int ypos )
         WriteChar(str[1]);  WriteChar(str[2]);
         if( str[3]!=' ' )   WriteChar(str[3]);
 
-        sprintf(buffer," %d  ",QAtom->serno);
+        sprintf(buffer," %ld  ",(long)QAtom->serno);
         WriteString(buffer);
 
         str = Residue[QGroup->refno];
@@ -1613,7 +1657,7 @@ int PickAtom( int shift, int xpos, int ypos )
             {   strcpy(buffer,"%n%r");
                 str = buffer+4;
                 if( Info.chaincount > 1 )
-                {   if( isdigit(QChain->ident) )
+                {   if( isdigit((int)QChain->ident) )
                         *str++ = ':';
                     *str++ = '%';
                     *str++ = 'c';
@@ -1708,8 +1752,8 @@ int PickAtom( int shift, int xpos, int ypos )
 
         if( PickCount == PickMode )
         {   if( PickMode == PickDist )
-            {   temp = (float)CalcDistance(PickHist[0].atm,
-                                           PickHist[1].atm);
+            {   temp = CalcDistance(PickHist[0].atm,
+                                    PickHist[1].atm);
 
                 WriteString("Distance ");
                 DescribeAtom(PickHist,False);
@@ -1719,8 +1763,8 @@ int PickAtom( int shift, int xpos, int ypos )
                 WriteString(buffer);
 
             } else if( PickMode == PickAngle )
-            {   temp = (float)CalcAngle(PickHist[0].atm,
-                                        PickHist[1].atm,
+            {   temp = CalcAngle(PickHist[0].atm,
+                                 PickHist[1].atm,
                                         PickHist[2].atm);
 
                 WriteString("Angle ");
@@ -1733,10 +1777,10 @@ int PickAtom( int shift, int xpos, int ypos )
                 WriteString(buffer);
 
             } else /* PickMode == PickTorsn */
-            {   temp = (float)CalcTorsion(PickHist[0].atm,
-                                          PickHist[1].atm,
-                                          PickHist[2].atm,
-                                          PickHist[3].atm);
+            {   temp = CalcTorsion(PickHist[0].atm,
+                                   PickHist[1].atm,
+                                   PickHist[2].atm,
+                                   PickHist[3].atm);
 
                 WriteString("Torsion ");
                 DescribeAtom(PickHist,False);
@@ -1793,7 +1837,7 @@ void ResetRenderer( void )
 
 static void InitialiseTables( void )
 {
-    register Byte __far *ptr;
+    register unsigned char __far *ptr;
     register unsigned int root,root2;
     register unsigned int i,rad,arg;
 
@@ -1805,7 +1849,7 @@ static void InitialiseTables( void )
     {   LookUp[rad] = ptr;
 
         /* i == 0 */
-        *ptr++ = (Byte)rad;  
+        *ptr++ = (unsigned char)rad;  
 
         root = rad-1;
         root2 = root*root;
@@ -1834,20 +1878,26 @@ void InitialiseRenderer( void )
 {
     register int rad,maxval;
 
-    FBuffer = (void __huge*)0;  
-    DBuffer = (void __huge*)0;
-    IBuffer = (void __far*)0;   
-    YBucket = (void __far*)0;
+    IBuffer = (Atom __far* __far*)0;   
+    YBucket = (Atom __far* __far*)0;
+    FBuffer = (Pixel __huge*)0;  
+    DBuffer = (short __huge*)0;
 
-#if defined(MSWIN) || defined(APPLEMAC)
-    FBufHandle = NULL;
-    DBufHandle = NULL;
+#ifdef MSWIN
+    FBufHandle = (HGLOBAL)0;
+    DBufHandle = (HGLOBAL)0;
+#endif
+
+#ifdef APPLEMAC
+    FBufHandle = (Handle)0;
+    DBufHandle = (Handle)0;
 #endif
 
 #if defined(IBMPC) || defined(APPLEMAC)
     /* Allocate tables on FAR heaps */ 
-    Array = (Byte __far*)_fmalloc(MAXTABLE*sizeof(Byte));
-    LookUp = (Byte __far* __far*)_fmalloc(MAXRAD*sizeof(Byte __far*));
+    Array = (unsigned char __far*)_fmalloc(MAXTABLE);
+    LookUp = (unsigned char __far* __far*)_fmalloc(
+              MAXRAD*sizeof(unsigned char __far*));
     HashTable = (void __far* __far*)_fmalloc(VOXSIZE*sizeof(void __far*));
     ColConst = (Card __far*)_fmalloc(MAXRAD*sizeof(Card));
     

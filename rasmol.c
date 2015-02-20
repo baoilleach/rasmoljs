@@ -28,7 +28,7 @@
 #include "repres.h"
 #include "pixutils.h"
 #include "outfile.h"
-
+#include "tmesh.h"
 
 
 #ifdef esv
@@ -76,7 +76,7 @@
 #include <netdb.h>
 #endif
 
-#define IsIdentChar(x)  ((isalnum(x))||((x)=='_')||((x)=='$'))
+#define IsIdentChar(x)  ((isalnum((int)(x)))||((x)=='_')||((x)=='$'))
 #define TwoPi           6.28318531
 
 /* Either stdout or stderr */
@@ -124,11 +124,11 @@ static int FileNo;
 #define AMPickCoord    0x10
 
 typedef struct {
-    int bitmask;
-    char *name;
+        int bitmask;
+        char *name;
     } AdviseType;
 
-static AdviseType AdviseMap[ItemCount] = {
+static AdviseType AdviseMap[AdvItemCount] = {
     { AMPickAtom,    "Pick"    },  /* AdvPickAtom    */
     { AMPickNumber,  "PickNo"  },  /* AdvPickNumber  */
     { AMSelectCount, "Count"   },  /* AdvSelectCount */
@@ -336,7 +336,8 @@ static int OpenSocket( void )
 
     if( !ServerPort )
     {   length = sizeof(addr);
-        if( !getsockname(SocketNo, (struct sockaddr*)&addr, &length) )
+        if( !getsockname(SocketNo, (struct sockaddr*)&addr,
+                         (socklen_t*)&length) )
         {   ServerPort = ntohs(addr.sin_port);
             fprintf(stderr,"RasMol Server TCP/IP Port: %d\n",ServerPort);
         }
@@ -432,7 +433,7 @@ static int IsIPCAdviseRequest( char *ptr, int conv )
             }
             *dst = '\0';
 
-            for( i=0; i<ItemCount; i++ )
+            for( i=0; i<AdvItemCount; i++ )
                 if( !CaseInsensitiveCompare(item,AdviseMap[i].name) )
                 {   if( flag )
                     {      IPCConvData[conv].advise |=  AdviseMap[i].bitmask;
@@ -562,7 +563,7 @@ static void InitTerminal( int sockets )
     } else StdInFlag = False;
 
 #else /* !VMS */
-    setbuf(stdin,(char*)NULL);
+    setbuf(stdin,(char*)0);
 #endif
 }
 
@@ -595,12 +596,12 @@ static int FetchCharacter( void )
             TimeOut.tv_sec = 1;
             TimeOut.tv_usec = 0;
             WaitSet = OrigWaitSet;
-#ifdef __hpux
-            status = select( WaitWidth, (int*)&WaitSet, (int*)NULL, 
-                                        (int*)NULL, &TimeOut );
+#ifdef HPUX_LEGACY
+            status = select( WaitWidth, (int*)&WaitSet, (int*)0, 
+                                        (int*)0, &TimeOut );
 #else
-            status = select( WaitWidth, &WaitSet, (fd_set*)NULL, 
-                                        (fd_set*)NULL, &TimeOut );
+            status = select( WaitWidth, &WaitSet, (fd_set*)0, 
+                                        (fd_set*)0, &TimeOut );
 #endif
 
 #ifdef SOCKETS
@@ -953,8 +954,10 @@ void RefreshScreen( void )
 #ifdef SOCKETS
 static void PrepareIPCAdviseItem( int item )
 {
-    register char *src, *dst;
-    register int i,flag;
+    register char *src;
+    register char *dst;
+    register int flag;
+    register int i;
 
     dst = AdviseBuffer;
     src = AdviseMap[item].name;
@@ -967,7 +970,7 @@ static void PrepareIPCAdviseItem( int item )
                   {   src = Residue[QGroup->refno];
                       flag = False;
                       for( i=0; i<3; i++ )
-                          if( (src[i]!=' ') && !isalpha(src[i]) )
+                          if( (src[i]!=' ') && !isalpha((int)src[i]) )
                               flag = True;
 
                       if( flag ) *dst++ = '[';
@@ -978,7 +981,7 @@ static void PrepareIPCAdviseItem( int item )
                       sprintf(dst,"%d",QGroup->serno);
                       for( dst=AdviseBuffer; *dst; dst++ );
                       if( QChain->ident!=' ' )
-                      {   if( isdigit(QChain->ident) ) *dst++ = ':';
+                      {   if( isdigit((int)QChain->ident) ) *dst++ = ':';
                           *dst++ = QChain->ident;
                       }
                       *dst++ = '.';
@@ -1117,9 +1120,9 @@ static void ProfileExecution( void )
     printf("Profiling Execution!\n");
 
 #ifdef TIME
-    start = time((time_t *)NULL);
+    start = time((time_t *)0);
 #else
-    gettimeofday(&start,(struct timezone *)NULL);
+    gettimeofday(&start,(struct timezone *)0);
 #endif
 
     for( i=0; i<ProfCount; i++ )
@@ -1133,11 +1136,11 @@ static void ProfileExecution( void )
     }
 
 #ifdef TIME
-    stop = time((time_t *)NULL);
+    stop = time((time_t *)0);
     fprintf(stderr,"Execution of %d frames\n",ProfCount);
     fprintf(stderr,"Duration = %ld seconds\n",stop-start);
 #else
-    gettimeofday(&stop,(struct timezone *)NULL);
+    gettimeofday(&stop,(struct timezone *)0);
     secs = (stop.tv_sec - start.tv_sec) + (double)
            (stop.tv_usec - start.tv_usec)/1000000.0;
     fprintf(stderr,"Execution of %d frames\n",ProfCount);
@@ -1151,8 +1154,8 @@ static void InitDefaultValues( void )
 {
     Interactive = True;
 
-    FileNamePtr = NULL;
-    ScriptNamePtr = NULL;
+    FileNamePtr = (char*)0;
+    ScriptNamePtr = (char*)0;
     InitialWide = DefaultWide;
     InitialHigh = DefaultHigh;
     ProfCount = 0;
@@ -1236,10 +1239,9 @@ static void ProcessOptions( int argc, char *argv[] )
                        !strcmp(ptr,"wide") )
             {   if( i == argc-1 ) DisplayUsage();
                 InitialWide = atoi(argv[++i]);
-                if( InitialWide < 48 )
-                {   InitialWide = 48;
-                } else if( j = InitialWide%4 )
-                    InitialWide += 4-j;
+                if( InitialWide > 48 )
+                {   InitialWide = (InitialWide+3)&~3;
+                } else InitialWide = 48;
 
             } else if( !strcmp(ptr,"height") ||
                        !strcmp(ptr,"high") )
@@ -1293,7 +1295,7 @@ int main( int argc, char *argv[] )
     ReDrawFlag = 0;
     
     temp = Interactive;
-    setbuf(OutFp,(char *)NULL);
+    setbuf(OutFp,(char *)0);
     Interactive = OpenDisplay(InitialWide,InitialHigh);
     InitTerminal(Interactive);
 
@@ -1329,6 +1331,7 @@ int main( int argc, char *argv[] )
     InitialiseAbstree();
     InitialiseOutFile();
     InitialiseRepres();
+    InitialiseTMesh();
 
 #ifdef PROFILE
     if( ProfCount )

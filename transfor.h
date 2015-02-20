@@ -90,7 +90,6 @@ int UseBackFade;
 Real Ambient;
 
 Real Scale,MaxZoom;
-Real DScale,IScale;
 Long SideLen,Offset;
 Card WorldRadius,WorldSize;
 int XOffset,YOffset,ZOffset;
@@ -120,7 +119,6 @@ extern int UseBackFade;
 extern Real Ambient;
 
 extern Real Scale,MaxZoom;
-extern Real DScale,IScale;
 extern Long SideLen,Offset;
 extern Card WorldRadius,WorldSize;
 extern int XOffset,YOffset,ZOffset;

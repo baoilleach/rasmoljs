@@ -165,6 +165,7 @@ static int MaskShade[MAXMASK];
 static int ScaleCount;
 
 static Real LastRX,LastRY,LastRZ;
+static Real DScale,IScale;
 static Real Zoom;
 
 
@@ -789,6 +790,7 @@ void RestrictZone( int mask )
                 }
     }
 
+    RestrictMonitors();
     DetermineClipping();
     VoxelsClean = False;
     BucketFlag = False;
@@ -899,6 +901,7 @@ void RestrictZoneExpr( Expr *expr )
                 }
     }
 
+    RestrictMonitors();
     DetermineClipping();
     VoxelsClean = False;
     BucketFlag = False;
@@ -948,7 +951,7 @@ int DefineShade( int r, int g, int b )
 }
 
 
-void ScaleColourMap( int count )
+static void ScaleColourMap( int count )
 {
     register int i, r, g, b;
     register int fract;
@@ -1029,6 +1032,9 @@ void DefineColourMap( void )
     register Real temp,inten;
     register int col,r,g,b;
     register int i,j,k;
+
+    /* Avoid compiler warning! */
+    k = 0;
 
     for( i=0; i<LutSize; i++ )
         ULut[i] = False;
@@ -1269,7 +1275,7 @@ void ColourHBondType( void )
                 ref->col = Shade2Colour(ref->shade);
             }
             Shade[ref->shade].refcount++;
-            ptr->col = (Byte)ref->col;
+            ptr->col = (unsigned char)ref->col;
         }
 }
 
@@ -1438,7 +1444,7 @@ void ColourDotsAttrib( int r, int g, int b )
 
 /* Coulomb's Law */
 #define CoulombScale  ((Long)(1<<12))
-int CalculatePotential( Long x, Long y, Long z )
+static int CalculatePotential( Long x, Long y, Long z )
 {
     register Chain __far *chain;
     register Group __far *group;
@@ -1709,17 +1715,18 @@ void ScaleColourAttrib( int attr )
 
 static int MatchNumber( int len, int value, char *mask )
 {
-    register char digit, template;
     register int result;
+    register int digit;
+    register int ch;
     register int i;
 
     result = True;
     for( i=0; i<len; i++ )
     {   digit = (value%10) + '0';
-        template = mask[len-i];
-        if( template==' ' )
+        ch = mask[len-i];
+        if( ch == ' ' )
         {   if( value ) result = False;
-        } else if( !MatchChar(template,digit) )
+        } else if( !MatchChar(ch,digit) )
             result = False;
         value /= 10;
     }
@@ -1987,10 +1994,11 @@ int IsVDWRadius( Atom __far *ptr )
 {
     register int rad;
 
-    if( ptr->flag & SphereFlag )
-    {   rad = ElemVDWRadius( ptr->elemno );
-        return( ptr->radius == rad );
-    } else return False;
+    if( !(ptr->flag&SphereFlag) )
+        return False;
+
+    rad = ElemVDWRadius( ptr->elemno );
+    return ptr->radius == rad;
 }
 
 
@@ -2067,7 +2075,7 @@ void InitialTransform( void )
 
     /* Code should match ReSizeScreen() */
     /* MaxZoom*DScale*Range*750 == 252  */
-    MaxZoom = 0.336*WorldSize/Range;
+    MaxZoom = 0.324*WorldSize/Range;
     if( MaxZoom < 1.0 )
     {   DScale *= MaxZoom;
         MaxZoom = 1.0;

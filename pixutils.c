@@ -72,7 +72,7 @@ typedef struct {
  *       extremely crude hack to avoid stripes
  *       appearing along cylinders.
  */
-#define ARCSIZE  2048
+#define ARCSIZE  8192
 
 static ArcEntry __far *ArcAcPtr;
 static ArcEntry __far *ArcDnPtr;
@@ -94,7 +94,7 @@ static int ClipStatus;
                                        *(fptr) = (c);               \
                                    }
 
-#define OutCode(res,x,y,z)            \
+#define OutCode2(res,x,y)             \
     {   if( (y)<0 )                   \
         {   (res) = BitAbove;         \
         } else if( (y) >= View.ymax ) \
@@ -105,7 +105,10 @@ static int ClipStatus;
         {   (res) |= BitLeft;         \
         } else if( (x) >= View.xmax ) \
             (res) |= BitRight;        \
-                                      \
+    }
+
+#define OutCode3(res,x,y,z)           \
+    {   OutCode2(res,x,y);            \
         if( !ZValid((z)) )            \
             (res) |= BitFront;        \
     }
@@ -120,29 +123,6 @@ static void DrawArcDn( short __huge*, Pixel __huge*, int, int );
 static void DrawArcAc( short __huge*, Pixel __huge*, int, int );
 static void ClipArcDn( short __huge*, Pixel __huge*, int, int, int, int );
 static void ClipArcAc( short __huge*, Pixel __huge*, int, int, int, int );
-
-
-#ifdef UNUSED
-static int OutCode( int x, int y, int z )
-{
-    register int result;
-
-    if( y < 0 )
-    {   result = BitAbove;
-    } else if( y >= View.ymax )
-    {   result = BitBelow;
-    } else result = 0;
-
-    if( x < 0 )
-    {   result |= BitLeft;
-    } else if( x >= View.xmax )
-        result |= BitRight;
-
-    if( !ZValid(z) )
-        result |= BitFront;
-    return result;
-}
-#endif
 
 
 void PlotPoint( int x, int y, int z, int col )
@@ -193,12 +173,12 @@ void PlotDeepPoint( int x, int y, int z, int col )
     dptr = View.dbuf+offset;
 
     if( z > *dptr )
-    {  fptr = View.fbuf+offset;
-       inten = (ColourDepth*(z+ImageRadius-ZOffset))/ImageSize;
-       if( inten > 0 )
-       {   *fptr = Lut[col+(inten&ColourMask)];
-       } else *fptr = Lut[col];
-       *dptr = z;
+    {   fptr = View.fbuf+offset;
+        inten = (ColourDepth*(z+ImageRadius-ZOffset))/ImageSize;
+        if( inten > 0 )
+        {   *fptr = Lut[col+(inten&ColourMask)];
+        } else *fptr = Lut[col];
+        *dptr = z;
     }
 }
 
@@ -328,8 +308,8 @@ void ClipLine( int x1, int y1, int z1,
     register int delta,rest;
     register int temp;
 
-    OutCode(code1,x1,y1,z1);
-    OutCode(code2,x2,y2,z2);
+    OutCode3(code1,x1,y1,z1);
+    OutCode3(code2,x2,y2,z2);
     if( Reject(code1,code2) )
         return;
 
@@ -372,7 +352,7 @@ void ClipLine( int x1, int y1, int z1,
             z1 = SlabValue-1;
         }
 
-        OutCode(code1,x1,y1,z1);
+        OutCode3(code1,x1,y1,z1);
         if( Reject(code1,code2) )
             return;
     }
@@ -388,8 +368,8 @@ void ClipTwinLine( int x1, int y1, int z1,
     register int code1,code2;
 
     if( col1!=col2 )
-    {   OutCode(code1,x1,y1,z1);
-        OutCode(code2,x2,y2,z2);
+    {   OutCode3(code1,x1,y1,z1);
+        OutCode3(code2,x2,y2,z2);
         if( !Reject(code1,code2) )
         {   if( !Accept(code1,code2) )
             {  xmid = (x1+x2)/2;
@@ -535,8 +515,8 @@ static void ClipVector( int x1, int y1, int z1,
     register int delta,rest;
     register int temp;
 
-    OutCode(code1,x1,y1,z1);
-    OutCode(code2,x2,y2,z2);
+    OutCode3(code1,x1,y1,z1);
+    OutCode3(code2,x2,y2,z2);
     if( Reject(code1,code2) )
         return;
 
@@ -578,7 +558,7 @@ static void ClipVector( int x1, int y1, int z1,
             y1 += (int)(((Long)rest*(y2-y1))/delta);
             z1 = SlabValue-1;
         }
-        OutCode(code1,x1,y1,z1);
+        OutCode3(code1,x1,y1,z1);
         if( Reject(code1,code2) )
             return;
     }
@@ -594,8 +574,8 @@ void ClipTwinVector( int x1, int y1, int z1,
     register int code1,code2;
 
     if( col1!=col2 )
-    {   OutCode(code1,x1,y1,z1);
-        OutCode(code2,x2,y2,z2);
+    {   OutCode3(code1,x1,y1,z1);
+        OutCode3(code2,x2,y2,z2);
         if( !Reject(code1,code2) )
         {   if( !Accept(code1,code2) )
             {  xmid = (x1+x2)/2;
@@ -667,7 +647,7 @@ void ClipDashVector( int x1, int y1, int z1,
     if( (x1==x2) && (y1==y2) ) 
         return;
 
-    /* Reject(OutCode(x1,y1,z1),OutCode(x2,y2,z2)) */
+    /* Reject(OutCode3(x1,y1,z1),OutCode3(x2,y2,z2)) */
     if( (x1<0) && (x2<0) ) return;
     if( (y1<0) && (y2<0) ) return;
     if( (x1>=View.xmax) && (x2>=View.xmax) ) return;
@@ -912,24 +892,1581 @@ void DashRibbon( Knot __far *src, Knot __far *dst, int col1, int col2 )
 }
 
 
-#ifdef UNUSED  /* Unused Function */
-static void OutLinePolygon( Poly *p )
+void DrawPolygonOutline( Poly *p )
 {
     register int i;
 
     for( i=0; i<p->count-1; i++ )
-         ClipLine( p->v[i].x, p->v[i].y, p->v[i].z, 
-                   p->v[i+1].x, p->v[i+1].y, p->v[i+1].z,
-                   p->v[i].inten);
+        DrawTwinLine( p->v[i].x, p->v[i].y, p->v[i].z, 
+                      p->v[i+1].x, p->v[i+1].y, p->v[i+1].z,
+                      p->v[i].inten, p->v[i].inten);
+    DrawTwinLine( p->v[i].x, p->v[i].y, p->v[i].z,
+                  p->v[0].x, p->v[0].y, p->v[0].z,
+                  p->v[i].inten, p->v[i].inten);
+}
+
+
+void ClipPolygonOutline( Poly *p )
+{
+    register int i;
+
+    for( i=0; i<p->count-1; i++ )
+        ClipLine( p->v[i].x, p->v[i].y, p->v[i].z, 
+                  p->v[i+1].x, p->v[i+1].y, p->v[i+1].z,
+                  p->v[i].inten);
     ClipLine( p->v[i].x, p->v[i].y, p->v[i].z,
               p->v[0].x, p->v[0].y, p->v[0].z,
               p->v[i].inten);
 }
-#endif
 
 
-#ifdef UNUSED
-static void DrawPolygon( Poly *p )
+/*====================================*/
+/*  Flat (Constant) Shaded Triangles  */
+/*====================================*/
+
+static void DrawFlatTriFlatTop( Vert *li, Vert *ri, Vert *bot, int col )
+{
+    static Edge lft, rgt;
+    register Pixel *fbase;
+    register short *dbase;
+    register short *dptr;
+    register int x,xmin,xmax;
+    register int y,ymin,dy;
+    register int offset;
+    register int z,dz;
+
+    if( li->x >= ri->x )
+        return;
+
+    dz = ((ri->z-li->z)<<16)/(ri->x-li->x);
+
+    y = li->y;
+    ymin = bot->y;
+    dy = ymin - y;
+
+    lft.dx = ((bot->x - li->x)<<16)/dy;
+    lft.dz = ((bot->z - li->z)<<16)/dy;
+    rgt.dx = ((bot->x - ri->x)<<16)/dy;
+    lft.x = li->x<<16;
+    lft.z = li->z<<16;
+    rgt.x = ri->x<<16;
+
+    offset = y*View.yskip;
+    fbase = (Pixel*)View.fbuf+offset;
+    dbase = View.dbuf+offset;
+
+    while( y < ymin ) {
+        xmax = (int)(rgt.x>>16);
+        xmin = (int)(lft.x>>16);
+
+        /* dz = (rgt.z-lft.z)/(xmax-xmin); */
+        z = lft.z;
+
+        dptr = dbase+xmin;
+        for( x=xmin; x<xmax; x++ )
+        {   if( (int)(z>>16) > *dptr )
+            {   fbase[x] = Lut[col];
+                *dptr = (int)(z>>16);
+            }
+            z += dz;
+            dptr++;
+        }
+
+        lft.x += lft.dx;
+        rgt.x += rgt.dx;
+        lft.z += lft.dz;
+        dbase += View.yskip;
+        fbase += View.yskip;
+        y++;
+    }
+}
+
+
+static void DrawFlatTriFlatBot( Vert *top, Vert *li, Vert *ri, int col )
+{
+    static Edge lft, rgt;
+    register Pixel *fbase;
+    register short *dbase;
+    register short *dptr;
+    register int x,xmin,xmax;
+    register int y,ymin,dy;
+    register int offset;
+    register int z,dz;
+
+    if( li->x >= ri->x )
+        return;
+    if( li->y == top->y+1 )
+        return;
+
+    dz = ((ri->z-li->z)<<16)/(ri->x-li->x);
+
+    ymin = li->y;
+    dy = ymin - top->y;
+    lft.dx = ((li->x - top->x)<<16)/dy;
+    lft.dz = ((li->z - top->z)<<16)/dy;
+    rgt.dx = ((ri->x - top->x)<<16)/dy;
+    rgt.x = lft.x = top->x<<16;
+    lft.z = top->z<<16;
+
+    /* Top vertex never drawn! */
+    lft.x += lft.dx;  rgt.x += rgt.dx;
+    lft.z += lft.dz;
+
+    y = top->y+1;
+    offset = y*View.yskip;
+    fbase = (Pixel*)View.fbuf+offset;
+    dbase = View.dbuf+offset;
+
+    while( y < ymin ) {
+        xmax = (int)(rgt.x>>16);
+        xmin = (int)(lft.x>>16);
+
+        /* dz = (rgt.z-lft.z)/(xmax-xmin); */
+        z = lft.z;
+
+        dptr = dbase+xmin;
+        for( x=xmin; x<xmax; x++ ) {
+            if( (int)(z>>16) > *dptr ) {
+                fbase[x] = Lut[col];
+                *dptr = (int)(z>>16);
+            }
+            z += dz;
+            dptr++;
+        }
+
+        lft.x += lft.dx;
+        rgt.x += rgt.dx;
+        lft.z += lft.dz;
+        dbase += View.yskip;
+        fbase += View.yskip;
+        y++;
+    }
+}
+
+
+static void DrawFlatTriLeft( Vert *top, Vert *li, Vert *bot, int col )
+{
+    static Edge lft, rgt;
+    register Pixel *fbase;
+    register short *dbase;
+    register short *dptr;
+    register int offset;
+    register int dx,dy,ry,ly;
+    register int xmin,xmax;
+    register int x,y,ymin;
+    register int z,dz;
+
+    /* Determine scanline gradients */
+    ly = li->y - top->y;
+    ry = bot->y - top->y;
+
+    dx = (li->x-top->x)*ry - (bot->x-top->x)*ly;
+    if( dx )
+    {   z = (li->z-top->z)*ry - (bot->z-top->z)*ly;
+        dz = (z<<16)/dx;
+    } else dz = 0;
+
+    lft.dx = ((li->x - top->x)<<16)/ly;
+    rgt.dx = ((bot->x - top->x)<<16)/ry;
+    rgt.dz = ((bot->z - top->z)<<16)/ry;
+
+    rgt.x = lft.x = top->x<<16;
+    rgt.z = top->z<<16;
+
+    /* Top vertex never drawn! */
+    lft.x += lft.dx;
+    rgt.x += rgt.dx;
+    rgt.z += rgt.dz;
+
+    y = top->y+1;
+    offset = y*View.yskip;
+    fbase = (Pixel*)View.fbuf+offset;
+    dbase = View.dbuf+offset;
+
+    ymin = li->y;
+    while( y<ymin )
+    {   xmax = (int)(rgt.x>>16);
+        xmin = (int)(lft.x>>16);
+
+        z = rgt.z;
+
+        dptr = dbase+(xmax-1);
+        for( x=xmax-1; x>=xmin; x-- )
+        {   if( (int)(z>>16) > *dptr )
+            {   fbase[x] = Lut[col];
+                *dptr = (int)(z>>16);
+            }
+            z -= dz;
+            dptr--;
+        }
+
+        lft.x += lft.dx;
+        rgt.x += rgt.dx;
+        rgt.z += rgt.dz;
+        dbase += View.yskip;
+        fbase += View.yskip;
+        y++;
+    }
+
+    dy = bot->y - li->y;
+    lft.dx = ((bot->x - li->x)<<16)/dy;
+    lft.x = li->x<<16;
+
+    ymin = bot->y;
+    while( y < ymin ) {
+        xmax = (int)(rgt.x>>16);
+        xmin = (int)(lft.x>>16);
+
+        z = rgt.z;
+
+        dptr = dbase+(xmax-1);
+        for( x=xmax-1; x>=xmin; x-- ) {
+            if( (int)(z>>16) > *dptr ) {
+                fbase[x] = Lut[col];
+                *dptr = (int)(z>>16);
+            }
+            z -= dz;
+            dptr--;
+        }
+
+        lft.x += lft.dx;
+        rgt.x += rgt.dx;
+        rgt.z += rgt.dz;
+        dbase += View.yskip;
+        fbase += View.yskip;
+        y++;
+    }
+}
+
+
+static void DrawFlatTriRight( Vert *top, Vert *ri, Vert *bot, int col )
+{
+    static Edge lft, rgt;
+    register Pixel *fbase;
+    register short *dbase;
+    register short *dptr;
+    register int offset;
+    register int dx,dy,ry,ly;
+    register int xmin,xmax;
+    register int x,y,ymin;
+    register int z,dz;
+
+    /* Determine scanline gradients */
+    ly = bot->y - top->y;
+    ry = ri->y - top->y;
+
+    dx = (bot->x-top->x)*ry - (ri->x-top->x)*ly;
+    if( dx )
+    {   z = (bot->z-top->z)*ry - (ri->z-top->z)*ly;
+        dz = (z<<16)/dx;
+    } else dz = 0;
+
+    lft.dz = ((bot->z - top->z)<<16)/ly;
+    lft.dx = ((bot->x - top->x)<<16)/ly;
+    rgt.dx = ((ri->x - top->x)<<16)/ry;
+
+    lft.z = top->z<<16;
+    rgt.x = lft.x = top->x<<16;
+
+    /* Top vertex never drawn! */
+    lft.x += lft.dx;
+    rgt.x += rgt.dx;
+    lft.z += lft.dz;
+
+    y = top->y+1;
+    offset = y*View.yskip;
+    fbase = (Pixel*)View.fbuf+offset;
+    dbase = View.dbuf+offset;
+
+    ymin = ri->y;
+    while( y<ymin )
+    {   xmax = (int)(rgt.x>>16);
+        xmin = (int)(lft.x>>16);
+
+        z = lft.z;
+
+        dptr = dbase+xmin;
+        for( x=xmin; x<xmax; x++ )
+        {   if( (int)(z>>16) > *dptr )
+            {   fbase[x] = Lut[col];
+                *dptr = (int)(z>>16);
+            }
+            z += dz;
+            dptr++;
+        }
+
+        lft.x += lft.dx;
+        rgt.x += rgt.dx;
+        lft.z += lft.dz;
+        dbase += View.yskip;
+        fbase += View.yskip;
+        y++;
+    }
+
+    dy = bot->y - ri->y;
+    rgt.dx = ((bot->x - ri->x)<<16)/dy;
+    rgt.x = ri->x<<16;
+
+    ymin = bot->y;
+    while( y < ymin ) {
+        xmax = (int)(rgt.x>>16);
+        xmin = (int)(lft.x>>16);
+
+        z = lft.z;
+
+        dptr = dbase+xmin;
+        for( x=xmin; x<xmax; x++ ) {
+            if( (int)(z>>16) > *dptr ) {
+                fbase[x] = Lut[col];
+                *dptr = (int)(z>>16);
+            }
+            z += dz;
+            dptr++;
+        }
+
+        lft.x += lft.dx;
+        rgt.x += rgt.dx;
+        lft.z += lft.dz;
+        dbase += View.yskip;
+        fbase += View.yskip;
+        y++;
+    }
+}
+
+
+void DrawFlatTriangle( Vert *p, Vert *q, Vert *r, int col )
+{
+    if( p->y < q->y )
+    {   if( p->y < r->y )
+        {   if( q->y < r->y )
+            {   DrawFlatTriRight(p,q,r,col);
+            } else if( q->y > r->y )
+            {   DrawFlatTriLeft(p,r,q,col);
+            } else DrawFlatTriFlatBot(p,r,q,col);
+        } else  if( p->y > r->y )
+        {   DrawFlatTriRight(r,p,q,col);
+        } else DrawFlatTriFlatTop(r,p,q,col);
+
+    } else if( p->y > q->y )
+    {   if( q->y < r->y )
+        {   if( p->y < r->y )
+            {   DrawFlatTriLeft(q,p,r,col);
+            } else if( p->y > r->y )
+            {   DrawFlatTriRight(q,r,p,col);
+            } else DrawFlatTriFlatBot(q,p,r,col);
+         } else if( q->y > r->y )
+         {  DrawFlatTriLeft(r,q,p,col);
+         } else DrawFlatTriFlatTop(q,r,p,col);
+
+    } else /* p->y == q->y */
+         if( p->y < r->y )
+         {   DrawFlatTriFlatTop(p,q,r,col);
+         } else if( p->y > r->y )
+             DrawFlatTriFlatBot(r,q,p,col);
+}
+
+
+/*=====================================*/
+/*  Gouraud (Smooth) Shaded Triangles  */
+/*=====================================*/
+
+static void DrawTriFlatTop( Vert *li, Vert *ri, Vert *bot )
+{
+    static Edge lft, rgt;
+    register Pixel *fbase;
+    register short *dbase;
+    register short *dptr;
+    register int x,xmin,xmax;
+    register int y,ymin,dy;
+    register int z,inten;
+    register int offset;
+    register int dz,di;
+
+    if( li->x >= ri->x )
+        return;
+
+    di = ((ri->inten-li->inten)<<16)/(ri->x-li->x);
+    dz = ((ri->z-li->z)<<16)/(ri->x-li->x);
+
+    y = li->y;
+    ymin = bot->y;
+    dy = ymin - y;
+
+    lft.di = ((bot->inten - li->inten)<<16)/dy;
+    lft.dx = ((bot->x - li->x)<<16)/dy;
+    lft.dz = ((bot->z - li->z)<<16)/dy;
+    rgt.dx = ((bot->x - ri->x)<<16)/dy;
+    lft.i = li->inten<<16;
+    lft.x = li->x<<16;
+    lft.z = li->z<<16;
+    rgt.x = ri->x<<16;
+
+    offset = y*View.yskip;
+    fbase = (Pixel*)View.fbuf+offset;
+    dbase = View.dbuf+offset;
+
+    while( y < ymin ) {
+        xmax = (int)(rgt.x>>16);
+        xmin = (int)(lft.x>>16);
+
+        inten = lft.i;
+        z = lft.z;
+
+        dptr = dbase+xmin;
+        for( x=xmin; x<xmax; x++ ) {
+            if( (int)(z>>16) > *dptr ) {
+                fbase[x] = Lut[(int)(inten>>16)];
+                *dptr = (int)(z>>16);
+            }
+            inten += di;
+            z += dz;
+            dptr++;
+        }
+
+        lft.x += lft.dx;
+        rgt.x += rgt.dx;
+        lft.z += lft.dz;
+        lft.i += lft.di;
+        dbase += View.yskip;
+        fbase += View.yskip;
+        y++;
+    }
+}
+
+
+static void DrawTriFlatBot( Vert *top, Vert *li, Vert *ri )
+{
+    static Edge lft, rgt;
+    register Pixel *fbase;
+    register short *dbase;
+    register short *dptr;
+    register int x,xmin,xmax;
+    register int y,ymin,dy;
+    register int z,inten;
+    register int offset;
+    register int dz,di;
+
+    if( li->x >= ri->x )
+        return;
+    if( li->y == top->y+1 )
+        return;
+
+    di = ((ri->inten-li->inten)<<16)/(ri->x-li->x);
+    dz = ((ri->z-li->z)<<16)/(ri->x-li->x);
+
+    ymin = li->y;
+    dy = ymin - top->y;
+    lft.di = ((li->inten - top->inten)<<16)/dy;
+    lft.dx = ((li->x - top->x)<<16)/dy;
+    lft.dz = ((li->z - top->z)<<16)/dy;
+    rgt.dx = ((ri->x - top->x)<<16)/dy;
+
+    rgt.x = lft.x = top->x<<16;
+    lft.i = top->inten<<16;
+    lft.z = top->z<<16;
+
+    /* Top vertex never drawn! */
+    lft.x += lft.dx;  rgt.x += rgt.dx;
+    lft.z += lft.dz;  lft.i += lft.di;
+
+    y = top->y+1;
+    offset = y*View.yskip;
+    fbase = (Pixel*)View.fbuf+offset;
+    dbase = View.dbuf+offset;
+
+    while( y < ymin ) {
+        xmax = (int)(rgt.x>>16);
+        xmin = (int)(lft.x>>16);
+
+        inten = lft.i;
+        z = lft.z;
+
+        dptr = dbase+xmin;
+        for( x=xmin; x<xmax; x++ ) {
+            if( (int)(z>>16) > *dptr ) {
+                fbase[x] = Lut[(int)(inten>>16)];
+                *dptr = (int)(z>>16);
+            }
+            inten += di;
+            z += dz;
+            dptr++;
+        }
+
+        lft.x += lft.dx;
+        rgt.x += rgt.dx;
+        lft.z += lft.dz;
+        lft.i += lft.di;
+        dbase += View.yskip;
+        fbase += View.yskip;
+        y++;
+    }
+}
+
+
+static void DrawTriLeft( Vert *top, Vert *li, Vert *bot )
+{
+    static Edge lft, rgt;
+    register Pixel *fbase;
+    register short *dbase;
+    register short *dptr;
+    register int dx,dy,ry,ly;
+    register int xmin,xmax;
+    register int x,y,ymin;
+    register int z,inten;
+    register int offset;
+    register int dz,di;
+
+    /* Determine scanline gradients */
+    ly = li->y - top->y;
+    ry = bot->y - top->y;
+
+    dx = (li->x-top->x)*ry - (bot->x-top->x)*ly;
+    if( dx )
+    {   inten = (li->inten-top->inten)*ry - (bot->inten-top->inten)*ly;
+        z = (li->z-top->z)*ry - (bot->z-top->z)*ly;
+        di = (inten<<16)/dx;
+        dz = (z<<16)/dx;
+    } else dz = di = 0;
+
+    rgt.di = ((bot->inten - top->inten)<<16)/ry;
+    rgt.dz = ((bot->z - top->z)<<16)/ry;
+    rgt.dx = ((bot->x - top->x)<<16)/ry;
+    lft.dx = ((li->x - top->x)<<16)/ly;
+
+    rgt.x = lft.x = top->x<<16;
+    rgt.i = top->inten<<16;
+    rgt.z = top->z<<16;
+
+    /* Top vertex never drawn! */
+    lft.x += lft.dx;
+    rgt.x += rgt.dx;
+    rgt.z += rgt.dz;
+    rgt.i += rgt.di;
+
+    y = top->y+1;
+    offset = y*View.yskip;
+    fbase = (Pixel*)View.fbuf+offset;
+    dbase = View.dbuf+offset;
+
+    ymin = li->y;
+    while( y<ymin )
+    {   xmax = (int)(rgt.x>>16);
+        xmin = (int)(lft.x>>16);
+
+        inten = rgt.i;
+        z = rgt.z;
+
+        dptr = dbase+(xmax-1);
+        for( x=xmax-1; x>=xmin; x-- )
+        {   if( (int)(z>>16) > *dptr )
+            {   fbase[x] = Lut[(int)(inten>>16)];
+                *dptr = (int)(z>>16);
+            }
+            inten -= di;
+            z -= dz;
+            dptr--;
+        }
+
+        lft.x += lft.dx;
+        rgt.x += rgt.dx;
+        rgt.z += rgt.dz;
+        rgt.i += rgt.di;
+        dbase += View.yskip;
+        fbase += View.yskip;
+        y++;
+    }
+
+    dy = bot->y - li->y;
+    lft.dx = ((bot->x - li->x)<<16)/dy;
+    lft.x = li->x<<16;
+
+    ymin = bot->y;
+    while( y < ymin ) {
+        xmax = (int)(rgt.x>>16);
+        xmin = (int)(lft.x>>16);
+
+        inten = rgt.i;
+        z = rgt.z;
+
+        dptr = dbase+(xmax-1);
+        for( x=xmax-1; x>=xmin; x-- ) {
+            if( (int)(z>>16) > *dptr ) {
+                fbase[x] = Lut[(int)(inten>>16)];
+                *dptr = (int)(z>>16);
+            }
+            inten -= di;
+            z -= dz;
+            dptr--;
+        }
+
+        lft.x += lft.dx;
+        rgt.x += rgt.dx;
+        rgt.z += rgt.dz;
+        rgt.i += rgt.di;
+        dbase += View.yskip;
+        fbase += View.yskip;
+        y++;
+    }
+}
+
+
+static void DrawTriRight( Vert *top, Vert *ri, Vert *bot )
+{
+    static Edge lft, rgt;
+    register Pixel *fbase;
+    register short *dbase;
+    register short *dptr;
+    register int dx,dy,ry,ly;
+    register int xmin,xmax;
+    register int x,y,ymin;
+    register int z,inten;
+    register int offset;
+    register int dz,di;
+
+    /* Determine scanline gradients */
+    ly = bot->y - top->y;
+    ry = ri->y - top->y;
+
+    dx = (bot->x-top->x)*ry - (ri->x-top->x)*ly;
+    if( dx )
+    {   inten = (bot->inten-top->inten)*ry - (ri->inten-top->inten)*ly;
+        z = (bot->z-top->z)*ry - (ri->z-top->z)*ly;
+        di = (inten<<16)/dx;
+        dz = (z<<16)/dx;
+    } else dz = di = 0;
+
+    lft.di = ((bot->inten - top->inten)<<16)/ly;
+    lft.dz = ((bot->z - top->z)<<16)/ly;
+    lft.dx = ((bot->x - top->x)<<16)/ly;
+    rgt.dx = ((ri->x - top->x)<<16)/ry;
+
+    rgt.x = lft.x = top->x<<16;
+    lft.i = top->inten<<16;
+    lft.z = top->z<<16;
+
+    /* Top vertex never drawn! */
+    lft.x += lft.dx;
+    rgt.x += rgt.dx;
+    lft.z += lft.dz;
+    lft.i += lft.di;
+
+    y = top->y+1;
+    offset = y*View.yskip;
+    fbase = (Pixel*)View.fbuf+offset;
+    dbase = View.dbuf+offset;
+
+    ymin = ri->y;
+    while( y < ymin ) {
+        xmax = (int)(rgt.x>>16);
+        xmin = (int)(lft.x>>16);
+
+        inten = lft.i;
+        z = lft.z;
+
+        dptr = dbase+xmin;
+        for( x=xmin; x<xmax; x++ ) {
+            if( (int)(z>>16) > *dptr ) {
+                fbase[x] = Lut[(int)(inten>>16)];
+                *dptr = (int)(z>>16);
+            }
+            inten += di;
+            z += dz;
+            dptr++;
+        }
+
+        lft.x += lft.dx;
+        rgt.x += rgt.dx;
+        lft.z += lft.dz;
+        lft.i += lft.di;
+        dbase += View.yskip;
+        fbase += View.yskip;
+        y++;
+    }
+
+    dy = bot->y - ri->y;
+    rgt.dx = ((bot->x - ri->x)<<16)/dy;
+    rgt.x = ri->x<<16;
+
+    ymin = bot->y;
+    while( y < ymin ) {
+        xmax = (int)(rgt.x>>16);
+        xmin = (int)(lft.x>>16);
+
+        inten = lft.i;
+        z = lft.z;
+
+        dptr = dbase+xmin;
+        for( x=xmin; x<xmax; x++ ) {
+            if( (int)(z>>16) > *dptr ) {
+                fbase[x] = Lut[(int)(inten>>16)];
+                *dptr = (int)(z>>16);
+            }
+            inten += di;
+            z += dz;
+            dptr++;
+        }
+
+        lft.x += lft.dx;
+        rgt.x += rgt.dx;
+        lft.z += lft.dz;
+        lft.i += lft.di;
+        dbase += View.yskip;
+        fbase += View.yskip;
+        y++;
+    }
+}
+
+
+void DrawTriangle( Vert *p, Vert *q, Vert *r )
+{
+    if( p->y < q->y )
+    {   if( p->y < r->y )
+        {   if( q->y < r->y )
+            {   DrawTriRight(p,q,r);
+            } else if( q->y > r->y )
+            {   DrawTriLeft(p,r,q);
+            } else DrawTriFlatBot(p,r,q);
+        } else  if( p->y > r->y )
+        {   DrawTriRight(r,p,q);
+        } else DrawTriFlatTop(r,p,q);
+
+    } else if( p->y > q->y )
+    {   if( q->y < r->y )
+        {   if( p->y < r->y )
+            {   DrawTriLeft(q,p,r);
+            } else if( p->y > r->y )
+            {   DrawTriRight(q,r,p);
+            } else DrawTriFlatBot(q,p,r);
+         } else if( q->y > r->y )
+         {  DrawTriLeft(r,q,p);
+         } else DrawTriFlatTop(q,r,p);
+
+    } else /* p->y == q->y */
+         if( p->y < r->y )
+         {   DrawTriFlatTop(p,q,r);
+         } else if( p->y > r->y )
+             DrawTriFlatBot(r,q,p);
+}
+
+
+static void ClipTriFlatTop( Vert *li, Vert *ri, Vert *bot )
+{
+    static Edge lft, rgt;
+    register Pixel *fbase;
+    register short *dbase;
+    register short *dptr;
+    register int x,xmin,xmax;
+    register int y,ymin,dy;
+    register int z,inten;
+    register int offset;
+    register int dz,di;
+
+    if( li->x >= ri->x )
+        return;
+
+    di = ((ri->inten-li->inten)<<16)/(ri->x-li->x);
+    dz = ((ri->z-li->z)<<16)/(ri->x-li->x);
+
+    y = li->y;
+    ymin = bot->y;
+    dy = ymin - y;
+
+    lft.di = ((bot->inten - li->inten)<<16)/dy;
+    lft.dx = ((bot->x - li->x)<<16)/dy;
+    lft.dz = ((bot->z - li->z)<<16)/dy;
+    rgt.dx = ((bot->x - ri->x)<<16)/dy;
+    lft.i = li->inten<<16;
+    lft.x = li->x<<16;
+    lft.z = li->z<<16;
+    rgt.x = ri->x<<16;
+
+    if( y < 0 )
+    {
+      rgt.x -= y*rgt.dx;
+      lft.x -= y*lft.dx;
+      lft.i -= y*lft.di;
+      lft.z -= y*lft.dz;
+      y = 0;
+    }
+
+    offset = y*View.yskip;
+    fbase = (Pixel*)View.fbuf+offset;
+    dbase = View.dbuf+offset;
+
+    if( ymin > View.ymax )
+      ymin = View.ymax;
+
+    while( y < ymin ) {
+        xmax = (int)(rgt.x>>16);
+        xmin = (int)(lft.x>>16);
+
+        if (xmin < 0) {
+            inten = lft.i - xmin*di;
+            z = lft.z - xmin*dz;
+            xmin = 0;
+        } else {
+            inten = lft.i;
+            z = lft.z;
+        }
+
+        if (xmax > View.xmax)
+          xmax = View.xmax;
+        dptr = dbase+xmin;
+        for( x=xmin; x<xmax; x++ ) {
+            if( (int)(z>>16) > *dptr ) {
+                fbase[x] = Lut[(int)(inten>>16)];
+                *dptr = (int)(z>>16);
+            }
+            inten += di;
+            z += dz;
+            dptr++;
+        }
+
+        lft.x += lft.dx;
+        rgt.x += rgt.dx;
+        lft.z += lft.dz;
+        lft.i += lft.di;
+        dbase += View.yskip;
+        fbase += View.yskip;
+        y++;
+    }
+}
+
+
+static void ClipTriFlatBot( Vert *top, Vert *li, Vert *ri )
+{
+    static Edge lft, rgt;
+    register Pixel *fbase;
+    register short *dbase;
+    register short *dptr;
+    register int x,xmin,xmax;
+    register int y,ymin,dy;
+    register int z,inten;
+    register int offset;
+    register int dz,di;
+
+    if( li->x >= ri->x )
+        return;
+    if( li->y == top->y+1 )
+        return;
+
+    di = ((ri->inten-li->inten)<<16)/(ri->x-li->x);
+    dz = ((ri->z-li->z)<<16)/(ri->x-li->x);
+
+    ymin = li->y;
+    dy = ymin - top->y;
+    lft.di = ((li->inten - top->inten)<<16)/dy;
+    lft.dx = ((li->x - top->x)<<16)/dy;
+    lft.dz = ((li->z - top->z)<<16)/dy;
+    rgt.dx = ((ri->x - top->x)<<16)/dy;
+
+    rgt.x = lft.x = top->x<<16;
+    lft.i = top->inten<<16;
+    lft.z = top->z<<16;
+
+    y = top->y;
+    if (y < 0) {
+        rgt.x -= y*rgt.dx;
+        lft.x -= y*lft.dx;
+        lft.z -= y*lft.dz;
+        lft.i -= y*lft.di;
+        y = 0;
+    } else {
+        /* Top vertex never drawn! */
+        lft.x += lft.dx;  rgt.x += rgt.dx;
+        lft.z += lft.dz;  lft.i += lft.di;
+        y++;
+    }
+
+    offset = y*View.yskip;
+    fbase = (Pixel*)View.fbuf+offset;
+    dbase = View.dbuf+offset;
+
+    if (ymin > View.ymax)
+        ymin = View.ymax;
+
+    while( y < ymin ) {
+        xmax = (int)(rgt.x>>16);
+        xmin = (int)(lft.x>>16);
+
+        if (xmin < 0) {
+            inten = lft.i - xmin*di;
+            z = lft.z - xmin*dz;
+            xmin = 0;
+        } else {
+            inten = lft.i;
+            z = lft.z;
+        }
+
+        if (xmax > View.xmax)
+          xmax = View.xmax;
+        dptr = dbase+xmin;
+        for( x=xmin; x<xmax; x++ ) {
+            if( (int)(z>>16) > *dptr ) {
+                fbase[x] = Lut[(int)(inten>>16)];
+                *dptr = (int)(z>>16);
+            }
+            inten += di;
+            z += dz;
+            dptr++;
+        }
+
+        lft.x += lft.dx;
+        rgt.x += rgt.dx;
+        lft.z += lft.dz;
+        lft.i += lft.di;
+        dbase += View.yskip;
+        fbase += View.yskip;
+        y++;
+    }
+}
+
+
+static void ClipTriLeft( Vert *top, Vert *li, Vert *bot )
+{
+    static Edge lft, rgt;
+    register Pixel *fbase;
+    register short *dbase;
+    register short *dptr;
+    register int dx,dy,ry,ly;
+    register int xmin,xmax;
+    register int x,y,ymin;
+    register int z,inten;
+    register int offset;
+    register int dz,di;
+
+    /* Determine scanline gradients */
+    ly = li->y - top->y;
+    ry = bot->y - top->y;
+
+    dx = (li->x-top->x)*ry - (bot->x-top->x)*ly;
+    if( dx )
+    {   inten = (li->inten-top->inten)*ry - (bot->inten-top->inten)*ly;
+        z = (li->z-top->z)*ry - (bot->z-top->z)*ly;
+        di = (inten<<16)/dx;
+        dz = (z<<16)/dx;
+    } else dz = di = 0;
+
+    rgt.di = ((bot->inten - top->inten)<<16)/ry;
+    rgt.dz = ((bot->z - top->z)<<16)/ry;
+    rgt.dx = ((bot->x - top->x)<<16)/ry;
+
+    rgt.x = lft.x = top->x<<16;
+    rgt.i = top->inten<<16;
+    rgt.z = top->z<<16;
+
+    if( li->y < 0 ) {
+        rgt.x += ly*rgt.dx;
+        rgt.i += ly*rgt.di;
+        rgt.z += ly*rgt.dz;
+        y = li->y;
+
+        /* Avoid compiler warnings */
+        fbase = (Pixel*)0;
+        dbase = (short*)0;
+    } else {
+        lft.dx = ((li->x - top->x)<<16)/ly;
+        lft.x = rgt.x;
+        y = top->y;
+        if( y < 0 ) {
+            lft.x -= y*lft.dx;
+            rgt.x -= y*rgt.dx;
+            rgt.i -= y*rgt.di;
+            rgt.z -= y*rgt.dz;
+            y = 0;
+
+            fbase = (Pixel*)View.fbuf;
+            dbase = View.dbuf;
+        } else {
+            /* Top vertex never drawn! */
+            lft.x += lft.dx;
+            rgt.x += rgt.dx;
+            rgt.z += rgt.dz;
+            rgt.i += rgt.di;
+            y++;
+
+            offset = y*View.yskip;
+            fbase = (Pixel*)View.fbuf+offset;
+            dbase = View.dbuf+offset;
+        }
+    }
+
+    ymin = li->y;
+    if( ymin > View.ymax )
+        ymin = View.ymax;
+    while( y<ymin )
+    {   xmax = (int)(rgt.x>>16);
+        xmin = (int)(lft.x>>16);
+
+        if( xmax > View.xmax ) {
+            offset = xmax - View.xmax;
+            inten = rgt.i - offset*di;
+            z = rgt.z - offset*dz;
+            xmax = View.xmax;
+        } else {
+            inten = rgt.i;
+            z = rgt.z;
+        }
+
+        if( xmin < 0 )
+            xmin = 0;
+        dptr = dbase+(xmax-1);
+        for( x=xmax-1; x>=xmin; x-- )
+        {   if( (int)(z>>16) > *dptr )
+            {   fbase[x] = Lut[(int)(inten>>16)];
+                *dptr = (int)(z>>16);
+            }
+            inten -= di;
+            z -= dz;
+            dptr--;
+        }
+
+        lft.x += lft.dx;
+        rgt.x += rgt.dx;
+        rgt.z += rgt.dz;
+        rgt.i += rgt.di;
+        dbase += View.yskip;
+        fbase += View.yskip;
+        y++;
+    }
+
+    dy = bot->y - li->y;
+    lft.dx = ((bot->x - li->x)<<16)/dy;
+    lft.x = li->x<<16;
+
+    if( y < 0 ) {
+        lft.x -= y*lft.dx;
+        rgt.x -= y*rgt.dx;
+        rgt.i -= y*rgt.di;
+        rgt.z -= y*rgt.dz;
+        y = 0;
+
+        fbase = (Pixel*)View.fbuf;
+        dbase = View.dbuf;
+    } else {
+        offset = y*View.yskip;
+        fbase = (Pixel*)View.fbuf+offset;
+        dbase = View.dbuf+offset;
+    }
+
+    ymin = bot->y;
+    if( ymin > View.ymax )
+        ymin = View.ymax;
+    while( y < ymin ) {
+        xmax = (int)(rgt.x>>16);
+        xmin = (int)(lft.x>>16);
+
+        if( xmax > View.xmax ) {
+            offset = xmax - View.xmax;
+            inten = rgt.i - offset*di;
+            z = rgt.z - offset*dz;
+            xmax = View.xmax;
+        } else {
+            inten = rgt.i;
+            z = rgt.z;
+        }
+
+        if( xmin < 0 )
+            xmin = 0;
+        dptr = dbase+(xmax-1);
+        for( x=xmax-1; x>=xmin; x-- ) {
+            if( (int)(z>>16) > *dptr ) {
+                fbase[x] = Lut[(int)(inten>>16)];
+                *dptr = (int)(z>>16);
+            }
+            inten -= di;
+            z -= dz;
+            dptr--;
+        }
+
+        lft.x += lft.dx;
+        rgt.x += rgt.dx;
+        rgt.z += rgt.dz;
+        rgt.i += rgt.di;
+        dbase += View.yskip;
+        fbase += View.yskip;
+        y++;
+    }
+}
+
+
+static void ClipTriRight( Vert *top, Vert *ri, Vert *bot )
+{
+    static Edge lft, rgt;
+    register Pixel *fbase;
+    register short *dbase;
+    register short *dptr;
+    register int dx,dy,ry,ly;
+    register int xmin,xmax;
+    register int x,y,ymin;
+    register int z,inten;
+    register int offset;
+    register int dz,di;
+
+    /* Determine scanline gradients */
+    ly = bot->y - top->y;
+    ry = ri->y - top->y;
+
+    dx = (bot->x-top->x)*ry - (ri->x-top->x)*ly;
+    if( dx )
+    {   inten = (bot->inten-top->inten)*ry - (ri->inten-top->inten)*ly;
+        z = (bot->z-top->z)*ry - (ri->z-top->z)*ly;
+        di = (inten<<16)/dx;
+        dz = (z<<16)/dx;
+    } else dz = di = 0;
+
+    lft.di = ((bot->inten - top->inten)<<16)/ly;
+    lft.dz = ((bot->z - top->z)<<16)/ly;
+    lft.dx = ((bot->x - top->x)<<16)/ly;
+
+    lft.x = top->x<<16;
+    lft.i = top->inten<<16;
+    lft.z = top->z<<16;
+
+    if( ri->y < 0 ) {
+        lft.x += ry*lft.dx;
+        lft.i += ry*lft.di;
+        lft.z += ry*lft.dz;
+        y = ri->y;
+
+        /* Avoid compiler warnings */
+        fbase = (Pixel*)0;
+        dbase = View.dbuf;
+    } else {
+        rgt.dx = ((ri->x - top->x)<<16)/ry;
+        rgt.x = lft.x;
+        y = top->y;
+        if( y < 0 ) {
+            rgt.x -= y*rgt.dx;
+            lft.x -= y*lft.dx;
+            lft.i -= y*lft.di;
+            lft.z -= y*lft.dz;
+            y = 0;
+
+            fbase = (Pixel*)View.fbuf;
+            dbase = View.dbuf;
+        } else {
+            /* Top vertex never drawn! */
+            rgt.x += rgt.dx;
+            lft.x += lft.dx;
+            lft.z += lft.dz;
+            lft.i += lft.di;
+            y++;
+
+            offset = y*View.yskip;
+            fbase = (Pixel*)View.fbuf+offset;
+            dbase = View.dbuf+offset;
+        }
+    }
+
+    ymin = ri->y;
+    if( ymin > View.ymax )
+        ymin = View.ymax;
+    while( y < ymin ) {
+        xmax = (int)(rgt.x>>16);
+        xmin = (int)(lft.x>>16);
+
+        if( xmin < 0 ) {
+            inten = lft.i - xmin*di;
+            z = lft.z - xmin*dz;
+            xmin = 0;
+        } else {
+            inten = lft.i;
+            z = lft.z;
+        }
+
+        if( xmax > View.xmax )
+            xmax = View.xmax;
+        dptr = dbase+xmin;
+        for( x=xmin; x<xmax; x++ ) {
+            if( (int)(z>>16) > *dptr ) {
+                fbase[x] = Lut[(int)(inten>>16)];
+                *dptr = (int)(z>>16);
+            }
+            inten += di;
+            z += dz;
+            dptr++;
+        }
+
+        lft.x += lft.dx;
+        rgt.x += rgt.dx;
+        lft.z += lft.dz;
+        lft.i += lft.di;
+        dbase += View.yskip;
+        fbase += View.yskip;
+        y++;
+    }
+
+    dy = bot->y - ri->y;
+    rgt.dx = ((bot->x - ri->x)<<16)/dy;
+    rgt.x = ri->x<<16;
+
+    if( y < 0 ) {
+        rgt.x -= y*rgt.dx;
+        lft.x -= y*lft.dx;
+        lft.i -= y*lft.di;
+        lft.z -= y*lft.dz;
+        y = 0;
+
+        fbase = (Pixel*)View.fbuf;
+        dbase = View.dbuf;
+    } else {
+        offset = y*View.yskip;
+        fbase = (Pixel*)View.fbuf+offset;
+        dbase = View.dbuf+offset;
+    }
+
+    ymin = bot->y;
+    if( ymin > View.ymax )
+        ymin = View.ymax;
+    while( y < ymin ) {
+        xmax = (int)(rgt.x>>16);
+        xmin = (int)(lft.x>>16);
+
+        if( xmin < 0 ) {
+            inten = lft.i - xmin*di;
+            z = lft.z - xmin*dz;
+            xmin = 0;
+        } else {
+            inten = lft.i;
+            z = lft.z;
+        }
+
+        if( xmax > View.xmax )
+            xmax = View.xmax;
+        dptr = dbase+xmin;
+        for( x=xmin; x<xmax; x++ ) {
+            if( (int)(z>>16) > *dptr ) {
+                fbase[x] = Lut[(int)(inten>>16)];
+                *dptr = (int)(z>>16);
+            }
+            inten += di;
+            z += dz;
+            dptr++;
+        }
+
+        lft.x += lft.dx;
+        rgt.x += rgt.dx;
+        lft.z += lft.dz;
+        lft.i += lft.di;
+        dbase += View.yskip;
+        fbase += View.yskip;
+        y++;
+    }
+}
+
+
+void ClipTriangle( Vert *p, Vert *q, Vert *r )
+{
+    register int ocp, ocq, ocr;
+
+    if( UseSlabPlane )
+        if( p->z >= SlabValue ||
+            q->z >= SlabValue ||
+            r->z >= SlabValue )
+            return;
+
+    OutCode2(ocp,p->x,p->y);
+    OutCode2(ocq,q->x,q->y);
+    OutCode2(ocr,r->x,r->y);
+
+    if( (ocp|ocq|ocr) == 0 )
+    {   DrawTriangle(p,q,r);
+        return;
+    }
+
+    if( (ocp&ocq&ocr) != 0 )
+        return;
+
+    if( p->y < q->y )
+    {   if( p->y < r->y )
+        {   if( q->y < r->y )
+            {   ClipTriRight(p,q,r);
+            } else if( q->y > r->y )
+            {   ClipTriLeft(p,r,q);
+            } else ClipTriFlatBot(p,r,q);
+        } else  if( p->y > r->y )
+        {   ClipTriRight(r,p,q);
+        } else ClipTriFlatTop(r,p,q);
+
+    } else if( p->y > q->y )
+    {   if( q->y < r->y )
+        {   if( p->y < r->y )
+            {   ClipTriLeft(q,p,r);
+            } else if( p->y > r->y )
+            {   ClipTriRight(q,r,p);
+            } else ClipTriFlatBot(q,p,r);
+         } else if( q->y > r->y )
+         {  ClipTriLeft(r,q,p);
+         } else ClipTriFlatTop(q,r,p);
+
+    } else /* p->y == q->y */
+         if( p->y < r->y )
+         {   ClipTriFlatTop(p,q,r);
+         } else if( p->y > r->y )
+             ClipTriFlatBot(r,q,p);
+}
+
+
+/*============================*/
+/*  Convex Polygon Rendering  */
+/*============================*/
+
+void DrawFlatPolygon( Poly *p )
+{
+    static Edge lft, rgt;
+    register Edge *pmin, *pmax;
+    register Pixel __huge *fbase;
+    register short __huge *dbase;
+    register short __huge *dptr;
+    register Long offset;
+
+    register Long z,dz;
+    register int ri,li,ry,ly;
+    register int xmin,xmax;
+    register int dy,ymin;
+    register int top,rem;
+    register int x,y,i;
+
+    /* Find top vertex */
+    top = 0;  
+    ymin = p->v[0].y;
+    for( i=1; i<p->count; i++ )
+       if( p->v[i].y < ymin )
+       {   ymin = p->v[i].y;
+           top = i;
+       }
+
+    rem = p->count;
+    ly = ry = y = ymin;
+    li = ri = top;
+
+    offset = (Long)y*View.yskip;
+    fbase = View.fbuf+offset;
+    dbase = View.dbuf+offset;
+
+    while( rem )
+    {   while( ly<=y && rem )
+        {   i = li-1; if( i<0 ) i=p->count-1;
+            if( p->v[i].y > y )
+            {   dy = p->v[i].y - ly;
+                lft.dx = (((Long)(p->v[i].x - p->v[li].x))<<16)/dy;
+                lft.dz = (((Long)(p->v[i].z - p->v[li].z))<<16)/dy;
+
+                lft.x = ((Long)p->v[li].x)<<16;
+                lft.z = ((Long)p->v[li].z)<<16;
+            }
+            ly = p->v[i].y;
+            rem--;  li = i;
+        }
+
+        while( ry<=y && rem )
+        {   i = ri+1; if( i>=p->count ) i = 0;
+            if( p->v[i].y > y )
+            {   dy = p->v[i].y - ry;
+                rgt.dx = (((Long)(p->v[i].x - p->v[ri].x))<<16)/dy;
+                rgt.dz = (((Long)(p->v[i].z - p->v[ri].z))<<16)/dy;
+
+                rgt.x = ((Long)p->v[ri].x)<<16;
+                rgt.z = ((Long)p->v[ri].z)<<16;
+            }
+            ry = p->v[i].y;
+            rem--; ri = i;
+        }
+
+
+        ymin = MinFun(ly,ry);
+        
+        while( y<ymin )
+        {   if( lft.x < rgt.x )
+            {   pmin = &lft;
+                pmax = &rgt;
+            } else
+            {   pmin = &rgt;
+                pmax = &lft;
+            }
+
+            xmax = (int)(pmax->x>>16)+1;
+            xmin = (int)(pmin->x>>16);
+
+            dz = (Long)((pmax->z-pmin->z)/(xmax-xmin));
+            z = pmin->z;
+
+            dptr = dbase+xmin;
+            for( x=xmin; x<xmax; x++ )
+            {   if( (int)(z>>16) > *dptr )
+                {   fbase[x] = Lut[p->v[0].inten];
+                    *dptr = (int)(z>>16);
+                }
+                z += dz;
+                dptr++;
+            }
+
+            lft.x += lft.dx;  rgt.x += rgt.dx;
+            lft.z += lft.dz;  rgt.z += rgt.dz;
+            dbase += View.yskip;
+            fbase += View.yskip;
+            y++;
+        }
+    }
+}
+
+
+void ClipFlatPolygon( Poly *p )
+{
+    static Edge lft, rgt;
+    register Edge *pmin, *pmax;
+    register Pixel __huge *fbase;
+    register short __huge *dbase;
+    register short __huge *dptr;
+    register Long offset;
+
+    register Long z,dz;
+    register int ri,li,ry,ly;
+    register int xmin,xmax;
+    register int dy,ymin;
+    register int top,rem;
+    register int x,y,i;
+
+    /* Reject Clip Polygon */
+    if( UseSlabPlane )
+        for( i=0; i<p->count; i++ )
+            if( p->v[i].z >= SlabValue )
+                return;
+
+    /* Find top vertex */
+    top = 0;  
+    ymin = p->v[0].y;
+    for( i=1; i<p->count; i++ )
+       if( p->v[i].y < ymin )
+       {   ymin = p->v[i].y;
+           top = i;
+       }
+
+    rem = p->count;
+    ly = ry = y = ymin;
+    li = ri = top;
+
+    if( y<0 )
+    {   rem--;
+
+        while( ly<=0 && rem )
+        {   i = li-1; if( i<0 ) i=p->count-1;
+            if( p->v[i].y > 0 )
+            {   dy = p->v[i].y - ly;
+                lft.dx = (((Long)(p->v[i].x - p->v[li].x))<<16)/dy;
+                lft.dz = (((Long)(p->v[i].z - p->v[li].z))<<16)/dy;
+
+                lft.x = ((Long)p->v[li].x)<<16;
+                lft.z = ((Long)p->v[li].z)<<16;
+            } else rem--;
+            ly = p->v[i].y;
+            li = i;
+        }
+
+        while( ry<=0 && rem )
+        {   i = ri+1; if( i>=p->count ) i = 0;
+            if( p->v[i].y > 0 )
+            {   dy = p->v[i].y - ry;
+                rgt.dx = (((Long)(p->v[i].x - p->v[ri].x))<<16)/dy;
+                rgt.dz = (((Long)(p->v[i].z - p->v[ri].z))<<16)/dy;
+
+                rgt.x = ((Long)p->v[ri].x)<<16;
+                rgt.z = ((Long)p->v[ri].z)<<16;
+            } else rem--;
+            ry = p->v[i].y;
+            ri = i;
+        }
+
+        fbase = View.fbuf;
+        dbase = View.dbuf;
+        y = 0;
+    } else /* y >= 0 */
+    {   offset = (Long)y*View.yskip;
+        fbase = View.fbuf+offset;
+        dbase = View.dbuf+offset;
+    }
+
+    while( rem )
+    {   while( ly<=y && rem )
+        {   i = li-1; if( i<0 ) i=p->count-1;
+            if( p->v[i].y > y )
+            {   dy = p->v[i].y - ly;
+                lft.dx = (((Long)(p->v[i].x - p->v[li].x))<<16)/dy;
+                lft.dz = (((Long)(p->v[i].z - p->v[li].z))<<16)/dy;
+
+                lft.x = ((Long)p->v[li].x)<<16;
+                lft.z = ((Long)p->v[li].z)<<16;
+            }
+            ly = p->v[i].y;
+            rem--;  li = i;
+        }
+
+        while( ry<=y && rem )
+        {   i = ri+1; if( i>=p->count ) i = 0;
+            if( p->v[i].y > y )
+            {   dy = p->v[i].y - ry;
+                rgt.dx = (((Long)(p->v[i].x - p->v[ri].x))<<16)/dy;
+                rgt.dz = (((Long)(p->v[i].z - p->v[ri].z))<<16)/dy;
+
+                rgt.x = ((Long)p->v[ri].x)<<16;
+                rgt.z = ((Long)p->v[ri].z)<<16;
+            }
+            ry = p->v[i].y;
+            rem--; ri = i;
+        }
+
+        ymin = MinFun(ly,ry);
+        if( ymin>View.ymax )
+        {   ymin = View.ymax;
+            rem = 0;
+        }
+        
+        while( y<ymin )
+        {   if( lft.x < rgt.x )
+            {   pmin = &lft;
+                pmax = &rgt;
+            } else
+            {   pmin = &rgt;
+                pmax = &lft;
+            }
+
+            xmax = (int)(pmax->x>>16)+1;
+            xmin = (int)(pmin->x>>16);
+
+            if( (xmin<View.xmax) && (xmax>=0) )
+            {   dz = (Long)((pmax->z-pmin->z)/(xmax-xmin));
+                if( xmin<0 )
+                {   z = pmin->z - xmin*dz;
+                    xmin = 0;
+                } else /* xmin >= 0 */
+                    z = pmin->z;
+
+                if( xmax>=View.xmax )
+                    xmax = View.xmax;
+
+                dptr = dbase+xmin;
+                for( x=xmin; x<xmax; x++ )
+                {   if( (int)(z>>16) > *dptr )
+                    {   fbase[x] = Lut[p->v[0].inten];
+                        *dptr = (int)(z>>16);
+                    }
+                    z += dz;
+                    dptr++;
+                }
+            }
+
+            lft.x += lft.dx;  rgt.x += rgt.dx;
+            lft.z += lft.dz;  rgt.z += rgt.dz;
+            dbase += View.yskip;
+            fbase += View.yskip;
+            y++;
+        }
+    }
+}
+
+
+void DrawPolygon( Poly *p )
 {
     static Edge lft, rgt;
     register Edge *pmin, *pmax;
@@ -1035,109 +2572,6 @@ static void DrawPolygon( Poly *p )
         }
     }
 }
-#endif
-
-
-#ifdef UNUSED
-static void DrawFlatPolygon( Poly *p )
-{
-    static Edge lft, rgt;
-    register Edge *pmin, *pmax;
-    register Pixel __huge *fbase;
-    register short __huge *dbase;
-    register short __huge *dptr;
-    register Long offset;
-
-    register Long z,dz;
-    register int ri,li,ry,ly;
-    register int xmin,xmax;
-    register int dy,ymin;
-    register int top,rem;
-    register int x,y,i;
-
-    /* Find top vertex */
-    top = 0;  
-    ymin = p->v[0].y;
-    for( i=1; i<p->count; i++ )
-       if( p->v[i].y < ymin )
-       {   ymin = p->v[i].y;
-           top = i;
-       }
-
-    rem = p->count;
-    ly = ry = y = ymin;
-    li = ri = top;
-
-    offset = (Long)y*View.yskip;
-    fbase = View.fbuf+offset;
-    dbase = View.dbuf+offset;
-
-    while( rem )
-    {   while( ly<=y && rem )
-        {   i = li-1; if( i<0 ) i=p->count-1;
-            if( p->v[i].y > y )
-            {   dy = p->v[i].y - ly;
-                lft.dx = (((Long)(p->v[i].x - p->v[li].x))<<16)/dy;
-                lft.dz = (((Long)(p->v[i].z - p->v[li].z))<<16)/dy;
-
-                lft.x = ((Long)p->v[li].x)<<16;
-                lft.z = ((Long)p->v[li].z)<<16;
-            }
-            ly = p->v[i].y;
-            rem--;  li = i;
-        }
-
-        while( ry<=y && rem )
-        {   i = ri+1; if( i>=p->count ) i = 0;
-            if( p->v[i].y > y )
-            {   dy = p->v[i].y - ry;
-                rgt.dx = (((Long)(p->v[i].x - p->v[ri].x))<<16)/dy;
-                rgt.dz = (((Long)(p->v[i].z - p->v[ri].z))<<16)/dy;
-
-                rgt.x = ((Long)p->v[ri].x)<<16;
-                rgt.z = ((Long)p->v[ri].z)<<16;
-            }
-            ry = p->v[i].y;
-            rem--; ri = i;
-        }
-
-
-        ymin = MinFun(ly,ry);
-        
-        while( y<ymin )
-        {   if( lft.x < rgt.x )
-            {   pmin = &lft;
-                pmax = &rgt;
-            } else
-            {   pmin = &rgt;
-                pmax = &lft;
-            }
-
-            xmax = (int)(pmax->x>>16)+1;
-            xmin = (int)(pmin->x>>16);
-
-            dz = (Long)((pmax->z-pmin->z)/(xmax-xmin));
-            z = pmin->z;
-
-            dptr = dbase+xmin;
-            for( x=xmin; x<xmax; x++ )
-            {   if( (int)(z>>16) > *dptr )
-                {   fbase[x] = Lut[p->v[0].inten];
-                    *dptr = (int)(z>>16);
-                }
-                z += dz;
-                dptr++;
-            }
-
-            lft.x += lft.dx;  rgt.x += rgt.dx;
-            lft.z += lft.dz;  rgt.z += rgt.dz;
-            dbase += View.yskip;
-            fbase += View.yskip;
-            y++;
-        }
-    }
-}
-#endif
 
 
 void ClipPolygon( Poly *p )
@@ -1310,330 +2744,226 @@ void ClipPolygon( Poly *p )
 }
 
 
-#ifdef UNUSED
-static void ClipFlatPolygon( Poly *p )
-{
-    static Edge lft, rgt;
-    register Edge *pmin, *pmax;
-    register Pixel __huge *fbase;
-    register short __huge *dbase;
-    register short __huge *dptr;
-    register Long offset;
-
-    register Long z,dz;
-    register int ri,li,ry,ly;
-    register int xmin,xmax;
-    register int dy,ymin;
-    register int top,rem;
-    register int x,y,i;
-
-    /* Reject Clip Polygon */
-    if( UseSlabPlane )
-        for( i=0; i<p->count; i++ )
-            if( p->v[i].z >= SlabValue )
-                return;
-
-    /* Find top vertex */
-    top = 0;  
-    ymin = p->v[0].y;
-    for( i=1; i<p->count; i++ )
-       if( p->v[i].y < ymin )
-       {   ymin = p->v[i].y;
-           top = i;
-       }
-
-    rem = p->count;
-    ly = ry = y = ymin;
-    li = ri = top;
-
-    if( y<0 )
-    {   rem--;
-
-        while( ly<=0 && rem )
-        {   i = li-1; if( i<0 ) i=p->count-1;
-            if( p->v[i].y > 0 )
-            {   dy = p->v[i].y - ly;
-                lft.dx = (((Long)(p->v[i].x - p->v[li].x))<<16)/dy;
-                lft.dz = (((Long)(p->v[i].z - p->v[li].z))<<16)/dy;
-
-                lft.x = ((Long)p->v[li].x)<<16;
-                lft.z = ((Long)p->v[li].z)<<16;
-            } else rem--;
-            ly = p->v[i].y;
-            li = i;
-        }
-
-        while( ry<=0 && rem )
-        {   i = ri+1; if( i>=p->count ) i = 0;
-            if( p->v[i].y > 0 )
-            {   dy = p->v[i].y - ry;
-                rgt.dx = (((Long)(p->v[i].x - p->v[ri].x))<<16)/dy;
-                rgt.dz = (((Long)(p->v[i].z - p->v[ri].z))<<16)/dy;
-
-                rgt.x = ((Long)p->v[ri].x)<<16;
-                rgt.z = ((Long)p->v[ri].z)<<16;
-            } else rem--;
-            ry = p->v[i].y;
-            ri = i;
-        }
-
-        fbase = View.fbuf;
-        dbase = View.dbuf;
-        y = 0;
-    } else /* y >= 0 */
-    {   offset = (Long)y*View.yskip;
-        fbase = View.fbuf+offset;
-        dbase = View.dbuf+offset;
-    }
-
-    while( rem )
-    {   while( ly<=y && rem )
-        {   i = li-1; if( i<0 ) i=p->count-1;
-            if( p->v[i].y > y )
-            {   dy = p->v[i].y - ly;
-                lft.dx = (((Long)(p->v[i].x - p->v[li].x))<<16)/dy;
-                lft.dz = (((Long)(p->v[i].z - p->v[li].z))<<16)/dy;
-
-                lft.x = ((Long)p->v[li].x)<<16;
-                lft.z = ((Long)p->v[li].z)<<16;
-            }
-            ly = p->v[i].y;
-            rem--;  li = i;
-        }
-
-        while( ry<=y && rem )
-        {   i = ri+1; if( i>=p->count ) i = 0;
-            if( p->v[i].y > y )
-            {   dy = p->v[i].y - ry;
-                rgt.dx = (((Long)(p->v[i].x - p->v[ri].x))<<16)/dy;
-                rgt.dz = (((Long)(p->v[i].z - p->v[ri].z))<<16)/dy;
-
-                rgt.x = ((Long)p->v[ri].x)<<16;
-                rgt.z = ((Long)p->v[ri].z)<<16;
-            }
-            ry = p->v[i].y;
-            rem--; ri = i;
-        }
-
-        ymin = MinFun(ly,ry);
-        if( ymin>View.ymax )
-        {   ymin = View.ymax;
-            rem = 0;
-        }
-        
-        while( y<ymin )
-        {   if( lft.x < rgt.x )
-            {   pmin = &lft;
-                pmax = &rgt;
-            } else
-            {   pmin = &rgt;
-                pmax = &lft;
-            }
-
-            xmax = (int)(pmax->x>>16)+1;
-            xmin = (int)(pmin->x>>16);
-
-            if( (xmin<View.xmax) && (xmax>=0) )
-            {   dz = (Long)((pmax->z-pmin->z)/(xmax-xmin));
-                if( xmin<0 )
-                {   z = pmin->z - xmin*dz;
-                    xmin = 0;
-                } else /* xmin >= 0 */
-                    z = pmin->z;
-
-                if( xmax>=View.xmax )
-                    xmax = View.xmax;
-
-                dptr = dbase+xmin;
-                for( x=xmin; x<xmax; x++ )
-                {   if( (int)(z>>16) > *dptr )
-                    {   fbase[x] = Lut[p->v[0].inten];
-                        *dptr = (int)(z>>16);
-                    }
-                    z += dz;
-                    dptr++;
-                }
-            }
-
-            lft.x += lft.dx;  rgt.x += rgt.dx;
-            lft.z += lft.dz;  rgt.z += rgt.dz;
-            dbase += View.yskip;
-            fbase += View.yskip;
-            y++;
-        }
-    }
-}
-#endif
-
+/*==========================*/
+/*  Render Ribbon Segments  */
+/*==========================*/
 
 void SolidRibbon( Knot __far *src, Knot __far *dst, int col )
 {
-    static Poly p;
+    register int dx, dy;
+    Vert p, q, r;
 
-    p.v[0].x = src->px+src->wx;  
-    p.v[0].y = src->py+src->wy;  
-    p.v[0].z = src->pz+src->wz;
-    p.v[0].inten = src->vinten+col;
+    p.x = src->px-src->wx;  
+    p.y = src->py-src->wy;  
+    p.z = src->pz-src->wz;
+    p.inten = src->vinten+col;
 
-    p.v[1].x = dst->px+dst->wx;  
-    p.v[1].y = dst->py+dst->wy;  
-    p.v[1].z = dst->pz+dst->wz;
-    p.v[1].inten = dst->vinten+col;
+    q.x = dst->px+dst->wx;  
+    q.y = dst->py+dst->wy;  
+    q.z = dst->pz+dst->wz;
+    q.inten = dst->vinten+col;
 
-    p.v[2].x = dst->px-dst->wx;
-    p.v[2].y = dst->py-dst->wy;  
-    p.v[2].z = dst->pz-dst->wz;
-    p.v[2].inten = dst->vinten+col;
+    dx = q.x - p.x;
+    dy = q.y - p.y;
 
-    p.v[3].x = src->px-src->wx;  
-    p.v[3].y = src->py-src->wy;  
-    p.v[3].z = src->pz-src->wz;
-    p.v[3].inten = src->vinten+col;
+    r.x = dst->px-dst->wx;
+    r.y = dst->py-dst->wy;  
+    r.z = dst->pz-dst->wz;
+    r.inten = dst->vinten+col;
 
-    p.count = 4;
-    /* OutLinePolygon( &p ); */
-    ClipPolygon( &p );
+    if( dst->wx*dy > dst->wy*dx )
+      ClipTriangle( &p, &q, &r );
+   else
+      ClipTriangle( &p, &r, &q );
+
+    r.x = src->px+src->wx;  
+    r.y = src->py+src->wy;  
+    r.z = src->pz+src->wz;
+    r.inten = src->vinten+col;
+
+    if( src->wx*dy < src->wy*dx )
+      ClipTriangle( &p, &q, &r );
+   else
+      ClipTriangle( &p, &r, &q );
 }
 
 
 void SolidRibbon2( Knot __far *src, Knot __far *dst, int col1, int col2 )
 {
     register int dx,dy;
-    register int col;
-    static Poly p;
+    Vert p, q, r;
 
-    p.count = 3;
-    p.v[0].x = src->px+src->wx;  
-    p.v[0].y = src->py+src->wy;  
-    p.v[0].z = src->pz+src->wz;
-    p.v[1].x = dst->px-dst->wx;  
-    p.v[1].y = dst->py-dst->wy;  
-    p.v[1].z = dst->pz-dst->wz;
+    p.x = src->px-src->wx;  
+    p.y = src->py-src->wy;  
+    p.z = src->pz-src->wz;
 
-    dx = p.v[1].x - p.v[0].x;
-    dy = p.v[1].y - p.v[0].y;
+    q.x = dst->px+dst->wx;  
+    q.y = dst->py+dst->wy;  
+    q.z = dst->pz+dst->wz;
 
-    p.v[2].x = dst->px+dst->wx;
-    p.v[2].y = dst->py+dst->wy;  
-    p.v[2].z = dst->pz+dst->wz;
+    dx = q.x - p.x;
+    dy = q.y - p.y;
 
-#ifdef INVERT
-    col = ( dst->wx*dy > dst->wy*dx )? col2 : col1;
-#else
-    col = ( dst->wx*dy < dst->wy*dx )? col2 : col1;
-#endif
-    p.v[0].inten = src->vinten+col;
-    p.v[1].inten = dst->vinten+col;
-    p.v[2].inten = dst->vinten+col;
+    r.x = dst->px-dst->wx;
+    r.y = dst->py-dst->wy;  
+    r.z = dst->pz-dst->wz;
 
-    /* OutLinePolygon( &p ); */
-    ClipPolygon( &p );
+    if( dst->wx*dy > dst->wy*dx )
+    {
+      p.inten = src->vinten+col2;
+      q.inten = dst->vinten+col2;
+      r.inten = dst->vinten+col2;
+      ClipTriangle( &p, &q, &r );
+    } else {
+      p.inten = src->vinten+col1;
+      q.inten = dst->vinten+col1;
+      r.inten = dst->vinten+col1;
+      ClipTriangle( &p, &r, &q );
+    }
 
-    p.v[2].x = src->px-src->wx;  
-    p.v[2].y = src->py-src->wy;  
-    p.v[2].z = src->pz-src->wz;
+    r.x = src->px+src->wx;  
+    r.y = src->py+src->wy;  
+    r.z = src->pz+src->wz;
 
-#ifdef INVERT
-    col = ( src->wx*dy > src->wy*dx )? col2 : col1;
-#else
-    col = ( src->wx*dy < src->wy*dx )? col2 : col1;
-#endif
-
-    p.v[0].inten = src->vinten+col;
-    p.v[1].inten = dst->vinten+col;
-    p.v[2].inten = src->vinten+col;
-    /* OutLinePolygon( &p ); */
-    ClipPolygon( &p );
+    if( src->wx*dy < src->wy*dx )
+    {
+      p.inten = src->vinten+col1;
+      q.inten = dst->vinten+col1;
+      r.inten = src->vinten+col1;
+      ClipTriangle( &p, &q, &r );
+    }
+    else
+    {
+      p.inten = src->vinten+col2;
+      q.inten = dst->vinten+col2;
+      r.inten = src->vinten+col2;
+      ClipTriangle( &p, &r, &q );
+    }
 }
 
 
-void RectRibbon( Knot __far *src, Knot __far *dst, int col )
+void RectRibbon( Knot __far *src, Knot __far *dst, int col,
+                 int scap, int dcap )
 {
-    static Poly p;
+    Vert s00, s01, s10, s11;
+    Vert d00, d01, d10, d11;
+    int svcol, shcol;
+    int dvcol, dhcol;
+    int size, inten;
+    Real rinten;
 
-    p.count = 4;
+    if (src) {
+        s00.x = src->px-src->wx-src->dx;
+        s00.y = src->py-src->wy-src->dy;
+        s00.z = src->pz-src->wz-src->dz;
 
-    p.v[0].inten = src->vinten+col;
-    p.v[1].inten = dst->vinten+col;
-    p.v[2].inten = dst->vinten+col;
-    p.v[3].inten = src->vinten+col;
+        s01.x = src->px-src->wx+src->dx;
+        s01.y = src->py-src->wy+src->dy;
+        s01.z = src->pz-src->wz+src->dz;
 
-    /* Top Surface */
-    p.v[0].x = src->px+src->wx+src->dx;  
-    p.v[0].y = src->py+src->wy+src->dy;  
-    p.v[0].z = src->pz+src->wz+src->dz;
+        s10.x = src->px+src->wx-src->dx;
+        s10.y = src->py+src->wy-src->dy;
+        s10.z = src->pz+src->wz-src->dz;
 
-    p.v[1].x = dst->px+dst->wx+dst->dx;  
-    p.v[1].y = dst->py+dst->wy+dst->dy;  
-    p.v[1].z = dst->pz+dst->wz+dst->dz;
+        s11.x = src->px+src->wx+src->dx;
+        s11.y = src->py+src->wy+src->dy;
+        s11.z = src->pz+src->wz+src->dz;
 
-    p.v[2].x = dst->px-dst->wx+dst->dx;
-    p.v[2].y = dst->py-dst->wy+dst->dy;  
-    p.v[2].z = dst->pz-dst->wz+dst->dz;
+        shcol = src->hinten+col;
+        svcol = src->vinten+col;
+    } else shcol = svcol = 0;
 
-    p.v[3].x = src->px-src->wx+src->dx;  
-    p.v[3].y = src->py-src->wy+src->dy;  
-    p.v[3].z = src->pz-src->wz+src->dz;
-    ClipPolygon( &p );
+    if (dst) {
+        d00.x = dst->px-dst->wx-dst->dx;
+        d00.y = dst->py-dst->wy-dst->dy;
+        d00.z = dst->pz-dst->wz-dst->dz;
+    
+        d01.x = dst->px-dst->wx+dst->dx;
+        d01.y = dst->py-dst->wy+dst->dy;
+        d01.z = dst->pz-dst->wz+dst->dz;
+    
+        d10.x = dst->px+dst->wx-dst->dx;
+        d10.y = dst->py+dst->wy-dst->dy;
+        d10.z = dst->pz+dst->wz-dst->dz;
 
-    /* Bottom Surface */
-    p.v[0].x = src->px+src->wx-src->dx;  
-    p.v[0].y = src->py+src->wy-src->dy;  
-    p.v[0].z = src->pz+src->wz-src->dz;
+        d11.x = dst->px+dst->wx+dst->dx;
+        d11.y = dst->py+dst->wy+dst->dy;
+        d11.z = dst->pz+dst->wz+dst->dz;
+    
+        dhcol = dst->hinten+col;
+        dvcol = dst->vinten+col;
+    } else dhcol = dvcol = 0;
+    
+    if (src && dst)
+    {
+        s00.inten = shcol;  d00.inten = dhcol;
+        s01.inten = shcol;  d01.inten = dhcol;
+        ClipTriangle( &s00, &d00, &s01 );
+        ClipTriangle( &d00, &d01, &s01 );
 
-    p.v[1].x = dst->px+dst->wx-dst->dx;  
-    p.v[1].y = dst->py+dst->wy-dst->dy;  
-    p.v[1].z = dst->pz+dst->wz-dst->dz;
+        s01.inten = svcol;  d01.inten = dvcol;
+        s11.inten = svcol;  d11.inten = dvcol;
+        ClipTriangle( &s01, &d01, &s11 );
+        ClipTriangle( &d01, &d11, &s11 );
 
-    p.v[2].x = dst->px-dst->wx-dst->dx;
-    p.v[2].y = dst->py-dst->wy-dst->dy;  
-    p.v[2].z = dst->pz-dst->wz-dst->dz;
+        s11.inten = shcol;  d11.inten = dhcol;
+        s10.inten = shcol;  d10.inten = dhcol;
+        ClipTriangle( &s11, &d11, &s10 );
+        ClipTriangle( &d11, &d10, &s10 );
 
-    p.v[3].x = src->px-src->wx-src->dx;  
-    p.v[3].y = src->py-src->wy-src->dy;  
-    p.v[3].z = src->pz-src->wz-src->dz;
-    ClipPolygon( &p );
+        s10.inten = svcol;  d10.inten = dvcol;
+        s00.inten = svcol;  d00.inten = dvcol;
+        ClipTriangle( &s10, &d10, &s00 );
+        ClipTriangle( &d10, &d00, &s00 );
+    }
 
-    p.v[0].inten = src->hinten+col;
-    p.v[1].inten = dst->hinten+col;
-    p.v[2].inten = dst->hinten+col;
-    p.v[3].inten = src->hinten+col;
+    if (scap)
+    {
+      size = isqrt( (Long)src->tx*src->tx +
+                    (Long)src->ty*src->ty +
+                    (Long)src->tz*src->tz ) + 1;
+#ifdef ORIGINAL
+      rinten = LightDot(-src->tx,InvertY(src->ty),-src->tz);
+      rinten /= size*LightLength;
+#else
+      rinten = (Real)-src->tz/size;
+#endif
 
-    /* Left Surface */
-    p.v[0].x = src->px+src->wx+src->dx;  
-    p.v[0].y = src->py+src->wy+src->dy;  
-    p.v[0].z = src->pz+src->wz+src->dz;
+      if( src->tz > 0 ) rinten = -rinten;
 
-    p.v[1].x = dst->px+dst->wx+dst->dx;  
-    p.v[1].y = dst->py+dst->wy+dst->dy;  
-    p.v[1].z = dst->pz+dst->wz+dst->dz;
+      if( rinten > 0.0 )
+      {   inten = (char)(ColourMask*rinten) + col;
+      } else inten = col;
 
-    p.v[2].x = dst->px+dst->wx-dst->dx;
-    p.v[2].y = dst->py+dst->wy-dst->dy;  
-    p.v[2].z = dst->pz+dst->wz-dst->dz;
+      s00.inten = inten;  s01.inten = inten;
+      s10.inten = inten;  s11.inten = inten;
+      ClipTriangle( &s00, &s01, &s10 );
+      ClipTriangle( &s10, &s01, &s11 );
+    }
 
-    p.v[3].x = src->px+src->wx-src->dx;  
-    p.v[3].y = src->py+src->wy-src->dy;  
-    p.v[3].z = src->pz+src->wz-src->dz;
-    ClipPolygon( &p );
+    if (dcap)
+    {
+      size = isqrt( (Long)dst->tx*dst->tx +
+                    (Long)dst->ty*dst->ty +
+                    (Long)dst->tz*dst->tz ) + 1;
+#ifdef ORIGINAL
+      rinten = LightDot(dst->tx,-InvertY(dst->ty),dst->tz);
+      rinten /= size*LightLength;
+#else
+      rinten = (Real)dst->tz/size;
+#endif
 
-    /* Right Surface */
-    p.v[0].x = src->px-src->wx+src->dx;  
-    p.v[0].y = src->py-src->wy+src->dy;  
-    p.v[0].z = src->pz-src->wz+src->dz;
+      if( dst->tz < 0 ) rinten = -rinten;
 
-    p.v[1].x = dst->px-dst->wx+dst->dx;  
-    p.v[1].y = dst->py-dst->wy+dst->dy;  
-    p.v[1].z = dst->pz-dst->wz+dst->dz;
+      if( rinten > 0.0 )
+      {   inten = (char)(ColourMask*rinten) + col;
+      } else inten = col;
 
-    p.v[2].x = dst->px-dst->wx-dst->dx;
-    p.v[2].y = dst->py-dst->wy-dst->dy;  
-    p.v[2].z = dst->pz-dst->wz-dst->dz;
-
-    p.v[3].x = src->px-src->wx-src->dx;  
-    p.v[3].y = src->py-src->wy-src->dy;  
-    p.v[3].z = src->pz-src->wz-src->dz;
-    ClipPolygon( &p );
+      d00.inten = inten;  d01.inten = inten;
+      d10.inten = inten;  d11.inten = inten;
+      ClipTriangle( &d00, &d10, &d01 );
+      ClipTriangle( &d01, &d10, &d11 );
+    }
 }
 
 
@@ -1707,7 +3037,7 @@ void DrawSphere( int x, int y, int z, int rad, int col )
 {
     register Pixel __huge *fptr, __huge *fold;
     register short __huge *dptr, __huge *dold;
-    register Byte __far *tptr;
+    register unsigned char __far *tptr;
 
     register Long offset;
     register int depth,wide,inten;
@@ -1963,6 +3293,8 @@ static void DrawCylinderCaps( int x1, int y1, int z1,
 
             if( ((k1>wide)||(dz>=LookUp[wide][k1]-zrate)) &&
                 ((k2>wide)||(dz>LookUp[wide][k2]+zrate)) )
+#else
+            if( ArcAcPtr < ArcAc+ARCSIZE )
 #endif
             {   ArcAcPtr->offset = offset; ArcAcPtr->inten = inten;
                 ArcAcPtr->dx=dx; ArcAcPtr->dy=dy; ArcAcPtr->dz=dz;
@@ -1976,6 +3308,8 @@ static void DrawCylinderCaps( int x1, int y1, int z1,
             high = LookUp[rad][absx];
             if( ((k1>high)||(dz>=LookUp[LookUp[rad][k1]][absx]-zrate)) &&
                 ((k2>high)||(dz>LookUp[LookUp[rad][k2]][absx]+zrate)) )
+#else
+            if( ArcDnPtr < ArcDn+ARCSIZE )
 #endif
             {   ArcDnPtr->offset = offset; ArcDnPtr->inten = inten;
                 ArcDnPtr->dx=dx; ArcDnPtr->dy=dy; ArcDnPtr->dz=dz;
@@ -1999,6 +3333,9 @@ void DrawCylinder( int x1, int y1, int z1,
     register int lx,ly,lz;
     register int mid,tmp;
     register Long temp;
+
+    /* Avoid Lookup Table Overflow! */
+    if( rad > MAXRAD ) rad = MAXRAD;
 
     /* Trivial Case */
     if( (x1==x2) && (y1==y2) )
@@ -2188,6 +3525,9 @@ void ClipCylinder( int x1, int y1, int z1,
     register int mid,tmp;
     register Long temp;
 
+    /* Avoid Lookup Table Overflow! */
+    if( rad > MAXRAD ) rad = MAXRAD;
+
     /* Visibility Tests */
     if( !TestCylinder(x1,y1,z1,x2,y2,z2,rad) )
         return;
@@ -2295,6 +3635,9 @@ static void ClipCharacter( int x, int y, int z, int glyph, int col )
     register int sx,sy;
     register int ex,ey;
 
+    /* Avoid compiler warnings! */
+    ex = 0;  ey = 0;
+
     ptr = VectFont[glyph];
     while( *ptr )
     {   /* Uppercase test */
@@ -2323,6 +3666,9 @@ void DisplayString( int x, int y, int z, char *label, int col )
     register char *ptr;
     register int sx,sy;
     register int ex,ey;
+
+    /* Avoid compiler warnings! */
+    ex = 0;  ey = 0;
 
     high = (FontSize*3)>>1;
 #ifdef INVERT
