@@ -329,9 +329,9 @@ void TransferImage( void )
   src = FBuffer;
   for( y=0; y<YRange; y++ ) {
     for( x=0; x<XRange; x++ ) {
-#ifdef __EMSCRIPTEN__ // Swap Red and Blue
+#ifdef __EMSCRIPTEN__ // Swap Red and Blue and set alpha to opaque
       Pixel pix = *src;
-      *dst++ = ((pix>>16)&0x0000ff) | (pix&0x00ff00) | (pix&0x0000ff)<<16;
+      *dst++ = ((pix>>16)&0x0000ff) | (pix&0x00ff00) | (pix&0x0000ff)<<16 | 0xff000000;
       src++;
 #else
       *dst++ = *src++;
