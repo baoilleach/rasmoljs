@@ -36,6 +36,7 @@ static SDL_Surface* Screen;
 #include "repres.h"
 #include "pixutils.h"
 #include "outfile.h"
+#include "tmesh.h"
 
 
 #ifdef IBMPC
@@ -411,6 +412,12 @@ void CloseDisplay( void )
 {
 }
 
+int FetchEvent( int wait )
+{
+    /* Avoid compiler warning! */
+    UnusedArgument(wait);
+    return 0;
+}
 
 void BeginWait( void )
 {
@@ -895,6 +902,7 @@ int main( int argc, char *argv[] )
     InitialiseAbstree();
     InitialiseOutFile();
     InitialiseRepres();
+    InitialiseTMesh();
     
     HandleCommand("load pdb1crn.ent");
     
