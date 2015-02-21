@@ -136,7 +136,7 @@ typedef signed char Char;
 typedef char Char;
 #endif
 
-#ifdef _LONGLONG
+#if defined(_LONGLONG) || defined(LP64) || defined(_LP64)
 typedef unsigned int Card;
 typedef int Long;
 #else
