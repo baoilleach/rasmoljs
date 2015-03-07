@@ -328,6 +328,7 @@ unsigned int GetTickCount()
     return (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
 }
 
+#undef USE_MEMCPY
 void TransferImage( void )
 {
   Pixel __huge *src;
@@ -338,11 +339,15 @@ void TransferImage( void )
   
   dst = (Uint32 *)Screen->pixels;
   src = FBuffer;
+#ifdef USE_MEMCPY
+  memcpy(dst, src, YRange*XRange*sizeof(Uint32));
+#else
   for( y=0; y<YRange; y++ ) {
     for( x=0; x<XRange; x++ ) {
       *dst++ = *src++;
     }
   }
+#endif
   
   if (SDL_MUSTLOCK(Screen)) SDL_UnlockSurface(Screen);
   
