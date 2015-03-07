@@ -81,6 +81,9 @@ static int LabelOptFlag;
 static int FileFormat;
 static int ProfCount;
 
+static int MainLoopTicks;
+static unsigned int ProfileStartTime;
+static int ProfileMainLoop;
 
 
 void WriteChar( int ch )
@@ -316,6 +319,14 @@ int CreateImage( void )
     return( (int)FBuffer );
 }
 
+unsigned int GetTickCount()
+{
+    struct timeval tv;
+    if(gettimeofday(&tv, NULL) != 0)
+        return 0;
+
+    return (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
+}
 
 void TransferImage( void )
 {
@@ -719,6 +730,9 @@ static void InitDefaultValues( void )
 
     FileFormat = FormatPDB;
     CalcBondsFlag = True;
+    
+    ProfileMainLoop = False;
+    MainLoopTicks = 0;
 }
 
 
@@ -837,6 +851,23 @@ void SetScreenSize(int width, int height)
 
 void MainLoop()
 {
+  if (ProfileMainLoop) {
+    Real delta = TwoPi / 100;
+    if (MainLoopTicks == 0)
+      ProfileStartTime = GetTickCount();
+    MainLoopTicks++;
+    ReDrawFlag |= RFRotateY;
+    DialValue[1] += delta;
+    ApplyTransform();
+    if (MainLoopTicks >= 100) {
+      char buf[25];
+      int fps = MainLoopTicks * 1000 / (GetTickCount() - ProfileStartTime);
+      sprintf(buf, "Profile FPS: %d\n", fps);
+      WriteString(buf);
+      ProfileMainLoop = False;
+    }
+  }
+    
   SDL_Event event;
   while(SDL_PollEvent(&event)) {
     switch(event.type)
@@ -872,6 +903,12 @@ void HandleCommand(const char* command)
     
   strcpy(CurLine, command);
   ExecuteCommand();
+}
+
+void SetProfileOn()
+{
+  ProfileMainLoop = True;
+  MainLoopTicks = 0;
 }
 
 int main( int argc, char *argv[] )
