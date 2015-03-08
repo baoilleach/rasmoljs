@@ -354,6 +354,8 @@ int ClipboardImage( void )
 
 void ClearImage( void )
 {
+  memset(FBuffer, 0xff000000, XRange*YRange*sizeof(Uint32));
+  TransferImage();
 }
 
 
